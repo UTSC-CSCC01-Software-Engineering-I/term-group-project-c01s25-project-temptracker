@@ -20,3 +20,6 @@
 18. As a user, I want to earn badges by inputting data, so that I can be rewarded for my contributions  
 19. As a user, I want to sort locations by temperature, so I can easily determine the range of temperatures  
 20. As a user, I want larger buttons optimized for mobile, so that I can easily navigate the application
+21. As a user, I want to receive suggestions or autofill for location names, so that I can input data faster and more accurately.
+22. As a user, I want the app to remember my login session, so I don’t need to log in every time.
+23. As a user, I want to be able to set alerts for specific beaches when temperatures go above/below a threshold, so I can plan my visits accordingly.
