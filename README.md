@@ -22,7 +22,7 @@ The Glow Temperature Tracker aims to create a community-driven platform for moni
 
 ### Prerequisites
 
-- Node.js (LTS version)
+- Node.js
 - npm or yarn
 - Supabase account
 
@@ -81,6 +81,43 @@ The application will be available at:
 
 - Frontend: http://localhost:3000
 - Backend: http://localhost:8080
+
+## Project Structure
+
+```
+glow-temperature-tracker/
+├── client/               # Next.js frontend application
+│   ├── app/               # App router pages and components
+│   ├── components/        # Reusable components
+│   ├── lib/               # Utility functions and shared logic
+│   ├── public/            # Static assets
+│   └── styles/            # Global styles
+│
+├── server/               # Express.js backend application
+│   └── app/
+│       ├── controllers/   # Route controllers
+│       ├── middleware/    # Custom middleware
+│       ├── models/        # Data models
+│       └── routes/        # API routes
+│
+└── docs/                 # Project documentation and deliverables
+```
+
+## Authentication
+
+The application includes example authentication pages and components:
+
+- `/auth/login` - User login page
+- `/auth/register` - New user registration
+- `/auth/forgot-password` - Password recovery
+- `/auth/reset-password` - Password reset form
+
+Authentication is handled using Supabase Auth, providing:
+
+- Email/password authentication
+- Session management
+- Protected routes
+- User profile management
 
 ## Development Workflow
 
