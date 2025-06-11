@@ -10,11 +10,11 @@
 
 
 .map-placeholder {
-    background-color: #e5e7eb;
+    background-color: white;
     border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     height: 80vh;
-    margin: 1em 0;
+    margin: 1.25em 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -80,5 +80,5 @@
 
 .location-card span:last-child {
     font-weight: 700;
-    color: #1e40af;
+    color: var(--dark-blue);
 }

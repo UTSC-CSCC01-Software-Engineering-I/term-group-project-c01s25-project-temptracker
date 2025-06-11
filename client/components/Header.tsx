@@ -11,10 +11,10 @@ const navLinks = [
 
 export default function Header() {
   return (
-    <header className="w-full bg-white border-b border-gray-300 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-3 pb-2 flex flex-col md:flex-row md:items-center md:justify-between">
+    <header className="w-full bg-navblue border-b border-darkblue sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-2 md:py-3 flex flex-col md:flex-row md:items-center md:justify-between">
         <div className="flex items-center justify-evenly w-full md:w-auto ">
-          <h1 className="text-2xl font-extrabold text-gray-900 tracking-wide select-none my-1 md:mb-0">
+          <h1 className="text-2xl italic font-bold text-gray-900 tracking-wide select-none my-1 md:mb-0">
             GLOW - Temp Tracker
           </h1>
           <button
@@ -39,7 +39,7 @@ export default function Header() {
             <Link
               key={href}
               href={href}
-              className="flex-shrink-0 text-gray-700 hover:text-gray-900 transition font-medium whitespace-nowrap"
+              className="flex-shrink-0 text-darkblue hover:text-gray-800 transition font-medium whitespace-nowrap"
               tabIndex={0}
             >
               {label}
