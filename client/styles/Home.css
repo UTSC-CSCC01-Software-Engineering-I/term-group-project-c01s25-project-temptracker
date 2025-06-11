@@ -61,6 +61,7 @@
 }
 
 .location-card {
+    color: var(--dark-blue);
     width: 100%;
     max-width: 500px;
     background: #fff;

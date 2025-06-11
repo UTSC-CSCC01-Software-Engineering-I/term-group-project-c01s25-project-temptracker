@@ -11,7 +11,7 @@ const navLinks = [
 
 export default function Header() {
   return (
-    <header className="w-full bg-navblue border-b border-darkblue sticky top-0 z-50">
+    <header className="w-full bg-nav-blue border-b border-dark-blue sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-6 lg:px-8 py-2 md:py-3 flex flex-col md:flex-row md:items-center md:justify-between">
         <div className="flex items-center justify-evenly w-full md:w-auto ">
           <h1 className="text-2xl italic font-bold text-gray-900 tracking-wide select-none my-1 md:mb-0">
@@ -39,7 +39,7 @@ export default function Header() {
             <Link
               key={href}
               href={href}
-              className="flex-shrink-0 text-darkblue hover:text-gray-800 transition font-medium whitespace-nowrap"
+              className="flex-shrink-0 text-dark-blue hover:text-gray-800 transition font-medium whitespace-nowrap"
               tabIndex={0}
             >
               {label}
