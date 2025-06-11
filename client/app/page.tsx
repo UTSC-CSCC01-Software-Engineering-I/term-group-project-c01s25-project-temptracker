@@ -10,7 +10,6 @@ const sampleLocations = [
 export default function Home() {
   return (
     <>
-      <Header />
       <main className="main-container">
         <div className="map-placeholder">
           <p>
