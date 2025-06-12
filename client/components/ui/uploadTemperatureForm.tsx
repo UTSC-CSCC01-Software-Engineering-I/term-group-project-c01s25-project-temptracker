@@ -70,24 +70,16 @@ export default function UploadTemperatureForm() {
       temperatureUnit: "C",
       longitude: "",
       latitude: "",
-      date: new Date(), // Default to today
+      date: new Date(),
       notes: "",
     },
   });
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      await submitTemperature({
-        temperature: data.temperature,
-        temperatureUnit: data.temperatureUnit,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        date: data.date,
-        notes: data.notes,
-      });
-
+      await submitTemperature(data);
       toast.success("Temperature reading submitted successfully!");
-      form.reset(); // Reset form after successful submission
+      form.reset();
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -95,18 +87,16 @@ export default function UploadTemperatureForm() {
           : "Failed to submit temperature reading"
       );
     }
-
-    //reset the form after submission
   };
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 max-w-xl md:mx-auto p-6 rounded-lg bg-card shadow-md"
+        className="m-2 space-y-6 w-full mx-auto p-6 rounded-lg bg-card shadow-md"
       >
-        <div className="space-y-2">
-          {/* Temperature Input Group */}
+        {/* Temperature */}
+        <div className="space-y-0.5">
           <FormLabel className="text-base font-semibold">
             Temperature Reading
           </FormLabel>
@@ -119,7 +109,6 @@ export default function UploadTemperatureForm() {
                   <FormControl>
                     <Input
                       type="number"
-                      {...field}
                       step="0.1"
                       placeholder="Enter temperature"
                       className="text-lg"
@@ -157,24 +146,22 @@ export default function UploadTemperatureForm() {
               )}
             />
           </div>
+        </div>
 
-          {/* Location Group */}
+        {/* Location */}
+        <div className="space-y-0.5">
           <FormLabel className="text-base font-semibold">Location</FormLabel>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <FormField
               control={form.control}
               name="longitude"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-normal text-sm">
-                    Longitude
-                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      {...field}
                       step="0.000001"
-                      placeholder="43.7847"
+                      placeholder="Longitude"
                       onChange={(e) => {
                         const value = e.target.value;
                         field.onChange(value === "" ? "" : parseFloat(value));
@@ -190,15 +177,11 @@ export default function UploadTemperatureForm() {
               name="latitude"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-normal text-sm">
-                    Latitude
-                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
-                      {...field}
                       step="0.000001"
-                      placeholder="79.1859"
+                      placeholder="Latitude"
                       onChange={(e) => {
                         const value = e.target.value;
                         field.onChange(value === "" ? "" : parseFloat(value));
@@ -210,52 +193,54 @@ export default function UploadTemperatureForm() {
               )}
             />
           </div>
+        </div>
 
-          {/* Date Input */}
+        {/* Date */}
+        <div className="space-y-0.5">
+          <FormLabel className="text-base font-semibold">
+            Date of Reading
+          </FormLabel>
           <FormField
             control={form.control}
             name="date"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Date of Reading</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button variant={"outline"}>
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
+              <FormItem>
+                <FormControl>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant={"outline"} className="mb-2">
+                        {field.value
+                          ? format(field.value, "PPP")
+                          : "Pick a date"}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={new Date(field.value)}
-                      onSelect={field.onChange}
-                      disabled={(date) => date > new Date()}
-                      captionLayout="dropdown"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  Optional: Defaults to today's date if not specified
-                </FormDescription>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={new Date(field.value)}
+                        onSelect={field.onChange}
+                        disabled={(date) => date > new Date()}
+                        captionLayout="dropdown"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+          <FormDescription>Defaults to today if not specified</FormDescription>
+        </div>
 
-          {/* Notes Input */}
+        {/* Notes */}
+        <div className="space-y-0.5">
+          <FormLabel className="text-base font-semibold">Notes</FormLabel>
           <FormField
             control={form.control}
             name="notes"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-base font-semibold">Notes</FormLabel>
                 <FormControl>
                   <Textarea
                     {...field}
@@ -273,19 +258,15 @@ export default function UploadTemperatureForm() {
           />
         </div>
 
+        {/* Submit */}
         <Button
           type="submit"
-          className="w-full cursor-pointer"
+          className="w-full cursor-pointer py-6"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? (
-            <>
-              Submitting...
-              {/* Add a loading spinner if you have one */}
-            </>
-          ) : (
-            "Submit Temperature Reading"
-          )}{" "}
+          {form.formState.isSubmitting
+            ? "Submitting..."
+            : "Submit Temperature Reading"}
         </Button>
       </form>
     </Form>

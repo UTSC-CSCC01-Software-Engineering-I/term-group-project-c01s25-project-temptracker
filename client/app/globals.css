@@ -10,6 +10,7 @@
   --color-main-blue: #e8eef4;
   --color-nav-blue: #53a5cb;
   --color-dark-blue: #09173b;
+  --color-card-blue: #3d4552;
 }
 
 /* dont use any of these for now */
@@ -18,6 +19,7 @@
   --color-foreground: hsl(var(--foreground));
 
   --color-card: hsl(var(--card));
+  --color-card-light: hsl(var(--card-light));
   --color-card-foreground: hsl(var(--card-foreground));
 
   --color-popover: hsl(var(--popover));
@@ -123,11 +125,12 @@
 }
 
 /* fix styling variables later */
-/* body {
+body {
   margin: 0;
   padding: 0;
-  background-color: var(--main-blue);
-} */
+  background-color: var(--main-blue) !important;
+}
+
 /* Map Container sizing*/
 .leaflet-container {
   width: 100%;
@@ -142,7 +145,7 @@
   height: 3rem;
   width: 3rem;
   background-color: white;
-  transform: translate(-25%,-25%);
+  transform: translate(-25%, -25%);
   display: flex;
   justify-content: center;
   align-items: center;

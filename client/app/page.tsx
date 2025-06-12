@@ -42,7 +42,7 @@ export default function Home() {
     <>
       <main className="main-container w-full">
         <div className='w-full flex flex-col items-center justify-center mt-4 mb-1'>
-            <div className=' h-12 flex items-center justify-space-between px-12 gap-3'>
+            <div className=' h-12 flex items-center justify-space-between px-12 gap-3 text-card-blue'>
               <div className='flex items-center gap-1'>
                   <label className='text-lg'>Latitude</label>
                   <input id='latitude' name='latitude' type='number' step="0.000001" className='border focus:outline-none border-gray-300 bg-white rounded-sm max-w-md w-full text-black' onChange={handleLatitude} />
