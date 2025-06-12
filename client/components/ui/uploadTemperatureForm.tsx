@@ -35,7 +35,7 @@ const formSchema = z
   .object({
     temperature: z.number("Temperature must be a number"),
     temperatureUnit: z.enum(["C", "F"]),
-    date: z.date(""),
+    date: z.date("Date is required"),
     longitude: z
       .number("Longitude must be a number")
       .min(-180, "Longitude must be between -180 and 180")
@@ -64,11 +64,8 @@ export default function UploadTemperatureForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      temperature: 0,
       temperatureUnit: "C",
       date: new Date(), // Default to today
-      longitude: 0,
-      latitude: 0,
       notes: "",
     },
   });
@@ -251,7 +248,7 @@ export default function UploadTemperatureForm() {
           />
         </div>
 
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full cursor-pointer">
           Submit Temperature Reading
         </Button>
       </form>
