@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import "./globals.css";
 import { Toaster } from "sonner";
 
+
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
