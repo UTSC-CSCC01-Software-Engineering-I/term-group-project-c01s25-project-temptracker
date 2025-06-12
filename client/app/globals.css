@@ -6,6 +6,13 @@
   }
 }
 
+@theme {
+  --color-main-blue: #e8eef4;
+  --color-nav-blue: #53a5cb;
+  --color-dark-blue: #09173b;
+}
+
+/* dont use any of these for now */
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -72,7 +79,12 @@
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
   --radius: 0.5rem;
+  /* new stuff */
+  --main-blue: #e8eef4;
+  --nav-blue: #53a5cb;
+  --dark-blue: #09173b;
 }
+
 .dark {
   --background: 220 18% 34%;
   --foreground: 0 0% 98%;
@@ -104,7 +116,15 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* fix styling variables later */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--main-blue);
 }
