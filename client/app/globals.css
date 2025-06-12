@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@layer base {
+  h1 {
+    @apply text-3xl font-bold;
+  }
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
