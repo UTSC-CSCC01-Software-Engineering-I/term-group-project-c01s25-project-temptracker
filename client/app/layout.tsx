@@ -35,8 +35,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Header />
-          <main className="p-4">{children}</main>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1 p-4 flex items-center justify-center">
+              {children}
+            </main>
+          </div>
         </ThemeProvider>
       </body>
     </html>

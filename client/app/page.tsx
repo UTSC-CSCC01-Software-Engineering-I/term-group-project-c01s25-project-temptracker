@@ -9,7 +9,7 @@ const sampleLocations = [
 export default function Home() {
   return (
     <>
-      <main className="main-container">
+      <main className="main-container w-full">
         <div className="map-placeholder">
           <p>
             Map will go here (maybe we make it full screen by default, then
