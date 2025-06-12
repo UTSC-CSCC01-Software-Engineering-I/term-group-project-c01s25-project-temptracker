@@ -11,7 +11,7 @@ import "leaflet/dist/leaflet.css";
 import 'react-leaflet-markercluster/styles';
 // import 'react-leaflet-markercluster/dist/styles.min.css'; // inside .js file
 
-const Map = () => {
+const Map = (props: any) => {
     const [userLocation, setUserLocation] = useState(() => {
 
         // const pos = getUserLocation();
@@ -19,7 +19,9 @@ const Map = () => {
         const userLocationData = localStorage.getItem('USER_LOCATION');
         return userLocationData ? JSON.parse(userLocationData) : {latitude: null, longitude: null};
     });
-
+    
+    
+    
     useEffect(() => {
         localStorage.setItem('USER_LOCATION', JSON.stringify(userLocation));
     },[userLocation])
@@ -63,9 +65,35 @@ const Map = () => {
             iconSize: point(33, 33, true),
         });
     }
-    if (userLocation.latitude && userLocation.longitude) {
+    if (props.centerLatitude != null && props.centerLongitude != null) {
+        console.log('Displaying search results', props.centerLatitude, props.centerLongitude);
         return (
-            <MapContainer center={[userLocation.latitude, userLocation.longitude]} zoom={13}>
+            <MapContainer key={`${props.centerLatitude},${props.centerLongitude}`} center={[props.centerLatitude, props.centerLongitude]} zoom={13}>
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                    maxZoom={19}
+                />
+                <MarkerClusterGroup
+                    chunkedLoading={true}
+                    iconCreateFunction={createClusterCustomIcon}
+                >
+                    {markers.map((marker, index) => {
+                        return (
+                            <Marker position={marker.geocode} icon={customIcon} key={index}>
+                                <Popup>{marker.popUp}</Popup>
+                            </Marker>
+                        )
+                    })}
+                </MarkerClusterGroup>
+            </MapContainer>
+        );
+
+    }
+    else if (userLocation.latitude && userLocation.longitude) {
+        console.log('Displaying user location')
+        return (
+            <MapContainer key={`${userLocation.latitude},${userLocation.longitude}`} center={[userLocation.latitude, userLocation.longitude]} zoom={13}>
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
