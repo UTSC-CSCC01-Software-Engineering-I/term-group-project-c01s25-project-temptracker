@@ -1,4 +1,7 @@
+"use client";
+
 import "@/styles/Home.css";
+import Map from '../components/Map'; // Assuming you have a Map component
 
 const sampleLocations = [
   { id: 1, name: "Location A", temperature: "22°C" },
@@ -11,10 +14,7 @@ export default function Home() {
     <>
       <main className="main-container">
         <div className="map-placeholder">
-          <p>
-            Map will go here (maybe we make it full screen by default, then
-            collapse it)
-          </p>
+          <Map />
         </div>
 
         <section className="locations-section">
