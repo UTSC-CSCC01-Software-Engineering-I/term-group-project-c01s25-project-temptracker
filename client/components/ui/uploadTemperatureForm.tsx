@@ -30,6 +30,7 @@ import {
 import { Input } from "@/components/shadcn/input";
 import { Textarea } from "@/components/shadcn/textarea";
 import { Calendar } from "@/components/shadcn/calendar";
+import { toast } from "sonner";
 
 const formSchema = z
   .object({
@@ -64,14 +65,20 @@ export default function UploadTemperatureForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      temperature: "",
       temperatureUnit: "C",
+      longitude: "",
+      latitude: "",
       date: new Date(), // Default to today
       notes: "",
     },
   });
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
+    toast.success("Temperature reading submitted successfully!");
     console.log(data);
+
+    //reset the form after submission
   };
 
   return (
