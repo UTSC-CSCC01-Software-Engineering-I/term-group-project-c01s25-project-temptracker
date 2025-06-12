@@ -31,6 +31,7 @@ import { Input } from "@/components/shadcn/input";
 import { Textarea } from "@/components/shadcn/textarea";
 import { Calendar } from "@/components/shadcn/calendar";
 import { toast } from "sonner";
+import { submitTemperature } from "@/lib/supabase/services/submit-temperatures";
 
 const formSchema = z
   .object({
@@ -74,9 +75,26 @@ export default function UploadTemperatureForm() {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    toast.success("Temperature reading submitted successfully!");
-    console.log(data);
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    try {
+      await submitTemperature({
+        temperature: data.temperature,
+        temperatureUnit: data.temperatureUnit,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        date: data.date,
+        notes: data.notes,
+      });
+
+      toast.success("Temperature reading submitted successfully!");
+      form.reset(); // Reset form after successful submission
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit temperature reading"
+      );
+    }
 
     //reset the form after submission
   };
@@ -199,7 +217,7 @@ export default function UploadTemperatureForm() {
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Date of birth</FormLabel>
+                <FormLabel>Date of Reading</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -224,7 +242,7 @@ export default function UploadTemperatureForm() {
                   </PopoverContent>
                 </Popover>
                 <FormDescription>
-                  Optional: Select the date of the temperature reading
+                  Optional: Defaults to today's date if not specified
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -255,8 +273,19 @@ export default function UploadTemperatureForm() {
           />
         </div>
 
-        <Button type="submit" className="w-full cursor-pointer">
-          Submit Temperature Reading
+        <Button
+          type="submit"
+          className="w-full cursor-pointer"
+          disabled={form.formState.isSubmitting}
+        >
+          {form.formState.isSubmitting ? (
+            <>
+              Submitting...
+              {/* Add a loading spinner if you have one */}
+            </>
+          ) : (
+            "Submit Temperature Reading"
+          )}{" "}
         </Button>
       </form>
     </Form>
