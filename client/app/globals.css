@@ -128,7 +128,7 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--main-blue);
+  background-color: var(--main-blue) !important;
 }
 
 /* Map Container sizing*/
