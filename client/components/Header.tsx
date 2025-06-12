@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -104,20 +104,13 @@ export default function Header() {
           className="p-2 mr-1 rounded-full bg-gray-200 hover:bg-gray-300 transition ml-auto md:ml-0"
           aria-label="Profile or login"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 text-gray-700"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5.121 17.804A9.001 9.001 0 1112 21a9.001 9.001 0 01-6.879-3.196z"
-            />
-          </svg>
+          <Image
+            src="/profile.png"
+            alt="Profile"
+            width={20}
+            height={20}
+            className="h-6 w-6"
+          />
         </Link>
       </div>
 

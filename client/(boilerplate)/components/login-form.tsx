@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/shadcn/button";
 import {
   Card,
   CardContent,
@@ -10,8 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/shadcn/input";
+import { Label } from "@/components/shadcn/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
