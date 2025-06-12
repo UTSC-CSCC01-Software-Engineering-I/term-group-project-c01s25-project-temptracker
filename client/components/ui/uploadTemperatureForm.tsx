@@ -31,6 +31,7 @@ import { Input } from "@/components/shadcn/input";
 import { Textarea } from "@/components/shadcn/textarea";
 import { Calendar } from "@/components/shadcn/calendar";
 import { toast } from "sonner";
+import { submitTemperature } from "@/lib/supabase/services/submit-temperatures";
 
 const formSchema = z
   .object({
@@ -74,18 +75,27 @@ export default function UploadTemperatureForm() {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    toast.success("Temperature reading submitted successfully!");
-    console.log(data);
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    try {
+      await submitTemperature(data);
+      toast.success("Temperature reading submitted successfully!");
+      form.reset();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit temperature reading"
+      );
+    }
   };
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="m-2 space-y-6 w-full mx-auto p-6 rounded-lg bg-card-blue shadow-md"
+        className="m-2 space-y-6 w-full mx-auto p-6 rounded-lg bg-card shadow-md"
       >
-        {/* Temperature Group */}
+        {/* Temperature */}
         <div className="space-y-0.5">
           <FormLabel className="text-base font-semibold">
             Temperature Reading
@@ -138,7 +148,7 @@ export default function UploadTemperatureForm() {
           </div>
         </div>
 
-        {/* Location Group */}
+        {/* Location */}
         <div className="space-y-0.5">
           <FormLabel className="text-base font-semibold">Location</FormLabel>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
@@ -185,9 +195,11 @@ export default function UploadTemperatureForm() {
           </div>
         </div>
 
-        {/* Date Group */}
+        {/* Date */}
         <div className="space-y-0.5">
-          <FormLabel className="text-base font-semibold">Date Taken</FormLabel>
+          <FormLabel className="text-base font-semibold">
+            Date of Reading
+          </FormLabel>
           <FormField
             control={form.control}
             name="date"
@@ -218,9 +230,10 @@ export default function UploadTemperatureForm() {
               </FormItem>
             )}
           />
+          <FormDescription>Defaults to today if not specified</FormDescription>
         </div>
 
-        {/* Notes Group */}
+        {/* Notes */}
         <div className="space-y-0.5">
           <FormLabel className="text-base font-semibold">Notes</FormLabel>
           <FormField
@@ -246,8 +259,14 @@ export default function UploadTemperatureForm() {
         </div>
 
         {/* Submit */}
-        <Button type="submit" className="w-full cursor-pointer py-6">
-          Submit Temperature Reading
+        <Button
+          type="submit"
+          className="w-full cursor-pointer py-6"
+          disabled={form.formState.isSubmitting}
+        >
+          {form.formState.isSubmitting
+            ? "Submitting..."
+            : "Submit Temperature Reading"}
         </Button>
       </form>
     </Form>
