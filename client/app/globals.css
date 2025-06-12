@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@layer base {
+  h1 {
+    @apply text-3xl font-bold;
+  }
+}
+
 @theme {
   --color-main-blue: #e8eef4;
   --color-nav-blue: #53a5cb;
@@ -80,9 +86,9 @@
 }
 
 .dark {
-  --background: 0 0% 3.9%;
+  --background: 220 18% 34%;
   --foreground: 0 0% 98%;
-  --card: 0 0% 3.9%;
+  --card: 220 15% 28%;
   --card-foreground: 0 0% 98%;
   --popover: 0 0% 3.9%;
   --popover-foreground: 0 0% 98%;
@@ -94,10 +100,10 @@
   --muted-foreground: 0 0% 63.9%;
   --accent: 0 0% 14.9%;
   --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
+  --destructive: 0 94% 52%;
   --destructive-foreground: 0 0% 98%;
   --border: 0 0% 14.9%;
-  --input: 0 0% 14.9%;
+  --input: 219 14% 39%;
   --ring: 0 0% 83.1%;
   --chart-1: 220 70% 50%;
   --chart-2: 160 60% 45%;
@@ -117,11 +123,11 @@
 }
 
 /* fix styling variables later */
-body {
+/* body {
   margin: 0;
   padding: 0;
   background-color: var(--main-blue);
-}
+} */
 /* Map Container sizing*/
 .leaflet-container {
   width: 100%;

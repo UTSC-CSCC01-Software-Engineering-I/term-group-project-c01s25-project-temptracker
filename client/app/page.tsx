@@ -40,7 +40,7 @@ export default function Home() {
 
   return (
     <>
-      <main className="main-container">
+      <main className="main-container w-full">
         <div className='w-full flex flex-col items-center justify-center mt-4 mb-1'>
             <div className=' h-12 flex items-center justify-space-between px-12 gap-3'>
               <div className='flex items-center gap-1'>
