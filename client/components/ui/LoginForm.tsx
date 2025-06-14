@@ -17,6 +17,8 @@ import Link from "next/link";
 import { createClient } from "../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useState } from "react";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 const formSchema = z.object({
   email: z
@@ -30,6 +32,8 @@ const formSchema = z.object({
 const supabase = createClient();
 
 export default function LoginForm() {
+  const [showPassword, setShowPassword] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -81,11 +85,27 @@ export default function LoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="&#183; &#183; &#183; &#183; &#183; &#183; &#183; &#183;"
-                  type="password"
-                  {...field}
-                />
+                <div className="relative">
+                  <FormControl>
+                    <Input
+                      placeholder="&#183; &#183; &#183; &#183; &#183; &#183; &#183; &#183;"
+                      type={showPassword ? "text" : "password"}
+                      {...field}
+                    />
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="absolute right-0 top-0 h-full cursor-pointer dark:hover:bg-transparent hover:bg-transparent"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? (
+                      <EyeIcon className="h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <EyeOffIcon className="h-4 w-4" aria-hidden="true" />
+                    )}
+                  </Button>
+                </div>
               </FormControl>
               <FormMessage />
               <Button variant="link" size="link" className="ml-auto">

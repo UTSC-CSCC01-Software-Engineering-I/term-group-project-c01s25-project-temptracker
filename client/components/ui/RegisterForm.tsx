@@ -18,6 +18,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useState } from "react";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 const formSchema = z
   .object({
@@ -40,6 +42,8 @@ const formSchema = z
 const supabase = createClient();
 
 export default function RegisterForm() {
+  const [showPassword, setShowPassword] = useState(false);
+
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -51,7 +55,6 @@ export default function RegisterForm() {
     },
   });
 
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     const { email, password } = values;
@@ -59,10 +62,14 @@ export default function RegisterForm() {
     const { error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
-      toast.error("There was an error creating your account. Please try again.");
+      toast.error(
+        "There was an error creating your account. Please try again."
+      );
       form.setError("root", { message: error.message });
     } else {
-      toast.success("Account created successfully! Please check your email to verify your account.");
+      toast.success(
+        "Account created successfully! Please check your email to verify your account."
+      );
       router.refresh();
       router.push("/login");
     }
@@ -94,18 +101,33 @@ export default function RegisterForm() {
               <FormLabel>
                 Password<span className="text-red-700">*</span>
               </FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Create a password"
-                  type="password"
-                  {...field}
-                />
-              </FormControl>
+              <div className="relative">
+                <FormControl>
+                  <Input
+                    placeholder="Create a password"
+                    type={showPassword ? "text" : "password"}
+                    {...field}
+                  />
+                </FormControl>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="absolute right-0 top-0 h-full cursor-pointer dark:hover:bg-transparent hover:bg-transparent"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? (
+                    <EyeIcon className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <EyeOffIcon className="h-4 w-4" aria-hidden="true" />
+                  )}
+                </Button>
+              </div>
               <FormDescription>Must be as least 8 characters.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="confirm"
@@ -117,7 +139,7 @@ export default function RegisterForm() {
               <FormControl>
                 <Input
                   placeholder="Create a password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   {...field}
                 />
               </FormControl>
