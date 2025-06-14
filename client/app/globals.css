@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
 @layer base {
+  
   h1 {
-    @apply text-3xl font-bold;
+    @apply scroll-m-20 text-4xl md:text-5xl font-bold tracking-tight; 
+  }
+
+  h2 {
+    @apply scroll-m-20 text-3xl sm:text-4xl font-semibold text-center;
+  }
+
+  form {
+    @apply m-2 space-y-6 w-full mx-auto p-6 rounded-lg bg-card shadow-md max-w-[500px];
   }
 }
 
@@ -56,17 +65,17 @@
 }
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
-  --card: 0 0% 100%;
+  --background: 210 33% 93%; /* colour for backgroud */
+  --foreground: 223 74% 13%; /* colour for text */
+  --card: 0 0% 100%; /* colour for form backgrounds */
   --card-foreground: 0 0% 3.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 3.9%;
-  --primary: 0 0% 9%;
+  --primary: 0 0% 9%; /* colour for buttons and other interactive elements */
   --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 96.1%;
+  --secondary: 207 100% 32%; /* accent colour */
   --secondary-foreground: 0 0% 9%;
-  --muted: 0 0% 96.1%;
+  --muted: 220 15% 28%;
   --muted-foreground: 0 0% 45.1%;
   --accent: 0 0% 96.1%;
   --accent-foreground: 0 0% 9%;
@@ -82,13 +91,14 @@
   --chart-5: 27 87% 67%;
   --radius: 0.5rem;
   /* new stuff */
-  --main-blue: #e8eef4;
+  --main-blue: #e7edf3;
   --nav-blue: #53a5cb;
+  --test: hsl(217, 100%, 60%);
   --dark-blue: #09173b;
 }
 
 .dark {
-  --background: 220 18% 34%;
+  --background: 218 18% 34%;
   --foreground: 0 0% 98%;
   --card: 220 15% 28%;
   --card-foreground: 0 0% 98%;
@@ -96,9 +106,9 @@
   --popover-foreground: 0 0% 98%;
   --primary: 0 0% 98%;
   --primary-foreground: 0 0% 9%;
-  --secondary: 0 0% 14.9%;
+  --secondary: 199 54% 56%;
   --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 14.9%;
+  --muted: 0 0% 60%;
   --muted-foreground: 0 0% 63.9%;
   --accent: 0 0% 14.9%;
   --accent-foreground: 0 0% 98%;
@@ -112,6 +122,8 @@
   --chart-3: 30 80% 55%;
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
+  /* new stuff */
+  --nav-blue: #53a5cb;
 }
 
 @layer base {
@@ -125,11 +137,6 @@
 }
 
 /* fix styling variables later */
-body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--main-blue) !important;
-}
 
 /* Map Container sizing*/
 .leaflet-container {

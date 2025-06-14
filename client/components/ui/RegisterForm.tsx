@@ -158,7 +158,7 @@ export default function RegisterForm() {
         <div className="flex items-center justify-center">
           <p>Already have an account?</p>
           <Button variant="link" size="link" className="ml-2">
-            <Link href="login" className="text-base">
+            <Link href="login" className="text-base text-secondary">
               Login
             </Link>
           </Button>

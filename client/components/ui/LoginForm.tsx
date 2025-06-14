@@ -109,7 +109,7 @@ export default function LoginForm() {
               </FormControl>
               <FormMessage />
               <Button variant="link" size="link" className="ml-auto">
-                <Link href="/forgot-password">Forgot your password?</Link>
+                <Link href="/forgot-password" className="text-secondary">Forgot your password?</Link>
               </Button>
             </FormItem>
           )}
@@ -124,7 +124,7 @@ export default function LoginForm() {
         </div>
         <div className="flex items-center justify-center">
           <p>Don&apos;t have an account yet?</p>
-          <Button variant="link" size="link" className="ml-2 text-base">
+          <Button variant="link" size="link" className="ml-2 text-base text-secondary">
             <Link href="register">Register</Link>
           </Button>
         </div>
