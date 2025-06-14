@@ -66,10 +66,10 @@ export default function UploadTemperatureForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      temperature: "",
+      temperature: -1,
       temperatureUnit: "C",
-      longitude: "",
-      latitude: "",
+      longitude: -181,
+      latitude: -91,
       date: new Date(),
       notes: "",
     },
@@ -261,7 +261,7 @@ export default function UploadTemperatureForm() {
         {/* Submit */}
         <Button
           type="submit"
-          className="w-full cursor-pointer py-6"
+          size="submit"
           disabled={form.formState.isSubmitting}
         >
           {form.formState.isSubmitting
