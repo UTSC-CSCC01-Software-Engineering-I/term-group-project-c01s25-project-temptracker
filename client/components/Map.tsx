@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '../lib/supabase/client';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { Marker, Popup } from 'react-leaflet'
 import L, { Icon, divIcon, point } from 'leaflet';
 import MarkerClusterGroup from 'react-leaflet-markercluster';
@@ -29,6 +29,16 @@ const Map = (props: any) => {
         const localData = localStorage.getItem('TEMP_DATA');
         return localData ? JSON.parse(localData) : [];
     });
+    const [rawTempData, setRawTempData] = useState(() => {
+        const localRawData = localStorage.getItem('RAW_TEMP_DATA');
+        return localRawData ? JSON.parse(localRawData) : [];
+    });
+
+    const [clickedPoint, setClickedPoint] = useState({
+        latitude: null as number | null,
+        longitude: null as number | null,
+        nearestPoint: null as { latitude: number; longitude: number; temperature: number; distance: number; intensity: number } | null
+    });
     
     useEffect(() => {
         localStorage.setItem('USER_LOCATION', JSON.stringify(userLocation));
@@ -37,6 +47,9 @@ const Map = (props: any) => {
     useEffect(() => {
         localStorage.setItem('TEMP_DATA', JSON.stringify(tempData));
     },[tempData])
+    useEffect(() => {
+        localStorage.setItem('RAW_TEMP_DATA', JSON.stringify(rawTempData));
+    },[rawTempData])
 
     useEffect(() => {
         const fetchUserLocation = async () => {
@@ -109,8 +122,14 @@ const Map = (props: any) => {
         const heatData = data.map(point => [
             point.latitude,
             point.longitude,
-            tempConverter(point.temperature) // normalize temperature to 0-1 range
+            tempConverter(point.temperature) 
         ]);
+        const rawData = data.map(point => [
+            point.latitude,
+            point.longitude,
+            point.temperature
+        ]);
+        setRawTempData(rawData);
         // const arr = []
         // for (let i = 0; i < heatData.length; i++) {
         //     if (heatData[i][2] >= 0.9) {
@@ -178,6 +197,56 @@ const Map = (props: any) => {
         return null;
     };
 
+    const findNearestTemperaturePoint = (clickLat: number, clickLng: number, maxDistance: number = 0.5) => {
+        let nearest = null;
+        let minDistance = Infinity;
+
+        rawTempData.forEach((point: any) => {
+            const distance = Math.sqrt(
+                Math.pow(point[0] - clickLat, 2) + 
+                Math.pow(point[1] - clickLng, 2)
+            );
+            console.log(`Distance to point (${point[0]}, ${point[1]}):`, distance);
+            if (distance < minDistance && distance <= maxDistance) {
+                minDistance = distance;
+                nearest = {
+                    temperature: point[2],
+                    latitude: point[0],
+                    longitude: point[1],
+                    distance: distance,
+                };
+            }
+        });
+        console.log('Nearest point:', nearest);
+        return nearest;
+    };
+
+    const MapClickHandler = () => {
+        useMapEvents({
+            click: (e) => {
+                const { lat, lng } = e.latlng;
+                console.log('Map clicked at:', lat, lng);
+                
+                const nearestPoint = findNearestTemperaturePoint(lat, lng);
+                
+                if (nearestPoint) {
+                    setClickedPoint({
+                        latitude: lat,
+                        longitude: lng,
+                        nearestPoint: nearestPoint
+                    });
+                } else {
+                    setClickedPoint({
+                        latitude: null,
+                        longitude: null,
+                        nearestPoint: null
+                    });
+                }
+            }
+        });
+        return null;
+    };
+
     
 
 
@@ -190,6 +259,7 @@ const Map = (props: any) => {
                     url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
                     maxZoom={19}
                 />
+                <MapClickHandler />
                 <HeatmapLayer data={tempData} />
                 {/* <MarkerClusterGroup
                     chunkedLoading={true}
@@ -203,6 +273,16 @@ const Map = (props: any) => {
                         )
                     })}
                 </MarkerClusterGroup> */}
+                {clickedPoint.latitude && clickedPoint.longitude && (
+                <Marker position={[clickedPoint.latitude, clickedPoint.longitude]} icon={customIcon}>
+                    <Popup>
+                        <div>
+                            <strong>Temperature Data</strong><br/>
+                            <strong>Temperature:</strong> {clickedPoint.nearestPoint?.temperature}°C<br/>
+                        </div>
+                    </Popup>
+                </Marker>
+            )}
                 <div style={{
                 position: 'absolute',
                 top: '10px',
@@ -225,6 +305,7 @@ const Map = (props: any) => {
                     url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
                     maxZoom={19}
                 />
+                <MapClickHandler />
                 <HeatmapLayer data={tempData} />
                 {/* <MarkerClusterGroup
                     chunkedLoading={true}
@@ -238,6 +319,17 @@ const Map = (props: any) => {
                         )
                     })}
                 </MarkerClusterGroup> */}
+                {clickedPoint.latitude && clickedPoint.longitude && (
+                <Marker position={[clickedPoint.latitude, clickedPoint.longitude]} icon={customIcon}>
+                    <Popup>
+                        <div>
+                            <strong>Temperature Data</strong><br/>
+                            <strong>Temperature:</strong> {clickedPoint.nearestPoint?.temperature}°C<br/>
+                            {/* <strong>Measured on:</strong> {new Date(clickedPoint.nearestPoint?.measured_on).toLocaleDateString()}<br/> */}
+                        </div>
+                    </Popup>
+                </Marker>
+            )}
                 <div style={{
                 position: 'absolute',
                 top: '10px',
