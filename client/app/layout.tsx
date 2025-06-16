@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import Header from "@/components/Header";
 import "./globals.css";
+import { Toaster } from "sonner";
+
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -34,7 +37,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1 p-4 flex items-center justify-center">
+              {children}
+            </main>
+          </div>
+          <Toaster position="top-center" richColors/>
         </ThemeProvider>
       </body>
     </html>
