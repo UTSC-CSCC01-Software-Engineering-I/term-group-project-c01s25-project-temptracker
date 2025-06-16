@@ -22,13 +22,11 @@ export default function Home() {
   const handleLatitude = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
         setSearchLatitude(val)
-        console.log(val)
     }
 
   const handleLongitude = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
       setSearchLongitude(val)
-      console.log(val)
   }
 
   const searchCoords = () => {
@@ -37,18 +35,17 @@ export default function Home() {
     console.log(`Searching for coordinates: ${searchLatitude}, ${searchLongitude}`);
   }
 
-
   return (
     <>
       <main className="main-container w-full">
         <div className='w-full flex flex-col items-center justify-center mt-4 mb-1'>
             <div className=' h-12 flex items-center justify-space-between px-12 gap-3 text-card-blue'>
               <div className='flex items-center gap-1'>
-                  <label className='text-lg'>Latitude</label>
+                  <label className='text-lg text-foreground'>Latitude</label>
                   <input id='latitude' name='latitude' type='number' step="0.000001" className='border focus:outline-none border-gray-300 bg-white rounded-sm max-w-md w-full text-black' onChange={handleLatitude} />
               </div>
               <div className='flex items-center gap-1'>
-                <label className='text-lg'>Longitude</label>
+                <label className='text-lg text-foreground'>Longitude</label>
                 <input id='longitude' name='longitude' type='number' step="0.000001" className='border focus:outline-none border-gray-300 bg-white rounded-sm max-w-md w-full text-black' onChange={handleLongitude} />
               </div>
 

@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @layer base {
+  h1, h2, h3, h4, h5, h6, p {
+    @apply text-foreground;
+  }
   
   h1 {
     @apply scroll-m-20 text-4xl md:text-5xl font-bold tracking-tight; 
