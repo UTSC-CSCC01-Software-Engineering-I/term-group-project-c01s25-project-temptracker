@@ -6,7 +6,7 @@ interface LegendProps {
   unit?: string;
 }
 
-const MapLegend: React.FC<LegendProps> = ({ minTemp, maxTemp, unit = "°C" }) => {
+const MapLegend = () => {
   const legendItems = [
     { color: '#A40203', label: `>23.3°C / >74°F`, tempRange: '>23.3' },
     { color: '#E4080A', label: `19.5-23.3°C / 67-74°F`, tempRange: '19.5-23.3' },

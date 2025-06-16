@@ -45,7 +45,6 @@
   line-height: 1.2;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .legend {
     font-size: 10px;

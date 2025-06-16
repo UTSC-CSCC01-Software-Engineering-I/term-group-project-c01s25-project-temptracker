@@ -9,18 +9,12 @@ import MarkerClusterGroup from 'react-leaflet-markercluster';
 import { getUserLocation} from './GeoLocation';
 import MapLegend from './ui/MapLegend';
 import 'leaflet.heat'
-// import MarkerClusterGroup from 'react-leaflet-cluster';
 import "leaflet/dist/leaflet.css";
 import 'react-leaflet-markercluster/styles';
-import { he } from 'date-fns/locale';
-// import 'react-leaflet-markercluster/dist/styles.min.css'; // inside .js file
 const supabase = createClient();
 
 const Map = (props: any) => {
     const [userLocation, setUserLocation] = useState(() => {
-
-        // const pos = getUserLocation();
-        // console.log('User location:', pos);
         const userLocationData = localStorage.getItem('USER_LOCATION');
         return userLocationData ? JSON.parse(userLocationData) : {latitude: null, longitude: null};
     });
@@ -59,7 +53,6 @@ const Map = (props: any) => {
         };
         fetchUserLocation();
     }, []);
-    //Markers only contain one temperature, users can press a button to toggle, and then map refresh with updated markers
     const markers = [
         {
             geocode: [43.760120, -78.683160] as [number, number],
@@ -78,9 +71,9 @@ const Map = (props: any) => {
 
     const customIcon = new Icon({
         iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png", 
-        iconSize: [38, 38], // size of the icon
-        iconAnchor: [12, 31], // point of the icon which will correspond to marker's location
-        popupAnchor: [0, -41] // point from which the popup should open relative to the iconAnchor
+        iconSize: [38, 38], 
+        iconAnchor: [12, 31], 
+        popupAnchor: [0, -41] 
     });
 
     const createClusterCustomIcon = (cluster: any) => {
@@ -290,7 +283,7 @@ const Map = (props: any) => {
                 zIndex: 1000,
                 pointerEvents: 'auto'
             }}>
-                <MapLegend minTemp={0} maxTemp={30} />
+                <MapLegend />
             </div>
             </MapContainer>
         );
@@ -325,7 +318,6 @@ const Map = (props: any) => {
                         <div>
                             <strong>Temperature Data</strong><br/>
                             <strong>Temperature:</strong> {clickedPoint.nearestPoint?.temperature}°C<br/>
-                            {/* <strong>Measured on:</strong> {new Date(clickedPoint.nearestPoint?.measured_on).toLocaleDateString()}<br/> */}
                         </div>
                     </Popup>
                 </Marker>
@@ -337,7 +329,7 @@ const Map = (props: any) => {
                 zIndex: 1000,
                 pointerEvents: 'auto'
             }}>
-                <MapLegend minTemp={0} maxTemp={30} />
+                <MapLegend />
             </div>
             </MapContainer>
         );
