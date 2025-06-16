@@ -12,7 +12,12 @@ import "leaflet/dist/leaflet.css";
 import "react-leaflet-markercluster/styles";
 const supabase = createClient();
 
-const Map = (props: any) => {
+type MapProps = {
+  centerLatitude: number | null;
+  centerLongitude: number | null;
+};
+
+const Map = (props: MapProps) => {
   const [userLocation, setUserLocation] = useState(() => {
     const userLocationData = localStorage.getItem("USER_LOCATION");
     return userLocationData
@@ -176,7 +181,7 @@ const Map = (props: any) => {
     let nearest = null;
     let minDistance = Infinity;
 
-    rawTempData.forEach((point: any) => {
+    rawTempData.forEach((point: [number, number, number]) => {
       const distance = Math.sqrt(
         Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
       );
