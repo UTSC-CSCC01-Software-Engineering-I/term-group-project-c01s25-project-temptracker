@@ -1,10 +1,5 @@
 import React from 'react';
 import '../../styles/MapLegend.css'; // Assuming you have a CSS file for styling the legend
-interface LegendProps {
-  minTemp: number;
-  maxTemp: number;
-  unit?: string;
-}
 
 const MapLegend = () => {
   const legendItems = [
