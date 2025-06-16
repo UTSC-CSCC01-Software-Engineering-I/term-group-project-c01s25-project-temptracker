@@ -42,14 +42,14 @@ export default function Home() {
     <>
       <main className="main-container w-full">
         <div className='w-full flex flex-col items-center justify-center mt-4 mb-1'>
-            <div className=' h-12 flex items-center justify-space-between px-12 gap-3 text-card-blue'>
+            <div className='mb-3 h-auto flex md:flex-row flex-col items-center justify-space-between px-12 gap-3 text-card-blue'>
               <div className='flex items-center gap-1'>
-                  <label className='text-lg'>Latitude</label>
-                  <input id='latitude' name='latitude' type='number' step="0.000001" className='border focus:outline-none border-gray-300 bg-white rounded-sm max-w-md w-full text-black' onChange={handleLatitude} />
+                  <label className='text-lg ml-3'>Latitude</label>
+                  <input id='latitude' name='latitude' type='number' step="0.000001" className='border focus:outline-none border-gray-300 bg-white rounded-sm max-w-md w-72 text-black' onChange={handleLatitude} />
               </div>
               <div className='flex items-center gap-1'>
                 <label className='text-lg'>Longitude</label>
-                <input id='longitude' name='longitude' type='number' step="0.000001" className='border focus:outline-none border-gray-300 bg-white rounded-sm max-w-md w-full text-black' onChange={handleLongitude} />
+                <input id='longitude' name='longitude' type='number' step="0.000001" className='border focus:outline-none w-72 border-gray-300 bg-white rounded-sm max-w-md text-black' onChange={handleLongitude} />
               </div>
 
               <button className='bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors cursor-pointer' onClick={searchCoords}>Search</button>
