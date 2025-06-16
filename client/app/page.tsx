@@ -1,11 +1,13 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import "@/styles/Home.css";
 import dynamic from "next/dynamic";
 const LazyMap = dynamic(() => import("@/components/Map"), {
   ssr: false,
   loading: () => <p>Loading...</p>,
 });
+import { Input } from "@/components/shadcn/input";
+import { Label } from "@/components/shadcn/label";
 
 const sampleLocations = [
   { id: 1, name: "Location A", temperature: "22°C" },
@@ -21,54 +23,74 @@ export default function Home() {
 
   const handleLatitude = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
-        setSearchLatitude(val)
-    }
+    setSearchLatitude(val);
+  };
 
   const handleLongitude = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
-      setSearchLongitude(val)
-  }
+    setSearchLongitude(val);
+  };
 
   const searchCoords = () => {
     setCenterLatitude(searchLatitude);
     setCenterLongitude(searchLongitude);
-    console.log(`Searching for coordinates: ${searchLatitude}, ${searchLongitude}`);
-  }
+    console.log(
+      `Searching for coordinates: ${searchLatitude}, ${searchLongitude}`
+    );
+  };
 
   return (
-    <>
-      <main className="main-container w-full">
-        <div className='w-full flex flex-col items-center justify-center mt-4 mb-1'>
-            <div className=' h-12 flex items-center justify-space-between px-12 gap-3 text-card-blue'>
-              <div className='flex items-center gap-1'>
-                  <label className='text-lg text-foreground'>Latitude</label>
-                  <input id='latitude' name='latitude' type='number' step="0.000001" className='border focus:outline-none border-gray-300 bg-white rounded-sm max-w-md w-full text-black' onChange={handleLatitude} />
-              </div>
-              <div className='flex items-center gap-1'>
-                <label className='text-lg text-foreground'>Longitude</label>
-                <input id='longitude' name='longitude' type='number' step="0.000001" className='border focus:outline-none border-gray-300 bg-white rounded-sm max-w-md w-full text-black' onChange={handleLongitude} />
-              </div>
-
-              <button className='bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors cursor-pointer' onClick={searchCoords}>Search</button>
-            </div>
-            <div className="map-placeholder">
-              <LazyMap centerLatitude={centerLatitude} centerLongitude={centerLongitude}/>
-            </div>
+    <div className="main-container w-full max-w-[1800px] md:mt-4">
+      <div className="flex flex-col md:flex-row items-center justify-space-between md:px-12 gap-3">
+        <div className="flex md:items-center gap-1 flex-col md:flex-row">
+          <Label htmlFor="latitude" className="text-lg">
+            Latitude
+          </Label>
+          <Input
+            id="latitude"
+            type="number"
+            step="0.000001"
+            name="latitude"
+            onChange={handleLatitude}
+          />
         </div>
-        
+        <div className="flex md:items-center gap-1 flex-col md:flex-row">
+          <Label htmlFor="longitude" className="text-lg">
+            Longitude
+          </Label>
+          <Input
+            id="longitude"
+            type="number"
+            step="0.000001"
+            name="longitude"
+            onChange={handleLongitude}
+          />
+        </div>
 
-        <section className="locations-section">
-          <h2>Points of Interest</h2>
-          <div className="locations-list">
-            {sampleLocations.map(({ id, name, temperature }) => (
-              <div key={id} className="location-card">
-                <span>{name}</span>
-                <span>{temperature}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      </main>
-    </>
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors cursor-pointer w-full md:w-fit"
+          onClick={searchCoords}
+        >
+          Search
+        </button>
+      </div>
+      <div className="map-placeholder">
+        <LazyMap
+          centerLatitude={centerLatitude}
+          centerLongitude={centerLongitude}
+        />
+      </div>
+      <section className="locations-section">
+        <h2>Points of Interest</h2>
+        <div className="locations-list">
+          {sampleLocations.map(({ id, name, temperature }) => (
+            <div key={id} className="location-card">
+              <span>{name}</span>
+              <span>{temperature}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
