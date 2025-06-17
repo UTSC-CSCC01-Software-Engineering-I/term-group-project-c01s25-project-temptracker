@@ -33,6 +33,8 @@ const Map = (props: any) => {
         longitude: null as number | null,
         nearestPoint: null as { latitude: number; longitude: number; temperature: number; distance: number; intensity: number } | null
     });
+
+    const [tempVisible, setTempVisible] = useState(true);
     
     useEffect(() => {
         localStorage.setItem('USER_LOCATION', JSON.stringify(userLocation));
@@ -240,8 +242,6 @@ const Map = (props: any) => {
         return null;
     };
 
-    
-
 
     if (props.centerLatitude != null && props.centerLongitude != null) {
         console.log('Displaying search results', props.centerLatitude, props.centerLongitude);
@@ -253,7 +253,7 @@ const Map = (props: any) => {
                     maxZoom={19}
                 />
                 <MapClickHandler />
-                <HeatmapLayer data={tempData} />
+                {tempVisible && <HeatmapLayer data={tempData} />}
                 {/* <MarkerClusterGroup
                     chunkedLoading={true}
                     iconCreateFunction={createClusterCustomIcon}
@@ -270,7 +270,6 @@ const Map = (props: any) => {
                 <Marker position={[clickedPoint.latitude, clickedPoint.longitude]} icon={customIcon}>
                     <Popup>
                         <div>
-                            <strong>Temperature Data</strong><br/>
                             <strong>Temperature:</strong> {clickedPoint.nearestPoint?.temperature}°C<br/>
                         </div>
                     </Popup>
@@ -283,7 +282,15 @@ const Map = (props: any) => {
                 zIndex: 1000,
                 pointerEvents: 'auto'
             }}>
-                <MapLegend />
+                <div className='md:max-w-165px max-w-135px flex items-center justify-center gap-2 mb-2'>
+                    <button 
+                        className='bg-[#FFFFFFE6] hover:bg-[#FFFFFFCC] shadow text-[#333] md:text-base text-xs font-semibold px-4 py-2 rounded-md transition-colors cursor-pointer'
+                        onClick={() => setTempVisible(!tempVisible)}
+                    >
+                        Toggle Temperature
+                    </button>
+                </div>
+                {tempVisible && <MapLegend />}
             </div>
             </MapContainer>
         );
@@ -299,7 +306,7 @@ const Map = (props: any) => {
                     maxZoom={19}
                 />
                 <MapClickHandler />
-                <HeatmapLayer data={tempData} />
+                {tempVisible && <HeatmapLayer data={tempData} />}
                 {/* <MarkerClusterGroup
                     chunkedLoading={true}
                     iconCreateFunction={createClusterCustomIcon}
@@ -316,7 +323,6 @@ const Map = (props: any) => {
                 <Marker position={[clickedPoint.latitude, clickedPoint.longitude]} icon={customIcon}>
                     <Popup>
                         <div>
-                            <strong>Temperature Data</strong><br/>
                             <strong>Temperature:</strong> {clickedPoint.nearestPoint?.temperature}°C<br/>
                         </div>
                     </Popup>
@@ -329,7 +335,15 @@ const Map = (props: any) => {
                 zIndex: 1000,
                 pointerEvents: 'auto'
             }}>
-                <MapLegend />
+                <div className='md:max-w-165px max-w-135px flex items-center justify-center gap-2 mb-2'>
+                    <button 
+                        className='bg-[#FFFFFFE6] hover:bg-[#FFFFFFCC] shadow text-[#333] md:text-base text-xs font-semibold px-4 py-2 rounded-md transition-colors cursor-pointer'
+                        onClick={() => setTempVisible(!tempVisible)}
+                    >
+                        Toggle Temperature
+                    </button>
+                </div>
+                {tempVisible && <MapLegend />}
             </div>
             </MapContainer>
         );
