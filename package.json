@@ -1,5 +1,8 @@
 {
   "dependencies": {
-    "leaflet": "^1.9.4"
+    "@headlessui/react": "^2.2.4",
+    "install": "^0.13.0",
+    "leaflet": "^1.9.4",
+    "npm": "^11.4.2"
   }
 }
