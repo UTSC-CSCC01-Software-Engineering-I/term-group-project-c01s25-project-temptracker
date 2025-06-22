@@ -2,8 +2,8 @@ import UploadTemperatureForm from "@/components/ui/uploadTemperatureForm";
 
 export default function UploadPage() {
   return (
-    <div className="flex flex-col justify-center items-center flex-1 mb-6 px-4 lg:px-12 lg:py-12">
-      <div className="w-full max-w-md flex flex-col items-center gap-4">
+    <div className="flex flex-col justify-center items-center flex-1 mb-6 px-4 lg:px-12">
+      <div className="w-full max-w-md lg:max-w-none lg:w-[900px] flex flex-col items-center gap-4">
         <div className="text-center">
           <h1 className="mb-4">Upload Temperature</h1>
           <p className="text-muted mb-6 px-2">

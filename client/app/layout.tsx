@@ -39,7 +39,9 @@ export default function RootLayout({
           <div className="min-h-screen flex flex-col">
             <Header />
             <main className="flex-1 p-4 flex flex-col items-center">
-              <div className="mt-10 w-full max-w-md">{children}</div>
+              <div className="mt-10 w-full">
+                {children}
+              </div>
             </main>
           </div>
           <Toaster position="top-center" richColors />
