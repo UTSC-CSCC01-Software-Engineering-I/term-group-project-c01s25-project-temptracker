@@ -14,7 +14,7 @@
   }
 
   form {
-    @apply m-2 space-y-6 w-full mx-auto p-6 rounded-lg bg-card shadow-md max-w-[500px];
+    @apply m-2 space-y-6 mx-auto p-6 rounded-lg bg-card shadow-md w-[92.5%] max-w-xl md:max-w-3xl;
   }
 }
 

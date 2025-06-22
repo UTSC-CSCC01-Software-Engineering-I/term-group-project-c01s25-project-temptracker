@@ -5,7 +5,6 @@ import Header from "@/components/Header";
 import "./globals.css";
 import { Toaster } from "sonner";
 
-
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
@@ -33,17 +32,17 @@ export default function RootLayout({
       <body className={`${geistSans.className} antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
           <div className="min-h-screen flex flex-col">
             <Header />
-            <main className="flex-1 p-4 flex items-center justify-center">
-              {children}
+            <main className="flex-1 p-4 flex flex-col items-center">
+              <div className="mt-10 w-full max-w-md">{children}</div>
             </main>
           </div>
-          <Toaster position="top-center" richColors/>
+          <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>
     </html>
