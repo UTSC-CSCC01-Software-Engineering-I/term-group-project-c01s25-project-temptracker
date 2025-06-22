@@ -8,7 +8,7 @@ export default function UploadPage() {
           <h1 className="mb-4">Upload Temperature</h1>
           <p className="text-muted mb-6 px-2">
             Contribute to our water temperature database by submitting your
-            measurements below.
+            data below.
           </p>
         </div>
 

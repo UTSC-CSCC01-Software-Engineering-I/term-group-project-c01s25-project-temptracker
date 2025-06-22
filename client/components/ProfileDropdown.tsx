@@ -12,7 +12,24 @@ export default function ProfileDropdown({
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Detect initial theme
+    setIsDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
+  function toggleTheme() {
+    if (isDark) {
+      document.documentElement.classList.remove("dark");
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      setIsDark(true);
+    }
+    setOpen(false); // close dropdown after toggling
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -36,13 +53,13 @@ export default function ProfileDropdown({
       <button
         onClick={() => setOpen((prev) => !prev)}
         type="button"
-        className="flex items-center md:gap-x-2 gap-x-0.5 cursor-pointer justify-center p-2 rounded-full transition border-2 border-black focus:outline-none focus:ring-1 focus:ring-nav-blue focus:ring-offset-0"
+        className="flex items-center md:gap-x-2 gap-x-0.5 cursor-pointer justify-center p-1.5 rounded-full transition border-2 border-black focus:outline-none focus:ring-1 focus:ring-nav-blue focus:ring-offset-0"
       >
         <Image
           src="/profile.png"
           alt="Profile"
-          width={24}
-          height={24}
+          width={22}
+          height={22}
           className="rounded-full shadow-md"
         />
         <svg
@@ -69,13 +86,13 @@ export default function ProfileDropdown({
             : "opacity-0 scale-95 pointer-events-none"
         }`}
       >
-        <div className="py-2">
+        <div className="py-2 flex flex-col">
           {authLinks.map((link) =>
             "href" in link ? (
               <Link
                 key={link.label}
                 href={link.href}
-                className="block px-5 py-2 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
+                className="block px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
                 onClick={() => setOpen(false)}
               >
                 {link.label}
@@ -87,23 +104,33 @@ export default function ProfileDropdown({
                   link.action();
                   setOpen(false);
                 }}
-                className="w-full text-left px-5 py-2 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
+                className="w-full text-left px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
                 type="button"
               >
                 {link.label}
               </button>
             )
           )}
+
           {universalLinks.map(({ href, label }) => (
             <Link
               key={label}
               href={href}
-              className="block px-5 py-2 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
+              className="block px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
               onClick={() => setOpen(false)}
             >
               {label}
             </Link>
           ))}
+
+          {/* Theme toggle link at bottom */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-full text-left px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
+          >
+            Change Theme
+          </button>
         </div>
       </div>
     </div>
