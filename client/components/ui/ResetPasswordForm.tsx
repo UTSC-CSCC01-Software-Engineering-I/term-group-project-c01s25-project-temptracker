@@ -4,7 +4,14 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/shadcn/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input";
 import { Button } from "@/components/shadcn/button";
 import { createClient } from "@/lib/supabase/client";
@@ -35,7 +42,9 @@ export default function ResetPasswordForm() {
   });
 
   async function onSubmit(values: z.infer<typeof schema>) {
-    const { error } = await supabase.auth.updateUser({ password: values.password });
+    const { error } = await supabase.auth.updateUser({
+      password: values.password,
+    });
     if (error) toast.error(error.message);
     else {
       toast.success("Password updated! You can now log in.");
@@ -45,7 +54,10 @@ export default function ResetPasswordForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-80 space-y-4">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
         {/* New Password Field */}
         <FormField
           control={form.control}
@@ -61,7 +73,11 @@ export default function ResetPasswordForm() {
                     className="absolute right-2 top-2 text-muted-foreground"
                     onClick={() => setShowPassword((prev) => !prev)}
                   >
-                    {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </FormControl>
@@ -79,13 +95,20 @@ export default function ResetPasswordForm() {
               <FormLabel>Confirm Password</FormLabel>
               <FormControl>
                 <div className="relative">
-                  <Input type={showConfirmPassword ? "text" : "password"} {...field} />
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    {...field}
+                  />
                   <button
                     type="button"
                     className="absolute right-2 top-2 text-muted-foreground"
                     onClick={() => setShowConfirmPassword((prev) => !prev)}
                   >
-                    {showConfirmPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                    {showConfirmPassword ? (
+                      <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </FormControl>
@@ -94,9 +117,10 @@ export default function ResetPasswordForm() {
           )}
         />
 
-        <Button type="submit" className="w-full">Update Password</Button>
+        <Button type="submit" className="w-full">
+          Update Password
+        </Button>
       </form>
     </Form>
   );
 }
-
