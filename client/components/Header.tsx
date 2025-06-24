@@ -37,7 +37,7 @@ export default function Header() {
     { href: "/", label: "Home" },
     { href: "/upload", label: "Upload" },
     { href: "/archive", label: "Archive" },
-    { href: "/settings", label: "About" },
+    { href: "/about", label: "About" },
   ];
 
   return (

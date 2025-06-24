@@ -16,7 +16,6 @@ export default function ProfileDropdown({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Detect initial theme
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
@@ -28,7 +27,7 @@ export default function ProfileDropdown({
       document.documentElement.classList.add("dark");
       setIsDark(true);
     }
-    setOpen(false); // close dropdown after toggling
+    setOpen(false);
   }
 
   useEffect(() => {
@@ -123,11 +122,10 @@ export default function ProfileDropdown({
             </Link>
           ))}
 
-          {/* Theme toggle link at bottom */}
           <button
             type="button"
             onClick={toggleTheme}
-            className="w-full text-left px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
+            className="w-full text-left px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition cursor-pointer"
           >
             Change Theme
           </button>
