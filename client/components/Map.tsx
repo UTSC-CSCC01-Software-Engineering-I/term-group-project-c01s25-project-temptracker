@@ -34,21 +34,17 @@ const Map = (props: MapProps) => {
     return localRawData ? JSON.parse(localRawData) : [];
   });
 
-  const [clickedPoint, setClickedPoint] = useState({
-    latitude: null as number | null,
-    longitude: null as number | null,
-    nearestPoint: null as {
-      latitude: number;
-      longitude: number;
-      temperature: number;
-      distance: number;
-      intensity: number;
-    } | null,
-  });
+    const [clickedPoint, setClickedPoint] = useState({
+        latitude: null as number | null,
+        longitude: null as number | null,
+        nearestPoint: null as { latitude: number; longitude: number; temperature: number; distance: number; intensity: number } | null
+    });
 
-  useEffect(() => {
-    localStorage.setItem("USER_LOCATION", JSON.stringify(userLocation));
-  }, [userLocation]);
+    const [tempVisible, setTempVisible] = useState(true);
+    
+    useEffect(() => {
+        localStorage.setItem('USER_LOCATION', JSON.stringify(userLocation));
+    },[userLocation])
 
   useEffect(() => {
     localStorage.setItem("TEMP_DATA", JSON.stringify(tempData));
@@ -200,125 +196,139 @@ const Map = (props: MapProps) => {
     return nearest;
   };
 
-  const MapClickHandler = () => {
-    useMapEvents({
-      click: (e) => {
-        const { lat, lng } = e.latlng;
-        console.log("Map clicked at:", lat, lng);
+    const MapClickHandler = () => {
+        useMapEvents({
+            click: (e) => {
+                const { lat, lng } = e.latlng;
+                console.log('Map clicked at:', lat, lng);
+                
+                const nearestPoint = findNearestTemperaturePoint(lat, lng);
+                
+                if (nearestPoint) {
+                    setClickedPoint({
+                        latitude: lat,
+                        longitude: lng,
+                        nearestPoint: nearestPoint
+                    });
+                } else {
+                    setClickedPoint({
+                        latitude: null,
+                        longitude: null,
+                        nearestPoint: null
+                    });
+                }
+            }
+        });
+        return null;
+    };
 
-        const nearestPoint = findNearestTemperaturePoint(lat, lng);
 
-        if (nearestPoint) {
-          setClickedPoint({
-            latitude: lat,
-            longitude: lng,
-            nearestPoint: nearestPoint,
-          });
-        } else {
-          setClickedPoint({
-            latitude: null,
-            longitude: null,
-            nearestPoint: null,
-          });
-        }
-      },
-    });
-    return null;
-  };
+    if (props.centerLatitude != null && props.centerLongitude != null) {
+        console.log('Displaying search results', props.centerLatitude, props.centerLongitude);
+        return (
+            <MapContainer key={`${props.centerLatitude},${props.centerLongitude}`} center={[props.centerLatitude, props.centerLongitude]} zoom={13}>
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                    maxZoom={19}
+                />
+                <MapClickHandler />
+                {tempVisible && <HeatmapLayer data={tempData} />}
+                {/* <MarkerClusterGroup
+                    chunkedLoading={true}
+                    iconCreateFunction={createClusterCustomIcon}
+                >
+                    {markers.map((marker, index) => {
+                        return (
+                            <Marker position={marker.geocode} icon={customIcon} key={index}>
+                                <Popup>{marker.popUp}</Popup>
+                            </Marker>
+                        )
+                    })}
+                </MarkerClusterGroup> */}
+                {clickedPoint.latitude && clickedPoint.longitude && (
+                <Marker position={[clickedPoint.latitude, clickedPoint.longitude]} icon={customIcon}>
+                    <Popup>
+                        <div>
+                            <strong>Temperature:</strong> {clickedPoint.nearestPoint?.temperature}°C<br/>
+                        </div>
+                    </Popup>
+                </Marker>
+            )}
+                <div style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                zIndex: 1000,
+                pointerEvents: 'auto'
+            }}>
+                <div className='md:max-w-165px max-w-135px flex items-center justify-center gap-2 mb-2'>
+                    <button 
+                        className='bg-[#FFFFFFE6] hover:bg-[#FFFFFFCC] shadow text-[#333] md:text-base text-xs font-semibold px-4 py-2 rounded-md transition-colors cursor-pointer'
+                        onClick={() => setTempVisible(!tempVisible)}
+                    >
+                        Toggle Temperature
+                    </button>
+                </div>
+                {tempVisible && <MapLegend />}
+            </div>
+            </MapContainer>
+        );
 
-  if (props.centerLatitude != null && props.centerLongitude != null) {
-    console.log(
-      "Displaying search results",
-      props.centerLatitude,
-      props.centerLongitude
-    );
-    return (
-      <MapContainer
-        key={`${props.centerLatitude},${props.centerLongitude}`}
-        center={[props.centerLatitude, props.centerLongitude]}
-        zoom={13}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          maxZoom={19}
-        />
-        <MapClickHandler />
-        <HeatmapLayer data={tempData} />
-        {clickedPoint.latitude && clickedPoint.longitude && (
-          <Marker
-            position={[clickedPoint.latitude, clickedPoint.longitude]}
-            icon={customIcon}
-          >
-            <Popup>
-              <div>
-                <strong>Temperature Data</strong>
-                <br />
-                <strong>Temperature:</strong>
-                {clickedPoint.nearestPoint?.temperature}°C
-                <br />
-              </div>
-            </Popup>
-          </Marker>
-        )}
-        <div
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            zIndex: 1000,
-            pointerEvents: "auto",
-          }}
-        >
-          <MapLegend />
-        </div>
-      </MapContainer>
-    );
-  } else if (userLocation.latitude && userLocation.longitude) {
-    console.log("Displaying user location");
-    return (
-      <MapContainer
-        key={`${userLocation.latitude},${userLocation.longitude}`}
-        center={[userLocation.latitude, userLocation.longitude]}
-        zoom={13}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          maxZoom={19}
-        />
-        <MapClickHandler />
-        <HeatmapLayer data={tempData} />
-        {clickedPoint.latitude && clickedPoint.longitude && (
-          <Marker
-            position={[clickedPoint.latitude, clickedPoint.longitude]}
-            icon={customIcon}
-          >
-            <Popup>
-              <div>
-                <strong>Temperature Data</strong>
-                <br />
-                <strong>Temperature:</strong>
-                {clickedPoint.nearestPoint?.temperature}°C
-                <br />
-              </div>
-            </Popup>
-          </Marker>
-        )}
-        <div
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            zIndex: 1000,
-            pointerEvents: "auto",
-          }}
-        >
-          <MapLegend />
-        </div>
-      </MapContainer>
-    );
-  }
-};
+    }
+    else if (userLocation.latitude && userLocation.longitude) {
+        console.log('Displaying user location')
+        return (
+            <MapContainer key={`${userLocation.latitude},${userLocation.longitude}`} center={[userLocation.latitude, userLocation.longitude]} zoom={13}>
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                    maxZoom={19}
+                />
+                <MapClickHandler />
+                {tempVisible && <HeatmapLayer data={tempData} />}
+                {/* <MarkerClusterGroup
+                    chunkedLoading={true}
+                    iconCreateFunction={createClusterCustomIcon}
+                >
+                    {markers.map((marker, index) => {
+                        return (
+                            <Marker position={marker.geocode} icon={customIcon} key={index}>
+                                <Popup>{marker.popUp}</Popup>
+                            </Marker>
+                        )
+                    })}
+                </MarkerClusterGroup> */}
+                {clickedPoint.latitude && clickedPoint.longitude && (
+                <Marker position={[clickedPoint.latitude, clickedPoint.longitude]} icon={customIcon}>
+                    <Popup>
+                        <div>
+                            <strong>Temperature:</strong> {clickedPoint.nearestPoint?.temperature}°C<br/>
+                        </div>
+                    </Popup>
+                </Marker>
+            )}
+                <div style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                zIndex: 1000,
+                pointerEvents: 'auto'
+            }}>
+                <div className='md:max-w-165px max-w-135px flex items-center justify-center gap-2 mb-2'>
+                    <button 
+                        className='bg-[#FFFFFFE6] hover:bg-[#FFFFFFCC] shadow text-[#333] md:text-base text-xs font-semibold px-4 py-2 rounded-md transition-colors cursor-pointer'
+                        onClick={() => setTempVisible(!tempVisible)}
+                    >
+                        Toggle Temperature
+                    </button>
+                </div>
+                {tempVisible && <MapLegend />}
+            </div>
+            </MapContainer>
+        );
+
+    }
+}
 
 export default Map;
