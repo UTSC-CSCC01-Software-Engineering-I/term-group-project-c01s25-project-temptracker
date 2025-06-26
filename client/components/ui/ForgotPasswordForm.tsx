@@ -3,7 +3,14 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/shadcn/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input";
 import { Button } from "@/components/shadcn/button";
 import { createClient } from "@/lib/supabase/client";
@@ -32,7 +39,10 @@ export default function ForgotPasswordForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-80 space-y-4">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
         <FormField
           control={form.control}
           name="email"
@@ -46,7 +56,9 @@ export default function ForgotPasswordForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">Send reset link</Button>
+        <Button type="submit" className="w-full">
+          Send reset link
+        </Button>
       </form>
     </Form>
   );

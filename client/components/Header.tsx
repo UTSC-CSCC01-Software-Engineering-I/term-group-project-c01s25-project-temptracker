@@ -1,27 +1,28 @@
 "use client";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import ProfileDropdown from "./ProfileDropdown";
 import { createClient } from "../lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
 const supabase = createClient();
 
 export default function Header() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
-  //this checks for auth and sets the user state
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
     return () => listener?.subscription.unsubscribe();
   }, []);
-  //this handles logout if the user clicks the logout button
+
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -36,7 +37,7 @@ export default function Header() {
     { href: "/", label: "Home" },
     { href: "/upload", label: "Upload" },
     { href: "/archive", label: "Archive" },
-    { href: "/settings", label: "Settings" },
+    { href: "/about", label: "About" },
   ];
 
   return (
@@ -46,7 +47,7 @@ export default function Header() {
         <button
           className="md:hidden p-2 rounded-md transition hover:opacity-75 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
           aria-label="Toggle navigation menu"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setIsMobileMenuOpen((o) => !o)}
         >
           <svg
             className="h-6 w-6 text-gray-700"
@@ -55,21 +56,34 @@ export default function Header() {
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            {isOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            {isMobileMenuOpen ? (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             )}
           </svg>
         </button>
 
         {/* App title */}
-        <h1 className="text-2xl px-3 italic font-bold text-gray-900 tracking-wide select-none">
+        <h1 className="text-2xl pr-2 italic font-bold text-gray-900 tracking-wide select-none">
           GLOW - Temp Tracker
         </h1>
-            
-        {/* Desktop navigation */}
-        <nav className="hidden md:flex flex-grow justify-end md:mr-8 lg:mr-18" aria-label="Primary Navigation">
+
+        {/* Desktop nav */}
+        <nav
+          className="hidden md:flex flex-grow justify-end md:mr-8 lg:mr-18"
+          aria-label="Primary Navigation"
+        >
           {navLinks.map(({ href, label }) => (
             <Link
               key={href}
@@ -79,43 +93,14 @@ export default function Header() {
               {label}
             </Link>
           ))}
-          {!user ? (
-            <>
-              <Link href="/login" className="text-dark-blue hover:text-gray-800 transition font-medium md:px-3 text-lg">
-                Login
-              </Link>
-              <Link href="/register" className="text-dark-blue hover:text-gray-800 transition font-medium md:px-3 text-lg">
-                Register
-              </Link>
-            </>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="text-dark-blue hover:text-gray-800 transition font-medium md:px-3 text-lg"
-            >
-              Logout
-            </button>
-          )}
         </nav>
 
-        {/* Profile icon */}
-        <Link
-          href={user ? "#" : "/login"}
-          className="p-2 mr-1 rounded-full bg-gray-200 hover:bg-gray-300 transition ml-auto md:ml-0"
-          aria-label="Profile or login"
-        >
-          <Image
-            src="/profile.png"
-            alt="Profile"
-            width={20}
-            height={20}
-            className="h-6 w-6"
-          />
-        </Link>
+        {/* Profile Dropdown */}
+        <ProfileDropdown user={user} onLogout={handleLogout} />
       </div>
 
       {/* Mobile nav menu */}
-      {isOpen && (
+      {isMobileMenuOpen && (
         <nav
           className="flex md:hidden overflow-x-auto justify-center px-1 pb-1 no-scrollbar"
           aria-label="Mobile Navigation"
@@ -126,40 +111,11 @@ export default function Header() {
               key={href}
               href={href}
               className="text-dark-blue hover:text-gray-800 transition font-medium whitespace-nowrap flex-shrink-0 px-3"
-              onClick={() => setIsOpen(false)}
+              onClick={() => setIsMobileMenuOpen(false)}
             >
               {label}
             </Link>
           ))}
-          {/*This part below checks for auth and removes login/register if already logged in*/}
-          {!user ? (
-            <>
-              <Link
-                href="/login"
-                className="text-dark-blue hover:text-gray-800 transition font-medium px-3"
-                onClick={() => setIsOpen(false)}
-              >
-                Login
-              </Link>
-              <Link
-                href="/register"
-                className="text-dark-blue hover:text-gray-800 transition font-medium px-3"
-                onClick={() => setIsOpen(false)}
-              >
-                Register
-              </Link>
-            </>
-          ) : (
-            <button
-              onClick={() => {
-                handleLogout();
-                setIsOpen(false);
-              }}
-              className="text-dark-blue hover:text-gray-800 transition font-medium px-3"
-            >
-              Logout
-            </button>
-          )}
         </nav>
       )}
     </header>
