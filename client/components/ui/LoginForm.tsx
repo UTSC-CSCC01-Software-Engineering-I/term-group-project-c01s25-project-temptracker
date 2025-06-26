@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import Image from 'next/image'
 
 const formSchema = z.object({
   email: z
@@ -117,6 +118,34 @@ export default function LoginForm() {
         <Button type="submit" size="submit">
           Login
         </Button>
+        <div className="w-full flex flex-col">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex items-center justify-center gap-2"
+            onClick={async () => {
+              const { error } = await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                  redirectTo: `${window.location.origin}/auth/callback`,
+                },
+              });
+              if (error) {
+                toast.error(error.message);
+              }
+            }}
+          >
+            <Image
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google"
+              width={15}
+              height={15}
+            />
+            Continue with Google
+          </Button>
+        </div>
+
+
         <div className="flex items-center">
           <div className="flex-1 h-[2px] bg-muted-foreground mr-3"></div>
           Or
