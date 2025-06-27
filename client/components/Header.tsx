@@ -1,37 +1,11 @@
 "use client";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import ProfileDropdown from "./ProfileDropdown";
-import { createClient } from "../lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
 
-const supabase = createClient();
+import Link from "next/link";
+import { useState } from "react";
+import ProfileDropdown from "./ProfileDropdown";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
-    return () => listener?.subscription.unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Logout error:", error.message);
-    } else {
-      setUser(null);
-      router.refresh();
-    }
-  };
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -74,7 +48,6 @@ export default function Header() {
           </svg>
         </button>
 
-        {/* App title */}
         <h1 className="text-2xl pr-2 italic font-bold text-gray-900 tracking-wide select-none">
           GLOW - Temp Tracker
         </h1>
@@ -95,8 +68,7 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Profile Dropdown */}
-        <ProfileDropdown user={user} onLogout={handleLogout} />
+        <ProfileDropdown />
       </div>
 
       {/* Mobile nav menu */}

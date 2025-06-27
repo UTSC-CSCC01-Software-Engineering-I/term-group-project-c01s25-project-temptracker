@@ -1,19 +1,23 @@
 "use client";
+
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import type { User } from "@supabase/supabase-js";
+import { useUser } from "@/app/context";
 
-export default function ProfileDropdown({
-  user,
-  onLogout,
-}: {
-  user: User | null;
-  onLogout: () => void;
-}) {
+type LinkItem = { href: string; label: string };
+type ActionItem = { label: string; action: () => void };
+
+export default function ProfileDropdown() {
+  const { user, loading, logout } = useUser();
   const [open, setOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/"; // need to do it manually as router.refresh() doesn't trigger a full reload
+  };
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));
@@ -40,11 +44,13 @@ export default function ProfileDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // links
-  const universalLinks = [{ href: "/settings", label: "Settings" }];
+  const universalLinks: LinkItem[] = [{ href: "/settings", label: "Settings" }];
 
-  const authLinks = user
-    ? [{ label: "Logout", action: onLogout }]
+  const authLinks: (LinkItem | ActionItem)[] = user
+    ? [
+        { href: "/profile", label: "Profile" },
+        { label: "Logout", action: handleLogout },
+      ]
     : [{ href: "/login", label: "Login/Register" }];
 
   return (
@@ -103,7 +109,7 @@ export default function ProfileDropdown({
                   link.action();
                   setOpen(false);
                 }}
-                className="w-full text-left px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
+                className="w-full text-left px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition cursor-pointer"
                 type="button"
               >
                 {link.label}
