@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { registerUser } from "@/lib/supabase/api/register";
 
 const formSchema = z
   .object({
@@ -62,62 +63,24 @@ export default function RegisterForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    const { email, password, username } = values;
-
-    // check if username and email already exist
-    const { data: existingUsername } = await supabase
-      .from("user_profiles")
-      .select("id")
-      .ilike("username", username) // this ignores case for now, not the best practice though
-      .single();
-
-    console.log("Existing username:", existingUsername);
-
-    if (existingUsername) {
-      form.setError("username", {
-        message: "Sorry, this username is already in use.",
+    try {
+      await registerUser({
+        username: values.username,
+        email: values.email,
+        password: values.password,
       });
-      return;
-    }
-
-    const { data: existingEmail } = await supabase
-      .from("user_profiles")
-      .select("id")
-      .ilike("email", email)
-      .single();
-
-    if (existingEmail) {
-      form.setError("email", {
-        message: "Sorry, this email is already registered.",
-      });
-      return;
-    }
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-        },
-      },
-    });
-
-    // user_profile table is populated by the auth trigger
-
-    if (error) {
-      console.error("Supabase sign-up error:", error);
-      toast.error(
-        "There was an error creating your account. Please try again."
-      );
-      form.setError("root", { message: error.message });
-    } else {
-      toast.success(
-        "Account created successfully! Please check your email to verify your account."
-      );
+      toast.success("Account created successfully! Please check your email.");
       router.refresh();
       router.push("/login");
+    } catch (error: any) {
+      if (error.message.includes("Username")) {
+        form.setError("username", { message: error.message });
+      } else if (error.message.includes("Email")) {
+        form.setError("email", { message: error.message });
+      } else {
+        form.setError("root", { message: error.message });
+        toast.error(error.message);
+      }
     }
   }
 

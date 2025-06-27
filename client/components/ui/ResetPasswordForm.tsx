@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-
+import { resetPassword } from "@/lib/supabase/api/resetPassword";
 const schema = z
   .object({
     password: z.string().min(8, "Password must be at least 8 characters"),
@@ -28,8 +28,6 @@ const schema = z
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
-
-const supabase = createClient();
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -42,13 +40,13 @@ export default function ResetPasswordForm() {
   });
 
   async function onSubmit(values: z.infer<typeof schema>) {
-    const { error } = await supabase.auth.updateUser({
-      password: values.password,
-    });
-    if (error) toast.error(error.message);
-    else {
+    try {
+      await resetPassword(values.password);
       toast.success("Password updated! You can now log in.");
       router.push("/login");
+    } catch (error: any) {
+      toast.error(error.message);
+      form.setError("root", { message: error.message });
     }
   }
 

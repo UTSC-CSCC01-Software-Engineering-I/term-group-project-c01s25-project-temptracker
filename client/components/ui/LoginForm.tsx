@@ -14,11 +14,11 @@ import {
 } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input";
 import Link from "next/link";
-import { createClient } from "../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { loginUser } from "@/lib/supabase/api/login";
 
 const formSchema = z.object({
   identifier: z
@@ -27,8 +27,6 @@ const formSchema = z.object({
     .min(1, { message: "Email or Username is required" }),
   password: z.string().trim().min(1, { message: "Password is required" }),
 });
-
-const supabase = createClient();
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -44,41 +42,22 @@ export default function LoginForm() {
   const router = useRouter();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { identifier, password } = values;
-    let emailToUse = identifier;
-
-    const isEmail = /\S+@\S+\.\S+/.test(identifier);
-
-    if (!isEmail) {
-      console.log("Trying to fetch user_profiles with username:", identifier);
-      const { data: profile, error: profileError } = await supabase
-        .from("user_profiles")
-        .select("email")
-        .eq("username", identifier)
-        .single();
-
-      console.log("Result profile:", profile);
-      console.log("Profile fetch error:", profileError);
-
-      if (profileError || !profile?.email) {
-        form.setError("identifier", { message: "Username not found" });
-        return;
-      }
-
-      emailToUse = profile.email;
-    }
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email: emailToUse,
-      password,
-    });
-
-    if (error) {
-      form.setError("root", { message: error.message });
-    } else {
+    try {
+      await loginUser(values.identifier, values.password);
       toast.success("Login successful!");
       router.refresh();
       router.push("/");
+    } catch (error: any) {
+      if (
+        error.message.includes("Username") ||
+        error.message.includes("email") ||
+        error.message.includes("password")
+      ) {
+        form.setError("identifier", { message: error.message });
+      } else {
+        form.setError("root", { message: error.message });
+        toast.error(error.message);
+      }
     }
   }
 
@@ -108,7 +87,7 @@ export default function LoginForm() {
                 <div className="relative">
                   <FormControl>
                     <Input
-                      placeholder="&#183; &#183; &#183; &#183; &#183; &#183; &#183; &#183;"
+                      placeholder="••••••••"
                       type={showPassword ? "text" : "password"}
                       {...field}
                     />
