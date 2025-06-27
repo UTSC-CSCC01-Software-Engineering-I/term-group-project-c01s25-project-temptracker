@@ -21,11 +21,10 @@ import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 const formSchema = z.object({
-  email: z
+  identifier: z
     .string()
     .trim()
-    .min(1, { message: "Email is required" })
-    .email({ message: "Invalid email address" }),
+    .min(1, { message: "Email or Username is required" }),
   password: z.string().trim().min(1, { message: "Password is required" }),
 });
 
@@ -37,7 +36,7 @@ export default function LoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
     },
   });
@@ -45,11 +44,32 @@ export default function LoginForm() {
   const router = useRouter();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    const { email, password } = values;
+    const { identifier, password } = values;
+    let emailToUse = identifier;
+
+    const isEmail = /\S+@\S+\.\S+/.test(identifier);
+
+    if (!isEmail) {
+      console.log("Trying to fetch user_profiles with username:", identifier);
+      const { data: profile, error: profileError } = await supabase
+        .from("user_profiles")
+        .select("email")
+        .eq("username", identifier)
+        .single();
+
+      console.log("Result profile:", profile);
+      console.log("Profile fetch error:", profileError);
+
+      if (profileError || !profile?.email) {
+        form.setError("identifier", { message: "Username not found" });
+        return;
+      }
+
+      emailToUse = profile.email;
+    }
 
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: emailToUse,
       password,
     });
 
@@ -67,10 +87,10 @@ export default function LoginForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="">
         <FormField
           control={form.control}
-          name="email"
+          name="identifier"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Email / Username</FormLabel>
               <FormControl>
                 <Input placeholder="example@email.com" {...field} />
               </FormControl>
@@ -109,7 +129,9 @@ export default function LoginForm() {
               </FormControl>
               <FormMessage />
               <Button variant="link" size="link" className="ml-auto">
-                <Link href="/forgot-password" className="text-secondary">Forgot your password?</Link>
+                <Link href="/forgot-password" className="text-secondary">
+                  Forgot your password?
+                </Link>
               </Button>
             </FormItem>
           )}
@@ -124,7 +146,11 @@ export default function LoginForm() {
         </div>
         <div className="flex items-center justify-center">
           <p>Don&apos;t have an account yet?</p>
-          <Button variant="link" size="link" className="ml-2 text-base text-secondary">
+          <Button
+            variant="link"
+            size="link"
+            className="ml-2 text-base text-secondary"
+          >
             <Link href="register">Register</Link>
           </Button>
         </div>
