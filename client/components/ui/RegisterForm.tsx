@@ -23,6 +23,11 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 
 const formSchema = z
   .object({
+    username: z
+      .string()
+      .trim()
+      .min(3, { message: "Username must be at least 3 characters" })
+      .max(20, { message: "Username must be at most 20 characters" }),
     email: z
       .string()
       .trim()
@@ -49,6 +54,7 @@ export default function RegisterForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      username: "",
       email: "",
       password: "",
       confirm: "",
@@ -57,11 +63,20 @@ export default function RegisterForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
-    const { email, password } = values;
+    const { email, password, username } = values;
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          username,
+        },
+      },
+    });
 
     if (error) {
+      console.error("Supabase sign-up error:", error);
       toast.error(
         "There was an error creating your account. Please try again."
       );
@@ -78,6 +93,21 @@ export default function RegisterForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Username<span className="text-red-700">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Choose a username" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="email"
