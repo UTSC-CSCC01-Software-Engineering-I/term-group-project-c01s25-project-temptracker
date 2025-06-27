@@ -103,7 +103,7 @@ export default function ProfileDropdown({
                   link.action();
                   setOpen(false);
                 }}
-                className="w-full text-left px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
+                className="w-full text-left px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition cursor-pointer"
                 type="button"
               >
                 {link.label}
