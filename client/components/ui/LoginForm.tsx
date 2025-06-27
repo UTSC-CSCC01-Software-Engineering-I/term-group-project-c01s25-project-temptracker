@@ -136,6 +136,9 @@ export default function LoginForm() {
             </FormItem>
           )}
         />
+        {form.formState.errors.root && (
+          <FormMessage>{form.formState.errors.root.message}</FormMessage>
+        )}
         <Button type="submit" size="submit">
           Login
         </Button>

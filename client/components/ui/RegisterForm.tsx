@@ -65,6 +65,35 @@ export default function RegisterForm() {
     console.log(values);
     const { email, password, username } = values;
 
+    // check if username and email already exist
+    const { data: existingUsername } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .ilike("username", username) // this ignores case for now, not the best practice though
+      .single();
+
+    console.log("Existing username:", existingUsername);
+
+    if (existingUsername) {
+      form.setError("username", {
+        message: "Sorry, this username is already in use.",
+      });
+      return;
+    }
+
+    const { data: existingEmail } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .ilike("email", email)
+      .single();
+
+    if (existingEmail) {
+      form.setError("email", {
+        message: "Sorry, this email is already registered.",
+      });
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -74,6 +103,8 @@ export default function RegisterForm() {
         },
       },
     });
+
+    // user_profile table is populated by the auth trigger
 
     if (error) {
       console.error("Supabase sign-up error:", error);
@@ -152,7 +183,6 @@ export default function RegisterForm() {
                   )}
                 </Button>
               </div>
-              <FormDescription>Must be as least 8 characters.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
