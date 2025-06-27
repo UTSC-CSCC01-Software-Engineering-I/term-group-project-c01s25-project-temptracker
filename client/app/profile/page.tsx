@@ -1,31 +1,18 @@
 "use client";
 
-import { createClient } from "../../lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
-import { set } from "date-fns";
+import { format } from "date-fns";
+import { useUser } from "@/app/context";
 import { useEffect, useState } from "react";
 
-const supabase = createClient();
-
 export default function Profile() {
-  const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const { user, profile } = useUser();
+  console.log("User profile:", user);
 
   const [useFahrenheit, setUseFahrenheit] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
-    setRole("admin"); // add logic later
-
-    return () => listener?.subscription.unsubscribe();
-  }, []);
-
   const provider = user?.app_metadata?.provider || "email";
+  const userSince = user?.email_confirmed_at
+    ? format(new Date(user.email_confirmed_at), "MMMM d, yyyy")
+    : "Unknown";
 
   const submissions = [
     {
@@ -103,11 +90,9 @@ export default function Profile() {
 
       <div className="rounded-lg shadow-md overflow-hidden mb-14 lg:mb-20">
         <div className="bg-nav-blue h-8 flex items-center justify-end px-4">
-          {role === "admin" && (
-            <span className="text-xs font-medium text-white px-2 py-1 rounded">
-              Admin Account
-            </span>
-          )}
+          <span className="text-xs font-medium text-white px-2 py-1 rounded capitalize">
+            {profile?.role} Account
+          </span>
         </div>
 
         <div className="flex items-center bg-white p-6 space-x-6">
@@ -123,7 +108,10 @@ export default function Profile() {
             <p className="text-gray-600">
               {user?.email || "email@example.com"}
             </p>
-            <p className="text-sm text-gray-500">Signed in with {provider}</p>
+            <div className="mt-2">
+              <p className="text-sm text-gray-500">Signed in with {provider}</p>
+              <p className="text-sm text-gray-500">User since {userSince}</p>
+            </div>
           </div>
         </div>
       </div>

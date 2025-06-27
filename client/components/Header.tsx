@@ -2,19 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import ProfileDropdown from "./ProfileDropdown";
-import { useUser } from "@/app/context";
 
 export default function Header() {
-  const { user, loading, logout } = useUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    await logout();
-    window.location.href = "/"; // need to do it manually as router.refresh() doesn't trigger a full reload
-  };
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -77,7 +68,7 @@ export default function Header() {
           ))}
         </nav>
 
-        <ProfileDropdown user={user} onLogout={handleLogout} />
+        <ProfileDropdown />
       </div>
 
       {/* Mobile nav menu */}

@@ -15,6 +15,7 @@ const supabase = createClient();
 type Profile = {
   id: string;
   username: string;
+  role: string | null; // for now
 };
 
 const UserContext = createContext<{
