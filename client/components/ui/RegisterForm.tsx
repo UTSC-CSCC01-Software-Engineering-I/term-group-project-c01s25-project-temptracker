@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { registerUser } from "@/lib/supabase/api/register";
 
 const formSchema = z
   .object({
@@ -62,31 +63,24 @@ export default function RegisterForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    const { email, password, username } = values;
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-        },
-      },
-    });
-
-    if (error) {
-      console.error("Supabase sign-up error:", error);
-      toast.error(
-        "There was an error creating your account. Please try again."
-      );
-      form.setError("root", { message: error.message });
-    } else {
-      toast.success(
-        "Account created successfully! Please check your email to verify your account."
-      );
+    try {
+      await registerUser({
+        username: values.username,
+        email: values.email,
+        password: values.password,
+      });
+      toast.success("Account created successfully! Please check your email.");
       router.refresh();
       router.push("/login");
+    } catch (error: any) {
+      if (error.message.includes("Username")) {
+        form.setError("username", { message: error.message });
+      } else if (error.message.includes("Email")) {
+        form.setError("email", { message: error.message });
+      } else {
+        form.setError("root", { message: error.message });
+        toast.error(error.message);
+      }
     }
   }
 
@@ -152,7 +146,6 @@ export default function RegisterForm() {
                   )}
                 </Button>
               </div>
-              <FormDescription>Must be as least 8 characters.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
