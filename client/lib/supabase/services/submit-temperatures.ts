@@ -14,13 +14,13 @@ export async function submitTemperature(data: TemperatureSubmission) {
 
   // Uncomment this block after implementing authentication
 
-  // const {
-  //   data: { user },
-  // } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // if (!user) {
-  //   throw new Error("Login to submit a temperature reading.");
-  // }
+  if (!user) {
+    throw new Error("Login to submit a temperature reading.");
+  }
 
   const { data: result, error } = await supabase
     .from("temperatures")
