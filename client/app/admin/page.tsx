@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 const supabase = createClient();
 
 export default function Profile() {
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const [useFahrenheit, setUseFahrenheit] = useState(false);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const provider = user?.app_metadata?.provider || "email";
@@ -16,14 +16,18 @@ export default function Profile() {
     ? format(new Date(user.email_confirmed_at), "MMMM d, yyyy")
     : "Unknown";
 
+  // Fetch data depending on role
   useEffect(() => {
     const fetchSubmissions = async () => {
-      if (!user?.id) return;
+      if (!user?.id || !profile?.role) return;
 
-      const { data, error } = await supabase
-        .from("temperatures")
-        .select("*")
-        .eq("user_id", user.id);
+      const { data, error } =
+        profile.role === "admin"
+          ? await supabase.from("temperatures").select("*")
+          : await supabase
+              .from("temperatures")
+              .select("*")
+              .eq("user_id", user.id);
 
       if (error) {
         console.error("Error fetching submissions:", error);
@@ -33,7 +37,7 @@ export default function Profile() {
     };
 
     fetchSubmissions();
-  }, [user?.id]);
+  }, [user?.id, profile?.role]);
 
   const handleExportCSV = () => {
     const headers = ["Date", "Temperature", "Latitude", "Longitude", "Notes"];
@@ -59,16 +63,33 @@ export default function Profile() {
 
   const toggleUnits = () => setUseFahrenheit((prev) => !prev);
 
+  const handleToggleVerified = async (id: number, current: boolean) => {
+    const { error } = await supabase
+      .from("temperatures")
+      .update({ is_verified: !current })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error toggling verified:", error);
+    } else {
+      setSubmissions((prev) =>
+        prev.map((s) =>
+          s.id === id ? { ...s, is_verified: !current } : s
+        )
+      );
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold mb-4">
-        Welcome, {user?.user_metadata?.username || "User"}
+        Welcome, {user?.user_metadata?.username || "Admin"}
       </h1>
 
       <div className="rounded-lg shadow-md overflow-hidden mb-14 lg:mb-20">
         <div className="bg-nav-blue h-8 flex items-center justify-end px-4">
-          <span className="text-xs font-medium text-white px-2 py-1 rounded">
-            Personal Account
+          <span className="text-xs font-medium text-white px-2 py-1 rounded capitalize">
+            {profile?.role} Account
           </span>
         </div>
 
@@ -93,6 +114,7 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* Buttons (top on desktop) */}
       <div className="hidden sm:flex items-center justify-between mb-3">
         <h2 className="text-2xl font-semibold">My Submissions</h2>
         <div className="flex gap-4">
@@ -129,11 +151,16 @@ export default function Profile() {
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                 Notes
               </th>
+              {profile?.role === "admin" && (
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Verified
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 text-gray-700">
             {submissions.map(
-              ({ id, measured_on, temperature, latitude, longitude, notes }) => (
+              ({ id, measured_on, temperature, latitude, longitude, notes, is_verified }) => (
                 <tr
                   key={id}
                   className="hover:bg-blue-100 transition-colors duration-200"
@@ -152,6 +179,20 @@ export default function Profile() {
                     {latitude.toFixed(2)}, {longitude.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">{notes}</td>
+                  {profile?.role === "admin" && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handleToggleVerified(id, is_verified)}
+                        className={`px-3 py-1 text-sm rounded ${
+                          is_verified
+                            ? "bg-red-500 text-white hover:bg-red-600"
+                            : "bg-green-500 text-white hover:bg-green-600"
+                        }`}
+                      >
+                        {is_verified ? "Remove" : "Verify"}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               )
             )}
@@ -159,6 +200,7 @@ export default function Profile() {
         </table>
       </div>
 
+      {/* Buttons (bottom on mobile) */}
       <div className="flex sm:hidden justify-center gap-4 mt-2">
         <button
           onClick={handleExportCSV}
