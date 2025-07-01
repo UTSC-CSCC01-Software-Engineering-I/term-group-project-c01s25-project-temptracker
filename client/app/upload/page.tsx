@@ -1,5 +1,6 @@
 import UploadTemperatureForm from "@/components/ui/uploadTemperatureForm";
 import UploadTemperatureCSVForm from "@/components/ui/UploadTemperatureCSV";
+import { Shield } from "lucide-react";
 
 export default function UploadPage() {
   return (
@@ -16,17 +17,9 @@ export default function UploadPage() {
           <UploadTemperatureForm />
         </div>
       </div>
-      <div className="flex items-center px-8 sm:px-24">
-        <div className="flex-1 h-[2px] bg-muted-foreground mr-3"></div>
-        Or
-        <div className="flex-1 h-[2px] bg-muted-foreground ml-3"></div>
-      </div>
-      <div className="flex flex-col items-center">
-        <p className="text-muted px-2 text-center mb-4">
-          If you have a CSV file with temperature data, you can upload it here.
-        </p>
-        <UploadTemperatureCSVForm />
-      </div>
+
+      <UploadTemperatureCSVForm />
+
       <p className="text-center text-sm text-muted-foreground leading-snug">
         Please ensure your temperature readings are accurate and taken at
         surface level. Add any relevant observations in the notes section.
