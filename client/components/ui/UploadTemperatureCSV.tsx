@@ -1,8 +1,19 @@
+"use client";
+
 import { z } from "zod/v4";
 import Papa from "papaparse";
+import { Input } from "@/components/shadcn/input";
+import { toast } from "sonner";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
-const csvFileSchema = z.file().mime("text/csv").max(MAX_FILE_SIZE);
+const csvFileSchema = z
+  .file()
+  .mime("text/csv", {
+    error: "Invalid file type. File must end with .csv extension.",
+  })
+  .max(MAX_FILE_SIZE, {
+    error: `File size must be less than ${MAX_FILE_SIZE / 1024 / 1024} MB.`,
+  });
 
 const EXPECTED_CSV_HEADERS = [
   "temperature",
@@ -14,7 +25,7 @@ const EXPECTED_CSV_HEADERS = [
 ];
 const csvHeaderSchema = z.array(z.string()).check((headers) => {
   const missing = EXPECTED_CSV_HEADERS.filter(
-    (header) => !headers.includes(header)
+    (header) => !headers.value.includes(header)
   );
 
   const unexpected = headers.value.filter(
@@ -42,7 +53,7 @@ const rowsSchema = z
   .object({
     temperature: z.number("Temperature must be a number"),
     temperatureUnit: z.enum(["C", "F"]),
-    date: z.date("Date is required"),
+    date: z.iso.date("Date is required"),
     longitude: z
       .number("Longitude must be a number")
       .min(-180, "Longitude must be between -180 and 180")
@@ -70,6 +81,12 @@ const rowsSchema = z
 const csvRowsSchema = z.array(rowsSchema);
 
 async function validateCSV(file: File) {
+  // Validate file type and size
+  const fileValidation = csvFileSchema.safeParse(file);
+  if (!fileValidation.success) {
+    return { success: false, errors: fileValidation.error.issues };
+  }
+
   const csvText = await file.text();
 
   const { data, errors, meta } = Papa.parse(csvText, {
@@ -82,41 +99,46 @@ async function validateCSV(file: File) {
     return { success: false, errors };
   }
 
+  // Validate headers
   const headerValidation = csvHeaderSchema.safeParse(meta.fields);
-  if (!headerValidation.success)
+  if (!headerValidation.success) {
     return { success: false, errors: headerValidation.error.issues };
+  }
 
+  // Validate rows
   const rowsValidation = csvRowsSchema.safeParse(data);
-  if (!rowsValidation.success)
+  if (!rowsValidation.success) {
     return { success: false, errors: rowsValidation.error.issues };
+  }
 
   return { success: true, data: rowsValidation.data };
 }
 
 export default function UploadTemperatureCSVForm() {
-  return <div>form</div>;
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const validationResult = await validateCSV(file);
+    if (!validationResult.success) {
+      // Display first error with toast and the rest in console
+      toast.error(validationResult.errors[0].message);
+
+      validationResult.errors?.slice(1).forEach((error) => {
+        console.error("Validation error:", error);
+      });
+
+      return;
+    }
+
+    console.log("CSV data:", validationResult.data);
+  };
+
+  return (
+    <>
+      <Input type="file" placeholder="Longitude" onChange={handleFileChange} />
+    </>
+  );
 }
-
-/*
-        <FormLabel>Upload CSV</FormLabel>
-        <FormField
-          control={form.control}
-          name="longitude"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input
-                  type="file"
-                  placeholder="Longitude"
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    field.onChange(value === "" ? "" : parseFloat(value));
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-*/
