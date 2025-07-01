@@ -93,7 +93,7 @@ export default function UploadTemperatureForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="m-2 space-y-6 w-full mx-auto p-6 rounded-lg bg-card shadow-md"
+        className="space-y-6"
       >
         {/* Temperature */}
         <div className="space-y-0.5">
