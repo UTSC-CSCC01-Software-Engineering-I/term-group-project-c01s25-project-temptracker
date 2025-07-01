@@ -1,5 +1,6 @@
 import { createClient } from "../client";
 
+const supabase = createClient();
 export interface TemperatureSubmission {
   temperature: number;
   temperatureUnit: "C" | "F";
@@ -10,10 +11,6 @@ export interface TemperatureSubmission {
 }
 
 export async function submitTemperature(data: TemperatureSubmission) {
-  const supabase = createClient();
-
-  // Uncomment this block after implementing authentication
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -33,13 +30,43 @@ export async function submitTemperature(data: TemperatureSubmission) {
       longitude: data.longitude,
       measured_on: data.date.toISOString(),
       notes: data.notes,
-      user_id: "e013a350-51d9-468a-a104-ef1168eaec01", // Change this to user.id after implementing authentication
+      user_id: user.id,
     })
     .select()
     .single();
 
   if (error) {
     console.error("Error submitting temperature:", error);
+    throw error;
+  }
+  return result;
+}
+
+export async function submitTemperatures(data: [TemperatureSubmission]) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Login to submit temperature readings.");
+  }
+
+  const { data: result, error } = await supabase.from("temperatures").insert(
+    data.map((item) => ({
+      temperature:
+        item.temperatureUnit === "F"
+          ? ((item.temperature - 32) * 5) / 9
+          : item.temperature,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      measured_on: item.date.toISOString(),
+      notes: item.notes,
+      user_id: user.id,
+    }))
+  );
+
+  if (error) {
+    console.error("Error submitting temperatures:", error);
     throw error;
   }
   return result;
