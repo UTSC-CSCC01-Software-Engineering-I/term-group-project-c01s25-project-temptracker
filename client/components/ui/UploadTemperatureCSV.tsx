@@ -1,10 +1,15 @@
 "use client";
 
+import { useForm } from "react-hook-form";
 import { Input } from "@/components/shadcn/input";
 import { useCSVUpload } from "@/hooks/useCSVUpload";
 import FileDisplay from "@/components/ui/FileDisplay";
 import StatusMessage from "@/components/ui/StatusMessage";
 import { EXPECTED_CSV_HEADERS } from "@/lib/csvValidation";
+import { TemperatureData } from "@/lib/csvValidation";
+import { submitTemperatures } from "@/lib/supabase/services/submit-temperatures";
+import { toast } from "sonner";
+import { Button } from "@/components/shadcn/button";
 
 export default function UploadTemperatureCSVForm() {
   const {
@@ -19,6 +24,8 @@ export default function UploadTemperatureCSVForm() {
     handleDragLeave,
     clearFile,
   } = useCSVUpload();
+
+  const form = useForm<[TemperatureData]>();
 
   const getUploadAreaClassName = () => {
     let baseClasses =
@@ -44,8 +51,23 @@ export default function UploadTemperatureCSVForm() {
     return baseClasses;
   };
 
+  const onSubmit = async () => {
+    try {
+      await submitTemperatures(validatedData);
+      console.log("Submitting data:", validatedData);
+      toast.success("Temperature reading submitted successfully!");
+      clearFile(); // Reset the CSV upload after successful submission
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit temperature reading"
+      );
+    }
+  };
+
   return (
-    <form>
+    <form onSubmit={form.handleSubmit(onSubmit)}>
       <div
         className={getUploadAreaClassName()}
         onDrop={handleDrop}
@@ -79,6 +101,13 @@ export default function UploadTemperatureCSVForm() {
           {EXPECTED_CSV_HEADERS.join(", ")}
         </p>
       </div>
+      <Button
+        type="submit"
+        size="submit"
+        disabled={form.formState.isSubmitting}
+      >
+        {form.formState.isSubmitting ? "Submitting..." : "Submit CSV File"}
+      </Button>
     </form>
   );
 }

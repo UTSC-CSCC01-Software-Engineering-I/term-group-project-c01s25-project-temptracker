@@ -42,7 +42,7 @@ export async function submitTemperature(data: TemperatureSubmission) {
   return result;
 }
 
-export async function submitTemperatures(data: [TemperatureSubmission]) {
+export async function submitTemperatures(data: TemperatureSubmission[]) {
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -51,7 +51,7 @@ const rowsSchema = z
   .object({
     temperature: z.number("Temperature must be a number"),
     temperatureUnit: z.enum(["C", "F"]),
-    date: z.iso.date("Date is required"),
+    date: z.coerce.date("Date is required"),
     longitude: z
       .number("Longitude must be a number")
       .min(-180, "Longitude must be between -180 and 180")
