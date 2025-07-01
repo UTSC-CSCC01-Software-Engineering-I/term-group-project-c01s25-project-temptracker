@@ -188,6 +188,11 @@ export default function UploadTemperatureCSVForm() {
   const clearFile = () => {
     setUploadedFile(null);
     setUploadStatus("idle");
+    // Clear the input value so the same file can be selected again
+    const fileInput = document.getElementById("file-input") as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
   };
 
   return (
