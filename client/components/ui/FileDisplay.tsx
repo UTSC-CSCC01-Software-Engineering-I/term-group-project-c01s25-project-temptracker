@@ -45,7 +45,7 @@ export default function FileDisplay({
               e.stopPropagation();
               onClearFile();
             }}
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 dark:text-gray-600"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -61,10 +61,10 @@ export default function FileDisplay({
     <div className="flex flex-col items-center space-y-2">
       <Upload className="h-8 w-8 text-gray-400" />
       <div className="text-center">
-        <p className="text-sm font-medium text-gray-700">
+        <p className="text-sm font-medium">
           Drop your CSV file here or click to browse
         </p>
-        <p className="text-xs text-gray-500 mt-1">Max file size: 2MB</p>
+        <p className="text-xs text-muted-foreground mt-1">Max file size: 2MB</p>
       </div>
     </div>
   );

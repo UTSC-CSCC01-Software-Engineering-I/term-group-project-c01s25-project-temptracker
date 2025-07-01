@@ -39,7 +39,7 @@ export default function UploadTemperatureCSVForm() {
       baseClasses += " border-red-500 bg-red-50";
     } else {
       baseClasses +=
-        " border-gray-300 hover:border-primary/50 hover:bg-gray-50";
+        " border-gray-300 hover:border-primary/50 hover:bg-input/30";
     }
 
     if (isUploading) {
@@ -84,20 +84,18 @@ export default function UploadTemperatureCSVForm() {
           disabled={isUploading}
         />
 
-        <div className="flex flex-col items-center space-y-4">
-          <FileDisplay
-            isUploading={isUploading}
-            uploadedFile={uploadedFile}
-            uploadStatus={uploadStatus}
-            onClearFile={clearFile}
-          />
-        </div>
+        <FileDisplay
+          isUploading={isUploading}
+          uploadedFile={uploadedFile}
+          uploadStatus={uploadStatus}
+          onClearFile={clearFile}
+        />
 
         <StatusMessage uploadStatus={uploadStatus} />
       </div>
-      <div className="mt-4 text-xs text-gray-500 space-y-1">
+      <div className="mt-4 text-xs space-y-1">
         <p className="font-medium">Required CSV headers:</p>
-        <p className="font-mono bg-gray-100 p-2 rounded text-xs">
+        <p className="font-mono bg-gray-100 dark:bg-input/30 p-2 rounded text-xs">
           {EXPECTED_CSV_HEADERS.join(", ")}
         </p>
       </div>
