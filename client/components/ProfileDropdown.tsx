@@ -9,7 +9,7 @@ type LinkItem = { href: string; label: string };
 type ActionItem = { label: string; action: () => void };
 
 export default function ProfileDropdown() {
-  const { user, loading, logout } = useUser();
+  const { user, profile, loading, logout } = useUser();
   const [open, setOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -18,8 +18,7 @@ export default function ProfileDropdown() {
     await logout();
     window.location.href = "/"; // need to do it manually as router.refresh() doesn't trigger a full reload
   };
-
-  useEffect(() => {
+useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
@@ -76,19 +75,13 @@ export default function ProfileDropdown() {
           strokeWidth={2}
           viewBox="0 0 24 24"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19 9l-7 7-7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       <div
         className={`absolute right-0 mt-3 w-56 rounded-xl bg-white bg-opacity-80 backdrop-blur-md shadow-2xl ring-1 ring-dark-blue ring-opacity-50 z-50 origin-top-right transform transition-all duration-300 ${
-          open
-            ? "opacity-100 scale-100"
-            : "opacity-0 scale-95 pointer-events-none"
+          open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
         }`}
       >
         <div className="py-2 flex flex-col">
@@ -127,6 +120,17 @@ export default function ProfileDropdown() {
               {label}
             </Link>
           ))}
+
+          {/* Admin-only link */}
+          {profile?.role === "admin" && (
+            <Link
+              href="/admin"
+              className="block px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
+              onClick={() => setOpen(false)}
+            >
+              Admin
+            </Link>
+          )}
 
           <button
             type="button"
