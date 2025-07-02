@@ -15,6 +15,7 @@ const supabase = createClient();
 type MapProps = {
   centerLatitude: number | null;
   centerLongitude: number | null;
+  timeRange: "all" | "week" | "month"; 
 };
 
 const Map = (props: MapProps) => {
@@ -88,33 +89,54 @@ const Map = (props: MapProps) => {
     }
   };
 
-  const getData = async () => {
-    const { data, error } = await supabase
+  const getData = async (timeRange: "all" | "week" | "month") => {
+    let fromDate: string | null = null;
+
+    if (props.timeRange === "week") {
+      fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (props.timeRange === "month") {
+      fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    const query = supabase
       .from("temperatures")
       .select("latitude, longitude, temperature, measured_on");
 
+    if (fromDate) {
+      query.gte("measured_on", fromDate);
+    }
+
+    const { data, error } = await query;
+
     if (error) {
       console.error("Error fetching data:", error);
-      return [];
+      return;
     }
-    console.log(`Fetched data:`, data);
+
+    console.log("Filtered data:", data);
+
     const heatData = data.map((point) => [
       point.latitude,
       point.longitude,
       tempConverter(point.temperature),
     ]);
+
     const rawData = data.map((point) => [
       point.latitude,
       point.longitude,
       point.temperature,
     ]);
+
     setRawTempData(rawData);
     setTempData(heatData);
   };
 
   useEffect(() => {
-    getData();
-  }, []);
+    if (props.timeRange) {
+      getData();
+    }
+  }, [props.timeRange]);
+
 
   const HeatmapLayer = ({
     data,
