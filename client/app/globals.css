@@ -14,7 +14,7 @@
   }
 
   form {
-    @apply m-2 space-y-6 mx-auto p-6 rounded-lg bg-card shadow-md w-[92.5%] max-w-xl md:max-w-3xl;
+    @apply m-2 space-y-4 mx-auto p-6 rounded-lg bg-card shadow-md w-[92.5%] max-w-xl md:max-w-3xl;
   }
 }
 
@@ -166,3 +166,17 @@
 }
 
 /* need to add animations later */
+
+input[type="time"] {
+  color: black; /* text */
+  accent-color: black; /* buttons and highlights */
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+}
+
+input[type="time"]:focus {
+  outline: 2px solid black;
+  outline-offset: 2px;
+}

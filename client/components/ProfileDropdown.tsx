@@ -1,21 +1,24 @@
 "use client";
+
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import type { User } from "@supabase/supabase-js";
+import { useUser } from "@/app/context";
 
-export default function ProfileDropdown({
-  user,
-  onLogout,
-}: {
-  user: User | null;
-  onLogout: () => void;
-}) {
+type LinkItem = { href: string; label: string };
+type ActionItem = { label: string; action: () => void };
+
+export default function ProfileDropdown() {
+  const { user, profile, loading, logout } = useUser();
   const [open, setOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/"; // need to do it manually as router.refresh() doesn't trigger a full reload
+  };
+useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
@@ -40,11 +43,13 @@ export default function ProfileDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // links
-  const universalLinks = [{ href: "/settings", label: "Settings" }];
+  const universalLinks: LinkItem[] = [{ href: "/settings", label: "Settings" }];
 
-  const authLinks = user
-    ? [{ label: "Logout", action: onLogout }]
+  const authLinks: (LinkItem | ActionItem)[] = user
+    ? [
+        { href: "/profile", label: "Profile" },
+        { label: "Logout", action: handleLogout },
+      ]
     : [{ href: "/login", label: "Login/Register" }];
 
   return (
@@ -70,19 +75,13 @@ export default function ProfileDropdown({
           strokeWidth={2}
           viewBox="0 0 24 24"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19 9l-7 7-7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       <div
         className={`absolute right-0 mt-3 w-56 rounded-xl bg-white bg-opacity-80 backdrop-blur-md shadow-2xl ring-1 ring-dark-blue ring-opacity-50 z-50 origin-top-right transform transition-all duration-300 ${
-          open
-            ? "opacity-100 scale-100"
-            : "opacity-0 scale-95 pointer-events-none"
+          open ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
         }`}
       >
         <div className="py-2 flex flex-col">
@@ -103,7 +102,7 @@ export default function ProfileDropdown({
                   link.action();
                   setOpen(false);
                 }}
-                className="w-full text-left px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
+                className="w-full text-left px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition cursor-pointer"
                 type="button"
               >
                 {link.label}
@@ -121,6 +120,17 @@ export default function ProfileDropdown({
               {label}
             </Link>
           ))}
+
+          {/* Admin-only link */}
+          {profile?.role === "admin" && (
+            <Link
+              href="/admin"
+              className="block px-5 py-1.5 text-gray-800 font-semibold rounded-lg hover:bg-main-blue hover:text-dark-blue transition"
+              onClick={() => setOpen(false)}
+            >
+              Admin
+            </Link>
+          )}
 
           <button
             type="button"

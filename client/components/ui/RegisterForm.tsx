@@ -20,9 +20,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { registerUser } from "@/lib/supabase/api/register";
 
 const formSchema = z
   .object({
+    username: z
+      .string()
+      .trim()
+      .min(3, { message: "Username must be at least 3 characters" })
+      .max(20, { message: "Username must be at most 20 characters" }),
     email: z
       .string()
       .trim()
@@ -49,6 +55,7 @@ export default function RegisterForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      username: "",
       email: "",
       password: "",
       confirm: "",
@@ -56,28 +63,45 @@ export default function RegisterForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    const { email, password } = values;
-
-    const { error } = await supabase.auth.signUp({ email, password });
-
-    if (error) {
-      toast.error(
-        "There was an error creating your account. Please try again."
-      );
-      form.setError("root", { message: error.message });
-    } else {
-      toast.success(
-        "Account created successfully! Please check your email to verify your account."
-      );
+    try {
+      await registerUser({
+        username: values.username,
+        email: values.email,
+        password: values.password,
+      });
+      toast.success("Account created successfully! Please check your email.");
       router.refresh();
       router.push("/login");
+    } catch (error: any) {
+      if (error.message.includes("Username")) {
+        form.setError("username", { message: error.message });
+      } else if (error.message.includes("Email")) {
+        form.setError("email", { message: error.message });
+      } else {
+        form.setError("root", { message: error.message });
+        toast.error(error.message);
+      }
     }
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Username<span className="text-red-700">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input placeholder="Choose a username" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="email"
@@ -122,7 +146,6 @@ export default function RegisterForm() {
                   )}
                 </Button>
               </div>
-              <FormDescription>Must be as least 8 characters.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
