@@ -7,6 +7,7 @@ export interface TemperatureSubmission {
   latitude: number;
   longitude: number;
   date: Date;
+  time: string;
   notes?: string;
 }
 
@@ -19,6 +20,11 @@ export async function submitTemperature(data: TemperatureSubmission) {
     throw new Error("Login to submit a temperature reading.");
   }
 
+  // Combine date and time into a full timestamp
+  const [hours, minutes] = data.time.split(':');
+  const timestamp = new Date(data.date);
+  timestamp.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
   const { data: result, error } = await supabase
     .from("temperatures")
     .insert({
@@ -28,7 +34,7 @@ export async function submitTemperature(data: TemperatureSubmission) {
           : data.temperature,
       latitude: data.latitude,
       longitude: data.longitude,
-      measured_on: data.date.toISOString(),
+      measured_on: timestamp.toISOString(),
       notes: data.notes,
       user_id: user.id,
     })

@@ -166,3 +166,17 @@
 }
 
 /* need to add animations later */
+
+input[type="time"] {
+  color: black; /* text */
+  accent-color: black; /* buttons and highlights */
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+}
+
+input[type="time"]:focus {
+  outline: 2px solid black;
+  outline-offset: 2px;
+}
