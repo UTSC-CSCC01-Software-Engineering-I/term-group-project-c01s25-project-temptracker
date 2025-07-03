@@ -86,7 +86,9 @@ export default function Profile() {
               {user?.email || "email@example.com"}
             </p>
             <div className="mt-2">
-              <p className="text-sm text-gray-500">Signed in with {provider}</p>
+              <p className="text-sm text-gray-500">
+                Signed in with <span className="capitalize">{provider}</span>
+              </p>
               <p className="text-sm text-gray-500">User since {userSince}</p>
             </div>
           </div>
@@ -133,7 +135,14 @@ export default function Profile() {
           </thead>
           <tbody className="divide-y divide-gray-200 text-gray-700">
             {submissions.map(
-              ({ id, measured_on, temperature, latitude, longitude, notes }) => (
+              ({
+                id,
+                measured_on,
+                temperature,
+                latitude,
+                longitude,
+                notes,
+              }) => (
                 <tr
                   key={id}
                   className="hover:bg-blue-100 transition-colors duration-200"
