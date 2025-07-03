@@ -19,9 +19,12 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
-import Image from 'next/image
+import Image from 'next/image';
 import { loginUser } from "@/lib/supabase/api/login";
 
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 
 const formSchema = z.object({
   identifier: z
