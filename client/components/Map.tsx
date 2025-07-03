@@ -133,7 +133,7 @@ const Map = (props: MapProps) => {
 
   useEffect(() => {
     if (props.timeRange) {
-      getData();
+      getData(props.timeRange);
     }
   }, [props.timeRange]);
 
