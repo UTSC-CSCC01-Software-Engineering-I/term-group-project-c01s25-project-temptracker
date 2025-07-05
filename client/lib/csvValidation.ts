@@ -16,6 +16,7 @@ export const EXPECTED_CSV_HEADERS = [
   "temperature",
   "temperatureUnit",
   "date",
+  "time",
   "longitude",
   "latitude",
   "notes",
@@ -51,7 +52,18 @@ const rowsSchema = z
   .object({
     temperature: z.number("Temperature must be a number"),
     temperatureUnit: z.enum(["C", "F"]),
-    date: z.coerce.date("Date is required"),
+    date: z.coerce.date({
+      error: (iss) =>
+        iss.code === "invalid_type"
+          ? "Date must be in YYYY-MM-DD format"
+          : "Something went wrong with the date format",
+    }),
+    time: z
+      .string()
+      .regex(
+        /^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/,
+        "Time must be in HH:MM format (24-hour clock)"
+      ),
     longitude: z
       .number("Longitude must be a number")
       .min(-180, "Longitude must be between -180 and 180")

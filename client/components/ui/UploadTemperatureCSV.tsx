@@ -28,7 +28,6 @@ export default function UploadTemperatureCSVForm() {
   } = useCSVUpload();
 
   const { profile } = useUser();
-  console.log(profile);
 
   const form = useForm<[TemperatureData]>();
 
