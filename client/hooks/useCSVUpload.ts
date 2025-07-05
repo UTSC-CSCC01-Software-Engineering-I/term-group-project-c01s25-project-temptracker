@@ -18,14 +18,13 @@ export function useCSVUpload() {
     try {
       const validationResult = await validateCSV(file);
       if (!validationResult.success) {
-        // Display first error with toast and the rest in console
         toast.error(
           validationResult.errors?.[0]?.message || "Validation failed"
         );
 
-        validationResult.errors?.slice(1).forEach((error) => {
+        for (const error of validationResult.errors || []) {
           console.error("Validation error:", error);
-        });
+        }
 
         setUploadStatus("error");
         return;
