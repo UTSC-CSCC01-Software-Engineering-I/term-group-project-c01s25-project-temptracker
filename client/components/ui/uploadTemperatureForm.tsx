@@ -102,10 +102,7 @@ export default function UploadTemperatureForm() {
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6"
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Temperature */}
         <div className="space-y-0.5">
           <FormLabel className="text-base font-semibold">
@@ -212,98 +209,103 @@ export default function UploadTemperatureForm() {
             Date and Time of Reading
           </FormLabel>
 
-          {/* Date */}
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant={"outline"} className="mb-2">
-                        {field.value
-                          ? format(field.value, "PPP")
-                          : "Pick a date"}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={new Date(field.value)}
-                        onSelect={field.onChange}
-                        disabled={(date) => date > new Date()}
-                        captionLayout="dropdown"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Time */}
-          <FormField
-            control={form.control}
-            name="time"
-            render={({ field }) => {
-              const [hour, minute] = (field.value || "00:00").split(":");
-              const updateTime = (newHour: string, newMinute: string) => {
-                field.onChange(`${newHour || hour}:${newMinute || minute}`);
-              };
-
-              return (
-                <FormItem>
+          <div className="flex space-x-3">
+            {/* Date */}
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex-1">
                   <FormControl>
-                    <div className="flex items-center gap-3">
-                      <Select
-                        value={hour}
-                        onValueChange={(h) => updateTime(h, minute)}
-                      >
-                        <SelectTrigger className="w-20">
-                          <SelectValue placeholder="HH" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 24 }, (_, i) => {
-                            const h = i.toString().padStart(2, "0");
-                            return (
-                              <SelectItem key={h} value={h}>
-                                {h}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                      <span className="text-muted-foreground font-medium">
-                        :
-                      </span>
-                      <Select
-                        value={minute}
-                        onValueChange={(m) => updateTime(hour, m)}
-                      >
-                        <SelectTrigger className="w-20">
-                          <SelectValue placeholder="MM" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 60 }, (_, i) => {
-                            const m = i.toString().padStart(2, "0");
-                            return (
-                              <SelectItem key={m} value={m}>
-                                {m}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className="w-full justify-start text-left"
+                        >
+                          {field.value
+                            ? format(field.value, "PPP")
+                            : "Pick a date"}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={new Date(field.value)}
+                          onSelect={field.onChange}
+                          disabled={(date) => date > new Date()}
+                          captionLayout="dropdown"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              );
-            }}
-          />
+              )}
+            />
+
+            {/* Time */}
+            <FormField
+              control={form.control}
+              name="time"
+              render={({ field }) => {
+                const [hour, minute] = (field.value || "00:00").split(":");
+                const updateTime = (newHour: string, newMinute: string) => {
+                  field.onChange(`${newHour || hour}:${newMinute || minute}`);
+                };
+
+                return (
+                  <FormItem className="w-auto">
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={hour}
+                          onValueChange={(h) => updateTime(h, minute)}
+                        >
+                          <SelectTrigger className="w-20">
+                            <SelectValue placeholder="HH" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 24 }, (_, i) => {
+                              const h = i.toString().padStart(2, "0");
+                              return (
+                                <SelectItem key={h} value={h}>
+                                  {h}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-muted-foreground font-medium">
+                          :
+                        </span>
+                        <Select
+                          value={minute}
+                          onValueChange={(m) => updateTime(hour, m)}
+                        >
+                          <SelectTrigger className="w-20">
+                            <SelectValue placeholder="MM" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 60 }, (_, i) => {
+                              const m = i.toString().padStart(2, "0");
+                              return (
+                                <SelectItem key={m} value={m}>
+                                  {m}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+          </div>
 
           <FormDescription>
             Uses current date and time if not specified
