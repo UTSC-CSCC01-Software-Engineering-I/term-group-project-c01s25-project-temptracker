@@ -39,16 +39,23 @@ const Map = (props: MapProps) => {
   const gTest = geoJsonTest as GeoJsonObject
 
   const [tempVisible, setTempVisible] = useState(true);
-    const [geoData, setGeoData] = useState<any>(null);
-    const [loading, setLoading] = useState(false);
-    const [polygons, setPolygons] = useState<any[]>([]);
-    const [gridsGenerated, setGridsGenerated] = useState(false);
-    
-    //Slider
-    const [weekDataBucket, setWeekDataBucket] = useState<any[]>([]);
-    const [monthDataBucket, setMonthDataBucket] = useState<any[]>([]);
-    const [currentWeekday, setCurrentWeekday] = useState(7)
-    const [currentMonthDate, setCurrentMonthDate] = useState(30)
+  const [geoData, setGeoData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [polygons, setPolygons] = useState<any[]>([]);
+  const [gridsGenerated, setGridsGenerated] = useState(false);
+  
+  //Slider
+  const [weekDataBucket, setWeekDataBucket] = useState<any[]>([]);
+  const [monthDataBucket, setMonthDataBucket] = useState<any[]>([]);
+  const [currentWeekday, setCurrentWeekday] = useState(7)
+  const [currentMonthDate, setCurrentMonthDate] = useState(30)
+
+  //click nearest point
+  const [allBucketRaw, setAllBucketRaw] = useState<any[]>([])
+  const [weekBucketRaw, setWeekBucketRaw] = useState<any[]>([])
+  const [montthBucketRaw, setMonthBucketRaw] = useState<any[]>([])
+  const [unit, setUnit] = useState('Celsius')
+
 
   const generateGrids = () => {
       let grids = []
@@ -190,6 +197,12 @@ const Map = (props: MapProps) => {
       return 1.0; // dark red
     }
   };
+
+  const toFarenheit = (temp: any) => {
+    if (typeof temp === "number") {
+      return (temp * 1.8) + 32
+    }
+  }
 
   const createWeekMarks = () => {
     const date = new Date(Date.now())
@@ -718,26 +731,77 @@ const SliderLayer = () => {
   const findNearestTemperaturePoint = (
     clickLat: number,
     clickLng: number,
+    timeRange: string,
     maxDistance: number = 0.5
   ) => {
     let nearest = null;
     let minDistance = Infinity;
 
-    rawTempData.forEach((point: [number, number, number]) => {
-      const distance = Math.sqrt(
-        Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-      );
-      if (distance < minDistance && distance <= maxDistance) {
-        minDistance = distance;
-        nearest = {
-          temperature: point[2],
-          latitude: point[0],
-          longitude: point[1],
-          distance: distance,
-        };
-      }
-    });
-    console.log("Nearest point:", nearest);
+    if (timeRange == "week") {
+      weekBucketRaw[currentWeekday-1].forEach((point: [number, number, number]) => {
+        const distance = Math.sqrt(
+          Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
+        );
+        if (distance < minDistance && distance <= 2*maxDistance) {
+          minDistance = distance;
+          nearest = {
+            temperature: point[2],
+            latitude: point[0],
+            longitude: point[1],
+            distance: distance,
+          };
+        }
+      });
+      console.log("Nearest point:", nearest);
+    } else if (timeRange == "month") {
+        montthBucketRaw[currentMonthDate-1].forEach((point: [number, number, number]) => {
+        const distance = Math.sqrt(
+          Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
+        );
+        if (distance < minDistance && distance <= 2*maxDistance) {
+          minDistance = distance;
+          nearest = {
+            temperature: point[2],
+            latitude: point[0],
+            longitude: point[1],
+            distance: distance,
+          };
+        }
+      });
+      console.log("Nearest point:", nearest);
+    } else {
+        allBucketRaw.forEach((point: [number, number, number]) => {
+        const distance = Math.sqrt(
+          Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
+        );
+        if (distance < minDistance && distance <= maxDistance) {
+          minDistance = distance;
+          nearest = {
+            temperature: point[2],
+            latitude: point[0],
+            longitude: point[1],
+            distance: distance,
+          };
+        }
+        });
+        console.log("Nearest point:", nearest);
+    }
+
+    // rawTempData.forEach((point: [number, number, number]) => {
+    //   const distance = Math.sqrt(
+    //     Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
+    //   );
+    //   if (distance < minDistance && distance <= maxDistance) {
+    //     minDistance = distance;
+    //     nearest = {
+    //       temperature: point[2],
+    //       latitude: point[0],
+    //       longitude: point[1],
+    //       distance: distance,
+    //     };
+    //   }
+    // });
+    // console.log("Nearest point:", nearest);
     return nearest;
   };
 
@@ -751,7 +815,7 @@ const SliderLayer = () => {
               }
                 console.log('Map clicked at:', lat, lng);
                 
-                const nearestPoint = findNearestTemperaturePoint(lat, lng);
+                const nearestPoint = findNearestTemperaturePoint(lat, lng, props.timeRange);
                 
                 if (nearestPoint) {
                     setClickedPoint({
@@ -864,6 +928,7 @@ const SliderLayer = () => {
         
         if (props.timeRange == "week") {
           let weeklyPoints = []
+          let weeklyPointsRaw = []
           const weekData = bucketWeek(rawTempData)
           console.log('week data', weekData)
 
@@ -896,13 +961,17 @@ const SliderLayer = () => {
             const combine = [...weekDataWithoutTime, ...allNewPoints].map((point) => {
               return [point[0], point[1], tempConverter(point[2])]
             })
+            const combineRaw = [...weekDataWithoutTime, ...allNewPoints]
             weeklyPoints.push(combine)
+            weeklyPointsRaw.push(combineRaw)
           }
           //set state
           setWeekDataBucket(weeklyPoints)
+          setWeekBucketRaw(weeklyPointsRaw)
 
         } else if (props.timeRange == "month") {
           let monthlyPoints = []
+          let monthlyPointsRaw = []
           const monthData = bucketMonth(rawTempData)
 
           if (!monthData || !Array.isArray(monthData) || monthData.length < 30) {
@@ -934,10 +1003,13 @@ const SliderLayer = () => {
             const combine = [...monthDataWithoutTime, ...allNewPoints].map((point) => {
               return [point[0], point[1], tempConverter(point[2])]
             })
+            const combineRaw = [...monthDataWithoutTime, ...allNewPoints]
             monthlyPoints.push(combine)
+            monthlyPointsRaw.push(combineRaw)
           }
           //set State
           setMonthDataBucket(monthlyPoints)
+          setMonthBucketRaw(monthlyPointsRaw)
           // console.log('MONTH BUCKET AFTER INTERPOLATION', monthlyPoints)
           
         } else {
@@ -957,7 +1029,10 @@ const SliderLayer = () => {
               // console.log('Temperature before conversion:', point[2]); // Add this line
               return [point[0], point[1], tempConverter(point[2])]
             })
-            setInterpolatedTempData(join);     
+            const joinRaw: TemperaturePoint[] = [...tempData, ...allNewPoints]
+
+            setInterpolatedTempData(join);
+            setAllBucketRaw(joinRaw)     
           }
         }
       }
@@ -993,7 +1068,7 @@ const SliderLayer = () => {
                 <Marker position={[clickedPoint.latitude, clickedPoint.longitude]} icon={customIcon}>
                     <Popup>
                         <div>
-                            <strong>Temperature:</strong> {clickedPoint.nearestPoint?.temperature}°C<br/>
+                            <strong>Temperature:</strong> {unit == 'Celsius' ? `${clickedPoint.nearestPoint?.temperature} °C` : `${toFarenheit(clickedPoint.nearestPoint?.temperature)} °F`}<br/>
                         </div>
                     </Popup>
                 </Marker>
@@ -1006,9 +1081,20 @@ const SliderLayer = () => {
                 zIndex: 1000,
                 pointerEvents: 'auto'
             }}>
-                <div className='md:max-w-165px max-w-135px flex items-center justify-center gap-2 mb-2'>
+                <div className='md:max-w-165px max-w-135px flex flex-col items-center justify-center gap-2 mb-2'>
+                  <div
+                    onClick={() => {
+                      if (unit == 'Celsius') {
+                        setUnit('Farenheit')
+                      } else {
+                        setUnit('Celsius')
+                      }
+                    }} 
+                    className='w-full text-center bg-[#FFFFFFE6] hover:bg-[#FFFFFFCC] shadow text-[#333] md:text-base text-xs font-semibold px-4 py-2 rounded-md transition-colors cursor-pointer'>
+                        {unit == 'Celsius'? 'Toggle Units: °C' : 'Toggle Units: °F'}
+                  </div>
                     <button 
-                        className='bg-[#FFFFFFE6] hover:bg-[#FFFFFFCC] shadow text-[#333] md:text-base text-xs font-semibold px-4 py-2 rounded-md transition-colors cursor-pointer'
+                        className='w-full text-center bg-[#FFFFFFE6] hover:bg-[#FFFFFFCC] shadow text-[#333] md:text-base text-xs font-semibold px-4 py-2 rounded-md transition-colors cursor-pointer'
                         onClick={() => setTempVisible(!tempVisible)}
                     >
                         Toggle Temperature
