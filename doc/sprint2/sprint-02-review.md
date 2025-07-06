@@ -66,13 +66,13 @@ List any process-related changes you are planning to make (if there are any)
 
 1. The temperature upload form was finalized and the previously made frontend was now linked to the PostgreSQL database. The form is vital for the MVP as it allows users to submit data to populate the map. In accordance with our goal, we also finished the CSV upload for admins. In accordance with our metrics, we have a 100% read/write success rate and our API calls are working accordingly (0 Auth/Temperature related 500- or 400- statuses). [Supabase (May not have access)](https://supabase.com/dashboard/project/vertksxuryrywouipodt/logs/edge-logs?its=2025-07-05T19:28:21.764Z&ite=&f={%22status_code%22:{%22error%22:false,%22success%22:true) 
 
-![Supabase Database Req](https://drive.google.com/file/d/1BAtybJtwpx2l-AqbLvq84eg8dG1fyTBb/view?usp=sharing
+![Supabase Database Req](https://drive.google.com/uc?export=view&id=1BAtybJtwpx2l-AqbLvq84eg8dG1fyTBb)
 
-![Supabase Req](https://drive.google.com/file/d/135eNJOzC0OntZkxpUi0zqZW_k-hWeJJJ/view?usp=sharing)
+![Supabase Req](https://drive.google.com/uc?export=view&id=135eNJOzC0OntZkxpUi0zqZW_k-hWeJJJ)
 
 2. User Authentication was mostly implemented, with OAuth being enabled as an additional sign-in partner. Usernames are collected for manual sign-ins, but the only current limitation is not prompting OAuth users to create one upon first entry. Despite that, the profile and related pages all work accordingly, and Supabase metrics do not show any vulnerabilities in this regard. *Supabase successful auth rates shown below*.
 
-![Auth Req](https://drive.google.com/file/d/1uuiZ-XutQ3dzSGozheCa0efiojcqpy88/view?usp=sharing)
+![Auth Req](https://drive.google.com/uc?export=view&id=1uuiZ-XutQ3dzSGozheCa0efiojcqpy88)
 
 3. An about page that contains the overall incentive/mission statement of the app was created. This page serves as a landing page and includes statistics and information presented in a very accessible and high-UX way.
 
