@@ -3,11 +3,19 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/shadcn/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input";
 import { Button } from "@/components/shadcn/button";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { sendResetEmail } from "@/lib/supabase/api/forgotPassword";
 
 const schema = z.object({
   email: z.string().email({ message: "Invalid email" }),
@@ -22,17 +30,17 @@ export default function ForgotPasswordForm() {
   });
 
   async function onSubmit(values: z.infer<typeof schema>) {
-    const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-
-    if (error) toast.error(error.message);
-    else toast.success("Reset link sent!");
+    try {
+      await sendResetEmail(values.email);
+      toast.success("Reset link sent!");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-80 space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="email"
@@ -46,7 +54,9 @@ export default function ForgotPasswordForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">Send reset link</Button>
+        <Button type="submit" className="w-full">
+          Send reset link
+        </Button>
       </form>
     </Form>
   );

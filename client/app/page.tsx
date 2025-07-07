@@ -21,6 +21,8 @@ export default function Home() {
   const [centerLatitude, setCenterLatitude] = useState<number | null>(null);
   const [centerLongitude, setCenterLongitude] = useState<number | null>(null);
 
+  const [timeRange, setTimeRange] = useState<"all" | "week" | "month">("all");
+
   const handleLatitude = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
     setSearchLatitude(val);
@@ -73,11 +75,25 @@ export default function Home() {
         >
           Search
         </button>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="timeRange">Time Range</Label>
+          <select
+            id="timeRange"
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value as any)}
+            className="border rounded px-3 py-1"
+          >
+            <option value="all">All Time</option>
+            <option value="week">Last Week</option>
+            <option value="month">Last Month</option>
+          </select>
+        </div>
       </div>
       <div className="map-placeholder">
         <LazyMap
           centerLatitude={centerLatitude}
           centerLongitude={centerLongitude}
+          timeRange={timeRange}
         />
       </div>
       <section className="locations-section">

@@ -14,7 +14,7 @@
   }
 
   form {
-    @apply m-2 space-y-6 w-full mx-auto p-6 rounded-lg bg-card shadow-md max-w-[500px];
+    @apply m-2 space-y-4 mx-auto p-6 rounded-lg bg-card shadow-md w-[92.5%] max-w-xl md:max-w-3xl;
   }
 }
 
@@ -23,6 +23,8 @@
   --color-nav-blue: #53a5cb;
   --color-dark-blue: #09173b;
   --color-card-blue: #3d4552;
+  --color-hover-blue: #b0d5e6;
+
 }
 
 /* dont use any of these for now */
@@ -161,4 +163,20 @@
   align-items: center;
   font-weight: 900;
   font-size: 1.5rem;
+}
+
+/* need to add animations later */
+
+input[type="time"] {
+  color: black; /* text */
+  accent-color: black; /* buttons and highlights */
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+}
+
+input[type="time"]:focus {
+  outline: 2px solid black;
+  outline-offset: 2px;
 }

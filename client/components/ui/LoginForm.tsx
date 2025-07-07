@@ -14,22 +14,25 @@ import {
 } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input";
 import Link from "next/link";
-import { createClient } from "../../lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
-const formSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, { message: "Email is required" })
-    .email({ message: "Invalid email address" }),
-  password: z.string().trim().min(1, { message: "Password is required" }),
-});
+import Image from 'next/image';
+import { loginUser } from "@/lib/supabase/api/login";
+
+import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
+
+const formSchema = z.object({
+  identifier: z
+    .string()
+    .trim()
+    .min(1, { message: "Email or Username is required" }),
+  password: z.string().trim().min(1, { message: "Password is required" }),
+});
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +40,7 @@ export default function LoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
     },
   });
@@ -45,20 +48,22 @@ export default function LoginForm() {
   const router = useRouter();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    const { email, password } = values;
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      form.setError("root", { message: error.message });
-    } else {
+    try {
+      await loginUser(values.identifier, values.password);
       toast.success("Login successful!");
       router.refresh();
       router.push("/");
+    } catch (error: any) {
+      if (
+        error.message.includes("Username") ||
+        error.message.includes("email") ||
+        error.message.includes("password")
+      ) {
+        form.setError("identifier", { message: error.message });
+      } else {
+        form.setError("root", { message: error.message });
+        toast.error(error.message);
+      }
     }
   }
 
@@ -67,10 +72,10 @@ export default function LoginForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="">
         <FormField
           control={form.control}
-          name="email"
+          name="identifier"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Email / Username</FormLabel>
               <FormControl>
                 <Input placeholder="example@email.com" {...field} />
               </FormControl>
@@ -88,7 +93,7 @@ export default function LoginForm() {
                 <div className="relative">
                   <FormControl>
                     <Input
-                      placeholder="&#183; &#183; &#183; &#183; &#183; &#183; &#183; &#183;"
+                      placeholder="••••••••"
                       type={showPassword ? "text" : "password"}
                       {...field}
                     />
@@ -109,14 +114,47 @@ export default function LoginForm() {
               </FormControl>
               <FormMessage />
               <Button variant="link" size="link" className="ml-auto">
-                <Link href="/forgot-password" className="text-secondary">Forgot your password?</Link>
+                <Link href="/forgot-password" className="text-secondary">
+                  Forgot your password?
+                </Link>
               </Button>
             </FormItem>
           )}
         />
+        {form.formState.errors.root && (
+          <FormMessage>{form.formState.errors.root.message}</FormMessage>
+        )}
         <Button type="submit" size="submit">
           Login
         </Button>
+        <div className="w-full flex flex-col">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex items-center justify-center gap-2"
+            onClick={async () => {
+              const { error } = await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                  redirectTo: `${window.location.origin}/auth/callback`,
+                },
+              });
+              if (error) {
+                toast.error(error.message);
+              }
+            }}
+          >
+            <Image
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google"
+              width={15}
+              height={15}
+            />
+            Continue with Google
+          </Button>
+        </div>
+
+
         <div className="flex items-center">
           <div className="flex-1 h-[2px] bg-muted-foreground mr-3"></div>
           Or
@@ -124,7 +162,11 @@ export default function LoginForm() {
         </div>
         <div className="flex items-center justify-center">
           <p>Don&apos;t have an account yet?</p>
-          <Button variant="link" size="link" className="ml-2 text-base text-secondary">
+          <Button
+            variant="link"
+            size="link"
+            className="ml-2 text-base text-secondary"
+          >
             <Link href="register">Register</Link>
           </Button>
         </div>

@@ -4,7 +4,7 @@ import { ThemeProvider } from "next-themes";
 import Header from "@/components/Header";
 import "./globals.css";
 import { Toaster } from "sonner";
-
+import { UserProvider } from "./context";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -33,17 +33,19 @@ export default function RootLayout({
       <body className={`${geistSans.className} antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-1 p-4 flex items-center justify-center">
-              {children}
-            </main>
-          </div>
-          <Toaster position="top-center" richColors/>
+          <UserProvider>
+            <div className="min-h-screen flex flex-col">
+              <Header />
+              <main className="flex-1 p-4 flex flex-col items-center">
+                <div className="mt-10 w-full">{children}</div>
+              </main>
+            </div>
+          </UserProvider>
+          <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>
     </html>
