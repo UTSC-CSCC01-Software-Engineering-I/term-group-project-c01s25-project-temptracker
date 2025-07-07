@@ -1,6 +1,6 @@
 # Release Plan
 
-**Release Name:** `<Release-v1.1>`
+**Release Name:** `<Release-v2.0>`
 
 ---
 
@@ -45,7 +45,7 @@ The second primary goal is to implement the map feature with over 1000 mock poin
 
 ## Release Scope
 
-The v1.1 release of the GLOW app should fulfill the primary goals outlined above, with some changes in implementation and construction.
+The v2.0 release of the GLOW app should fulfill the primary goals outlined above, with some changes in implementation and construction.
 
 ### Included Features
 
