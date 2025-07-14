@@ -32,7 +32,11 @@ import {
   interpolation,
 } from "./graphUtils";
 
-import type { MapProps, TemperaturePoint, TimeTemperaturePoint } from "./mapTypes";
+import type {
+  MapProps,
+  TemperaturePoint,
+  TimeTemperaturePoint,
+} from "./mapTypes";
 
 import { GeoJsonObject } from "geojson";
 import { string } from "zod/v4";
@@ -72,7 +76,7 @@ const Map = (props: MapProps) => {
     let grids = [];
     for (let i = 0; i < polygons.length; i++) {
       if (polygons[i].containsPoint) {
-        const grid = generateGridInPolygon(polygons[i].coordinates, 0.1);
+        const grid = generateGridInPolygon(polygons[i].coordinates, 0.5);
         grids.push({ grid: grid, polygon: polygons[i] });
       }
     }
@@ -128,37 +132,55 @@ const Map = (props: MapProps) => {
   });
 
   // console.log('geo data',geoJson)
-  useEffect(() => {
-    const loadGeoJSON = async () => {
-      try {
-        setGeoData(gTest);
-        //geoJson is ordered [long, lat]
-        const coordList = geoJsonTest.geometries[0].coordinates;
-        const x = coordList.map((coord: any) => {
-          let containspoint = false;
-          for (let i = 0; i < tempData.length; i++) {
-            const point = tempData[i];
-            if (pointInPolygon([point[1], point[0]], coord[0])) {
-              containspoint = true;
-              break;
-            }
-          }
-          return {
-            coordinates: coord[0],
-            containsPoint: containspoint,
-          };
-        });
-        setPolygons(x);
+  console.log(tempData, "temp data points loaded");
+  
+  // IMPORTANT
+  // Uncomment below when you run: Can be unstable
+  
+  // useEffect(() => {
+  //   const loadGeoJSON = async () => {
+  //     try {
+  //       setGeoData(gTest);
+  //       //geoJson is ordered [long, lat]
+  //       const coordList = geoJsonTest.geometries[0].coordinates;
+  //       const x = coordList
+  //         .slice(0, 1000)
+  //         .map((coord: any, index: number) => {
+  //           if (!coord || !Array.isArray(coord[0])) return null;
 
-        // const grids = generateGrids(); // This will now work with populated polygons
-        // setGeoGrids(grids);
-      } catch (error) {
-        console.error("Error loading geo data:", error);
-      }
-    };
+  //           let containspoint = false;
+  //           for (let i = 0; i < Math.min(tempData.length, 500); i++) {
+  //             const point = tempData[i];
+  //             if (
+  //               Array.isArray(point) &&
+  //               point.length >= 2 &&
+  //               typeof point[0] === "number" &&
+  //               typeof point[1] === "number" &&
+  //               pointInPolygon([point[1], point[0]], coord[0])
+  //             ) {
+  //               containspoint = true;
+  //               break;
+  //             }
+  //           }
 
-    loadGeoJSON();
-  }, []);
+  //           return {
+  //             coordinates: coord[0],
+  //             containsPoint: containspoint,
+  //           };
+  //         })
+  //         .filter(Boolean);
+
+  //       setPolygons(x);
+
+  //       // const grids = generateGrids(); // This will now work with populated polygons
+  //       // setGeoGrids(grids);
+  //     } catch (error) {
+  //       console.error("Error loading geo data:", error);
+  //     }
+  //   };
+
+  //   loadGeoJSON();
+  // }, []);
 
   useEffect(() => {
     if (polygons.length > 0) {
