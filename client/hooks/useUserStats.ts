@@ -29,6 +29,17 @@ export function useUserStats(userId: string | undefined) {
           "upload_count"
         );
 
+        const badgesResponse = await axios.get(
+          `${API_BASE_URL}/users/${userId}/badges`,
+          {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          }
+        );
+
+        console.log("Badges:", badgesResponse.data);
+
         setRank(stats.rank);
         setStreak(stats.curr_streak);
         console.log("User stats:", stats);

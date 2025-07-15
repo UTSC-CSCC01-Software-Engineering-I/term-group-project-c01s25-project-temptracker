@@ -20,7 +20,22 @@ async function getUserSubmissions(userId) {
   }
 }
 
+async function getUserBadges(userId) {
+  try {
+    const { data } = await supabase
+      .from("user_badges")
+      .select(`earned_on, badges (*)`)
+      .eq("user_id", userId);
+
+    return data || [];
+  } catch (e) {
+    console.error("Error fetching user badges:", e);
+    throw e;
+  }
+}
+
 module.exports = {
   getAllUsers,
   getUserSubmissions,
+  getUserBadges,
 };

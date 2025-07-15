@@ -13,5 +13,6 @@ userRouter.get(
   verifySelfAccess,
   userController.getUserSubmissions
 );
+userRouter.get("/:id/badges", verifySelfAccess, userController.getUserBadges);
 
 module.exports = userRouter;

@@ -19,7 +19,18 @@ async function getUserSubmissions(req, res) {
   }
 }
 
+async function getUserBadges(req, res) {
+  const userId = req.params.id;
+  try {
+    const badges = await userService.getUserBadges(userId);
+    res.json(badges);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   getUsers,
   getUserSubmissions,
+  getUserBadges,
 };
