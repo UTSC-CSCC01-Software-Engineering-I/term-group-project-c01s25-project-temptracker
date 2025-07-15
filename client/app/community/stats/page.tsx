@@ -8,7 +8,7 @@ import {
   fetchTopByLikesCount,
   fetchTopByMaxStreak,
   fetchCurrentUserStatsWithRank,
-} from "@/lib/supabase/services/statsService";
+} from "@/lib/services/statsService";
 
 type User = {
   user_id: number; // used as a key when rendering the table

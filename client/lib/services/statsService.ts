@@ -1,9 +1,13 @@
-import { createClient } from "../client";
+// RECONSIDER: currently a full frontend service
+import { createClient } from "../supabase/client";
 
 const supabase = createClient();
 
 // fixes tied ranking issue, O(50) complexity is negligible
-function assignRanksWithTies(data: any[], orderBy: "upload_count" | "likes_count" | "max_streak") {
+function assignRanksWithTies(
+  data: any[],
+  orderBy: "upload_count" | "likes_count" | "max_streak"
+) {
   let rank = 0;
   let lastValue: number | null = null;
   let countSame = 0;
@@ -26,14 +30,16 @@ function assignRanksWithTies(data: any[], orderBy: "upload_count" | "likes_count
 export async function fetchTopByUploadCount(limit = 50) {
   const { data, error } = await supabase
     .from("stats")
-    .select(`
+    .select(
+      `
       user_id,
       curr_streak,
       max_streak,
       upload_count,
       likes_count,
       user_profile:user_profiles(username)
-    `)
+    `
+    )
     .order("upload_count", { ascending: false })
     .limit(limit);
 
@@ -56,14 +62,16 @@ export async function fetchTopByUploadCount(limit = 50) {
 export async function fetchTopByLikesCount(limit = 50) {
   const { data, error } = await supabase
     .from("stats")
-    .select(`
+    .select(
+      `
       user_id,
       curr_streak,
       max_streak,
       upload_count,
       likes_count,
       user_profile:user_profiles(username)
-    `)
+    `
+    )
     .order("likes_count", { ascending: false })
     .limit(limit);
 
@@ -86,14 +94,16 @@ export async function fetchTopByLikesCount(limit = 50) {
 export async function fetchTopByMaxStreak(limit = 50) {
   const { data, error } = await supabase
     .from("stats")
-    .select(`
+    .select(
+      `
       user_id,
       curr_streak,
       max_streak,
       upload_count,
       likes_count,
       user_profile:user_profiles(username)
-    `)
+    `
+    )
     .order("max_streak", { ascending: false })
     .limit(limit);
 
@@ -119,13 +129,15 @@ export async function fetchCurrentUserStatsWithRank(
 ) {
   const { data: userRow, error } = await supabase
     .from("stats")
-    .select(`
+    .select(
+      `
       curr_streak,
       max_streak,
       upload_count,
       likes_count,
       user_profile:user_profiles(username)
-    `)
+    `
+    )
     .eq("user_id", userId)
     .single();
 
@@ -136,7 +148,8 @@ export async function fetchCurrentUserStatsWithRank(
     .select(`user_id, ${orderBy}`)
     .order(orderBy, { ascending: false });
 
-  if (allError || !allData) throw allError ?? new Error("Failed to fetch rankings");
+  if (allError || !allData)
+    throw allError ?? new Error("Failed to fetch rankings");
 
   const ranked = assignRanksWithTies(allData, orderBy);
 
