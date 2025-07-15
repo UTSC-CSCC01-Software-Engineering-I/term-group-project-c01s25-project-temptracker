@@ -1,6 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useUser } from "@/app/context";
+
+import {
+  fetchTopByUploadCount,
+  fetchTopByLikesCount,
+  fetchTopByMaxStreak,
+  fetchCurrentUserStatsWithRank,
+} from "@/lib/supabase/services/statsService";
 
 type User = {
   rank: number;
@@ -10,53 +18,100 @@ type User = {
   likes: number;
 };
 
-const topUsers: User[] = Array.from({ length: 30 }, (_, i) => ({
-  // will fix this
-  rank: i + 1,
-  username: `User${i + 1}`,
-  uploads: Math.floor(Math.random() * 200),
-  streak: Math.floor(Math.random() * 30),
-  likes: Math.floor(Math.random() * 1000),
-}));
-
-const currentUser: User = {
-  rank: 75,
-  username: "CurrentUser",
-  uploads: 56,
-  streak: 12,
-  likes: 345,
-};
+type SortKey = "upload_count" | "likes_count" | "max_streak";
+ 
+// ranks are broken currently because of ties
+function transformToUser(u: any, rank: number): User {
+  return {
+    rank,
+    username: u.username,
+    uploads: u.upload_count,
+    streak: u.max_streak,
+    likes: u.likes_count,
+  };
+}
 
 export default function CommunityTab() {
-  const maxVisible = 30;
-  const visibleUsers = topUsers.slice(0, maxVisible);
-  const isCurrentUserVisible = currentUser.rank <= maxVisible;
+  const { user } = useUser();
+
+  const [sortKey, setSortKey] = useState<SortKey>("upload_count");
+  const [users, setUsers] = useState<User[]>([]);
+  const [currentUserStat, setCurrentUserStat] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const maxVisible = 50;
+
+  useEffect(() => {
+    async function fetchAll() {
+      setLoading(true);
+      try {
+        let data: any[] = [];
+        if (sortKey === "upload_count") data = await fetchTopByUploadCount(maxVisible);
+        else if (sortKey === "likes_count") data = await fetchTopByLikesCount(maxVisible);
+        else if (sortKey === "max_streak") data = await fetchTopByMaxStreak(maxVisible);
+
+        const topUsers = data.map((u, i) => transformToUser(u, i + 1));
+        setUsers(topUsers);
+
+        if (!user?.id) {
+          setCurrentUserStat(null);
+          return;
+        }
+
+        const stat = await fetchCurrentUserStatsWithRank(user.id, sortKey);
+        setCurrentUserStat(transformToUser(stat, stat.rank));
+      } catch (e) {
+        console.error("Error loading leaderboard:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAll();
+  }, [user?.id, sortKey]);
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <h1 className="text-3xl font-bold mb-4 text-dark-blue">
-        Community Leaderboard
-      </h1>
+      <h1 className="text-3xl font-bold mb-4 text-dark-blue">Community Leaderboard</h1>
+
+      <div className="mb-4 flex gap-4">
+        <button
+          className={`px-4 py-2 rounded ${
+            sortKey === "upload_count" ? "bg-nav-blue text-white" : "bg-gray-200"
+          }`}
+          onClick={() => setSortKey("upload_count")}
+          disabled={loading}
+        >
+          Uploads
+        </button>
+        <button
+          className={`px-4 py-2 rounded ${
+            sortKey === "likes_count" ? "bg-nav-blue text-white" : "bg-gray-200"
+          }`}
+          onClick={() => setSortKey("likes_count")}
+          disabled={loading}
+        >
+          Likes
+        </button>
+        <button
+          className={`px-4 py-2 rounded ${
+            sortKey === "max_streak" ? "bg-nav-blue text-white" : "bg-gray-200"
+          }`}
+          onClick={() => setSortKey("max_streak")}
+          disabled={loading}
+        >
+          Max Streak
+        </button>
+      </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden mb-16">
         <table className="min-w-full divide-y divide-gray-200 table-fixed">
           <thead className="bg-nav-blue text-white sticky top-0 z-10">
             <tr>
-              <th className="w-1/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Rank
-              </th>
-              <th className="w-3/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Username
-              </th>
-              <th className="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Uploads
-              </th>
-              <th className="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Streak (days)
-              </th>
-              <th className="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Likes
-              </th>
+              <th className="w-1/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Rank</th>
+              <th className="w-3/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Username</th>
+              <th className="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Uploads</th>
+              <th className="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Streak (days)</th>
+              <th className="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Likes</th>
             </tr>
           </thead>
         </table>
@@ -64,68 +119,46 @@ export default function CommunityTab() {
         <div className="max-h-[400px] overflow-y-auto">
           <table className="min-w-full divide-y divide-gray-200 table-fixed">
             <tbody className="text-gray-700">
-              {visibleUsers.map(
-                ({ rank, username, uploads, streak, likes }) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-4 font-mono text-gray-500">Loading...</td>
+                </tr>
+              ) : (
+                users.map(({ rank, username, uploads, streak, likes }) => (
                   <tr
-                    key={rank}
-                    className={`hover:bg-blue-100 transition-colors duration-200 ${
-                      username === currentUser.username ? "bg-nav-blue" : ""
-                    }`}
+                    key={`${rank}-${username}`}
+                    className={`hover:bg-blue-100 transition-colors duration-200`}
                   >
-                    <td className="w-1/12 px-6 py-2 whitespace-nowrap font-mono">
-                      {rank}
-                    </td>
-                    <td className="w-3/12 px-6 py-2 whitespace-nowrap font-semibold text-dark-blue">
-                      {username}
-                    </td>
-                    <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">
-                      {uploads}
-                    </td>
-                    <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">
-                      {streak}
-                    </td>
-                    <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">
-                      {likes}
-                    </td>
+                    <td className="w-1/12 px-6 py-2 font-mono">{rank}</td>
+                    <td className="w-3/12 px-6 py-2 font-semibold text-dark-blue">{username}</td>
+                    <td className="w-2/12 px-6 py-2 font-mono">{uploads}</td>
+                    <td className="w-2/12 px-6 py-2 font-mono">{streak}</td>
+                    <td className="w-2/12 px-6 py-2 font-mono">{likes}</td>
                   </tr>
-                )
+                ))
               )}
             </tbody>
           </table>
         </div>
 
-        {!isCurrentUserVisible && (
-          <>
-            <div className="border-t border-gray-400 mt-4" />
-            <table className="min-w-full divide-y divide-gray-200 table-fixed">
-              <tbody className="text-gray-700">
-                <tr className="bg-yellow-50 hover:bg-yellow-100 transition-colors duration-200">
-                  <td className="w-1/12 px-6 py-2 whitespace-nowrap font-mono">
-                    {currentUser.rank}
-                  </td>
-                  <td className="w-3/12 px-6 py-2 whitespace-nowrap font-semibold text-dark-blue">
-                    {currentUser.username}
-                  </td>
-                  <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">
-                    {currentUser.uploads}
-                  </td>
-                  <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">
-                    {currentUser.streak}
-                  </td>
-                  <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">
-                    {currentUser.likes}
-                  </td>
+        {currentUserStat && (
+          <div className="border-t bg-nav-blue">
+            <table className="min-w-full table-fixed">
+              <tbody>
+                <tr className="hover:bg-nav-blue transition-colors duration-200">
+                  <td className="w-1/12 px-6 py-2 font-mono">{currentUserStat.rank}</td>
+                  <td className="w-3/12 px-6 py-2 font-semibold text-dark-blue">{currentUserStat.username}</td>
+                  <td className="w-2/12 px-6 py-2 font-mono">{currentUserStat.uploads}</td>
+                  <td className="w-2/12 px-6 py-2 font-mono">{currentUserStat.streak}</td>
+                  <td className="w-2/12 px-6 py-2 font-mono">{currentUserStat.likes}</td>
                 </tr>
               </tbody>
             </table>
-          </>
+          </div>
         )}
       </div>
 
-      <h1 className="text-3xl font-bold mb-4 text-dark-blue"> 
-        Badges
-        {/* to do later */}
-      </h1>
+      <h1 className="text-3xl font-bold mb-4 text-dark-blue">Badges</h1>
     </div>
   );
 }
