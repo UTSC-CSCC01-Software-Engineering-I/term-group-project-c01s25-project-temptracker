@@ -1,104 +1,132 @@
 "use client";
 
-import React from "react";
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 
-type User = {
-  rank: number;
-  username: string;
-  uploads: number;
-  streak: number;
-  likes: number;
-};
+const LOCATIONS = [
+  "All",
+  "Toronto",
+  "Chicago",
+  "New York",
+  "Lake Erie",
+  "Lake Ontario",
+];
+const TIME_RANGES = ["Last 72 hours", "Last Month", "All Time"];
 
-const topUsers: User[] = Array.from({ length: 100 }, (_, i) => ({ // will fix this
-  rank: i + 1,
-  username: `User${i + 1}`,
-  uploads: Math.floor(Math.random() * 200),
-  streak: Math.floor(Math.random() * 30),
-  likes: Math.floor(Math.random() * 1000),
-}));
+export default function CommunityPage() {
+  const [photos, setPhotos] = useState<string[]>([
+    "/sample1.jpg",
+    "/sample2.jpg",
+    "/sample3.jpg",
+    "/sample4.jpg",
+    "/sample5.jpg",
+  ]);
 
-const currentUser: User = {
-  rank: 75,
-  username: "CurrentUser",
-  uploads: 56,
-  streak: 12,
-  likes: 345,
-};
+  const [location, setLocation] = useState("All");
+  const [timeRange, setTimeRange] = useState("Last 72 hours");
 
-export default function CommunityTab() {
-  const maxVisible = 50;
-  const visibleUsers = topUsers.slice(0, maxVisible);
-  const isCurrentUserVisible = currentUser.rank <= maxVisible;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const urls = Array.from(files).map((file) => URL.createObjectURL(file));
+    setPhotos((prev) => [...urls, ...prev]);
+  };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
-      <h1 className="text-3xl font-bold mb-4 text-dark-blue">Community Leaderboard</h1>
+    <div className="max-w-6xl mx-auto px-4 pt-8 pb-4 space-y-10">
+      <h1 className="text-4xl font-bold text-dark-blue">
+        Welcome to the Community (WIP)
+      </h1>
+      <p>
+        Mark your place in the community by earning badges, contributing to the
+        global leaderboard and uploading pictures of your Great Lakes
+        adventures!
+      </p>
 
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 table-fixed">
-          <thead className="bg-nav-blue text-white sticky top-0 z-10">
-            <tr>
-              <th className="w-1/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Rank
-              </th>
-              <th className="w-3/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Username
-              </th>
-              <th className="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Uploads
-              </th>
-              <th className="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Streak (days)
-              </th>
-              <th className="w-2/12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                Likes
-              </th>
-            </tr>
-          </thead>
-        </table>
-
-        <div className="max-h-[400px] overflow-y-auto">
-          <table className="min-w-full divide-y divide-gray-200 table-fixed">
-            <tbody className="text-gray-700">
-              {visibleUsers.map(({ rank, username, uploads, streak, likes }) => (
-                <tr
-                  key={rank}
-                  className={`hover:bg-blue-100 transition-colors duration-200 ${
-                    username === currentUser.username ? "bg-nav-blue" : ""
-                  }`}
-                >
-                  <td className="w-1/12 px-6 py-2 whitespace-nowrap font-mono">{rank}</td>
-                  <td className="w-3/12 px-6 py-2 whitespace-nowrap font-semibold text-dark-blue">
-                    {username}
-                  </td>
-                  <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">{uploads}</td>
-                  <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">{streak}</td>
-                  <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">{likes}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <Link
+        href="/community/stats"
+        className="block bg-white/70 backdrop-blur-md rounded-2xl shadow-md border border-gray-200 p-5 hover:bg-white/90 transition"
+      >
+        <div className="text-dark-blue font-semibold text-lg mb-1 flex items-center gap-2">
+          🏆 View Leaderboard
         </div>
+        <p className="text-sm text-gray-600">
+          See top contributors and badges earned
+        </p>
+      </Link>
+      <h2 className="text-3xl font-bold mt-16 text-dark-blue">
+        {" "}
+        GLOW Photo Gallery
+      </h2>
 
-        {!isCurrentUserVisible && (
-          <>
-            <div className="border-t border-gray-400 mt-4" />
-            <table className="min-w-full divide-y divide-gray-200 table-fixed">
-              <tbody className="text-gray-700">
-                <tr className="bg-yellow-50 hover:bg-yellow-100 transition-colors duration-200">
-                  <td className="w-1/12 px-6 py-2 whitespace-nowrap font-mono">{currentUser.rank}</td>
-                  <td className="w-3/12 px-6 py-2 whitespace-nowrap font-semibold text-dark-blue">
-                    {currentUser.username}
-                  </td>
-                  <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">{currentUser.uploads}</td>
-                  <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">{currentUser.streak}</td>
-                  <td className="w-2/12 px-6 py-2 whitespace-nowrap font-mono">{currentUser.likes}</td>
-                </tr>
-              </tbody>
-            </table>
-          </>
-        )}
+      <div className="flex justify-center px-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end max-w-xl w-full">
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-600 mb-1">Time Range</label>
+            <select
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+            >
+              {TIME_RANGES.map((range) => (
+                <option key={range} value={range}>
+                  {range}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-600 mb-1">Location</label>
+            <select
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            >
+              {LOCATIONS.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-600 mb-1">Upload Photo</label>
+            <label
+              htmlFor="upload"
+              className="inline-block bg-nav-blue text-white text-sm px-4 py-2 rounded-xl cursor-pointer shadow hover:opacity-90"
+            >
+              Choose File
+            </label>
+            <input
+              id="upload"
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* grid of photos */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {photos.map((src, i) => (
+          <div
+            key={i}
+            className="relative w-full h-40 rounded-xl overflow-hidden shadow-md hover:scale-[1.02] transition"
+          >
+            <Image
+              src={src}
+              alt={`Photo ${i + 1}`}
+              fill
+              className="object-cover"
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
