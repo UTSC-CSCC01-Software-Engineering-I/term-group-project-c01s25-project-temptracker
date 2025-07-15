@@ -1,7 +1,9 @@
 import { createClient } from "../supabase/client";
 import axios from "axios";
+import { updateStreak } from "./streakService";
 
 const supabase = createClient();
+
 export interface TemperatureSubmission {
   temperature: number;
   temperatureUnit: "C" | "F";
@@ -36,6 +38,9 @@ export async function submitTemperature(data: TemperatureSubmission) {
   );
 
   console.log("Temperature submission response:", res.data);
+
+  // currently, we record streaks by consecutive uploads
+  await updateStreak(user.id);
 }
 
 export async function submitTemperatures(data: TemperatureSubmission[]) {
@@ -62,4 +67,7 @@ export async function submitTemperatures(data: TemperatureSubmission[]) {
   );
 
   console.log("Temperature submission response:", res.data);
+
+  // currently, we record streaks by consecutive uploads
+  await updateStreak(user.id);
 }
