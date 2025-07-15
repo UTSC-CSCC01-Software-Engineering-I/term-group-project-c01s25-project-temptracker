@@ -29,15 +29,32 @@ async function submitTemperature(formData) {
       data: data,
     };
   } catch (e) {
-    throw new Error(`Failed to submit temperatures: ${e.message}`);
+    console.error("submitTemperatures error:", e);
+    throw e;
   }
 }
 
-async function submitTemperatures(data) {
+async function submitTemperatures(csvData) {
   try {
-    return { message: "Temperatures submitted successfully", data: data };
+    const { data } = await supabase.from("temperatures").insert(
+      csvData.formData.map((item) => ({
+        temperature:
+          item.temperatureUnit === "F"
+            ? ((item.temperature - 32) * 5) / 9
+            : item.temperature,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        measured_on: item.date,
+        notes: item.notes,
+        user_id: csvData.userId,
+        is_verified: true, // Temperature submitted via CSV exclusively by admins are verified
+      }))
+    );
+
+    return { message: "Temperature CSV submitted successfully", data: data };
   } catch (e) {
-    throw new Error(`Failed to submit temperatures: ${e.message}`);
+    console.error("submitTemperatures error:", e);
+    throw e;
   }
 }
 

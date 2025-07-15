@@ -1,14 +1,7 @@
-"use client";
-
 import UploadTemperatureForm from "@/components/ui/UploadTemperatureForm";
 import UploadTemperatureCSVForm from "@/components/ui/UploadTemperatureCSV";
-import { useFetchUsers } from "@/hooks/useFetchUsers";
 
 export default function UploadPage() {
-  const { users, loading, error } = useFetchUsers();
-
-  console.log("Fetched users:", users);
-
   return (
     <div className="w-fit mx-auto flex-col space-y-4">
       <div className="flex flex-col justify-center items-center flex-1">

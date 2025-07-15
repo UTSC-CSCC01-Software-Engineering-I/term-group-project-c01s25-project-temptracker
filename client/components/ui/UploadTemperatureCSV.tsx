@@ -7,7 +7,7 @@ import FileDisplay from "@/components/ui/FileDisplay";
 import StatusMessage from "@/components/ui/StatusMessage";
 import { EXPECTED_CSV_HEADERS } from "@/lib/csvValidation";
 import { TemperatureData } from "@/lib/csvValidation";
-import { submitTemperatures } from "@/lib/supabase/services/submit-temperatures";
+import { submitTemperatures } from "@/lib/services/submit-temperatures";
 import { toast } from "sonner";
 import { Button } from "@/components/shadcn/button";
 import { Shield } from "lucide-react";
