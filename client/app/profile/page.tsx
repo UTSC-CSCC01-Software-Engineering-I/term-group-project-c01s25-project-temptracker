@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { useUser } from "@/app/context";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import ProfileStats from "@/components/ProfileStats";
 
 const supabase = createClient();
 
@@ -65,7 +66,7 @@ export default function Profile() {
         Welcome, {user?.user_metadata?.username || "User"}
       </h1>
 
-      <div className="rounded-lg shadow-md overflow-hidden mb-14 lg:mb-20">
+      <div className="rounded-lg shadow-md overflow-hidden">
         <div className="bg-nav-blue h-8 flex items-center justify-end px-4">
           <span className="text-xs font-medium text-white px-2 py-1 rounded">
             Personal Account
@@ -94,6 +95,8 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      <ProfileStats />
 
       <div className="hidden sm:flex items-center justify-between mb-3">
         <h2 className="text-2xl font-semibold">My Submissions</h2>
