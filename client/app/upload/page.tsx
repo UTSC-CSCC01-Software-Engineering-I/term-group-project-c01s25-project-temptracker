@@ -1,6 +1,5 @@
-import UploadTemperatureForm from "@/components/ui/uploadTemperatureForm";
-import UploadTemperatureCSVForm from "@/components/ui/UploadTemperatureCSV";
-import { Shield } from "lucide-react";
+import UploadTemperatureForm from "@/components/ui/UploadSingleTempForm";
+import UploadTemperatureCSVForm from "@/components/ui/UploadTempCSV";
 
 export default function UploadPage() {
   return (

@@ -6,6 +6,21 @@ async function getAllUsers() {
   return data;
 }
 
+async function getUserSubmissions(userId) {
+  try {
+    const { data } = await supabase
+      .from("temperatures")
+      .select("*")
+      .eq("user_id", userId);
+
+    return data || [];
+  } catch (e) {
+    console.error("Error fetching user submissions:", e);
+    throw e;
+  }
+}
+
 module.exports = {
   getAllUsers,
+  getUserSubmissions,
 };
