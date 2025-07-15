@@ -1,6 +1,6 @@
 const temperatureController = require("../controllers/temperatureController");
 const { Router } = require("express");
-const { authenticateUser } = require("../middleware/auth");
+const { authenticateUser } = require("../middleware/authUser");
 
 const temperatureRouter = Router();
 
