@@ -2,38 +2,17 @@
 
 import { format } from "date-fns";
 import { useUser } from "@/app/context";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-
-const supabase = createClient();
+import { useState } from "react";
+import { useUserSubmissions } from "@/hooks/useUserSubmissions";
 
 export default function Profile() {
   const { user } = useUser();
+  const { submissions, loading } = useUserSubmissions(user?.id);
   const [useFahrenheit, setUseFahrenheit] = useState(false);
-  const [submissions, setSubmissions] = useState<any[]>([]);
   const provider = user?.app_metadata?.provider || "email";
   const userSince = user?.email_confirmed_at
     ? format(new Date(user.email_confirmed_at), "MMMM d, yyyy")
     : "Unknown";
-
-  useEffect(() => {
-    const fetchSubmissions = async () => {
-      if (!user?.id) return;
-
-      const { data, error } = await supabase
-        .from("temperatures")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (error) {
-        console.error("Error fetching submissions:", error);
-      } else {
-        setSubmissions(data);
-      }
-    };
-
-    fetchSubmissions();
-  }, [user?.id]);
 
   const handleExportCSV = () => {
     const headers = ["Date", "Temperature", "Latitude", "Longitude", "Notes"];
@@ -134,36 +113,41 @@ export default function Profile() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 text-gray-700">
-            {submissions.map(
-              ({
-                id,
-                measured_on,
-                temperature,
-                latitude,
-                longitude,
-                notes,
-              }) => (
-                <tr
-                  key={id}
-                  className="hover:bg-blue-100 transition-colors duration-200"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {measured_on
-                      ? format(new Date(measured_on), "yyyy-MM-dd")
-                      : "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {useFahrenheit
-                      ? ((temperature * 9) / 5 + 32).toFixed(1)
-                      : temperature.toFixed(1)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {latitude.toFixed(2)}, {longitude.toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{notes}</td>
-                </tr>
-              )
-            )}
+            {(loading && (
+              <tr>
+                <td className="p-4">Loading...</td>
+              </tr>
+            )) ||
+              submissions.map(
+                ({
+                  id,
+                  measured_on,
+                  temperature,
+                  latitude,
+                  longitude,
+                  notes,
+                }) => (
+                  <tr
+                    key={id}
+                    className="hover:bg-blue-100 transition-colors duration-200"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {measured_on
+                        ? format(new Date(measured_on), "yyyy-MM-dd")
+                        : "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {useFahrenheit
+                        ? ((temperature * 9) / 5 + 32).toFixed(1)
+                        : temperature.toFixed(1)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {latitude.toFixed(2)}, {longitude.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">{notes}</td>
+                  </tr>
+                )
+              )}
           </tbody>
         </table>
       </div>
