@@ -1,8 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const userRoutes = require("./app/routes/user-routes");
-const temperatureRoutes = require("./app/routes/temperature-routes");
+const userRoutes = require("./app/routes/userRoutes");
+const temperatureRoutes = require("./app/routes/temperatureRoutes");
 
 const PORT = process.env.PORT || 8080;
 
