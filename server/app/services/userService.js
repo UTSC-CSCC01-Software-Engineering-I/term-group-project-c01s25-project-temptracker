@@ -1,4 +1,4 @@
-const supabase = require("../models/supabase-client");
+const supabase = require("../models/supabaseClient");
 
 async function getAllUsers() {
   const { data, error } = await supabase.auth.admin.listUsers();

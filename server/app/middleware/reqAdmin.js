@@ -1,4 +1,4 @@
-const supabase = require("../models/supabase-client");
+const supabase = require("../models/supabaseClient");
 
 const requireAdmin = async (req, res, next) => {
   const userId = req.user?.id;

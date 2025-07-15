@@ -1,4 +1,4 @@
-const userController = require("../controllers/user-controller");
+const userController = require("../controllers/userController");
 const { Router } = require("express");
 const { authenticateUser } = require("../middleware/authUser");
 const { requireAdmin } = require("../middleware/reqAdmin");

@@ -1,4 +1,4 @@
-const supabase = require("../models/supabase-client");
+const supabase = require("../models/supabaseClient");
 
 async function submitTemperature(formData) {
   try {
