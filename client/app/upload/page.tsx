@@ -1,6 +1,6 @@
 "use client";
 
-import UploadTemperatureForm from "@/components/ui/uploadTemperatureForm";
+import UploadTemperatureForm from "@/components/ui/UploadTemperatureForm";
 import UploadTemperatureCSVForm from "@/components/ui/UploadTemperatureCSV";
 import { useFetchUsers } from "@/hooks/useFetchUsers";
 

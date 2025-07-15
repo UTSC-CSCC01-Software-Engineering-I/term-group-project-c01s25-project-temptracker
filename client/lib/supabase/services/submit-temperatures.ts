@@ -1,4 +1,5 @@
 import { createClient } from "../client";
+import axios from "axios";
 
 const supabase = createClient();
 export interface TemperatureSubmission {
@@ -16,36 +17,25 @@ export async function submitTemperature(data: TemperatureSubmission) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   if (!user) {
     throw new Error("Login to submit a temperature reading.");
   }
 
-  // Combine date and time into a full timestamp
-  const [hours, minutes] = data.time.split(':');
-  const timestamp = new Date(data.date);
-  timestamp.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/temperatures/single`,
+    { ...data, user_id: user.id },
+    {
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    }
+  );
 
-  const { data: result, error } = await supabase
-    .from("temperatures")
-    .insert({
-      temperature:
-        data.temperatureUnit === "F"
-          ? ((data.temperature - 32) * 5) / 9
-          : data.temperature,
-      latitude: data.latitude,
-      longitude: data.longitude,
-      measured_on: timestamp.toISOString(),
-      notes: data.notes,
-      user_id: user.id,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error submitting temperature:", error);
-    throw error;
-  }
-  return result;
+  console.log("Temperature submission response:", res.data);
 }
 
 export async function submitTemperatures(data: TemperatureSubmission[]) {
