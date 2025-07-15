@@ -5,6 +5,7 @@ import { useUser } from "@/app/context";
 import { useState } from "react";
 import { useUserSubmissions } from "@/hooks/useUserSubmissions";
 import Image from "next/image";
+import ProfileStats from "@/components/ProfileStats";
 
 export default function Profile() {
   const { user, profile } = useUser();
@@ -45,7 +46,7 @@ export default function Profile() {
         Welcome, {user?.user_metadata?.username || "User"}
       </h1>
 
-      <div className="rounded-lg shadow-md overflow-hidden mb-14 lg:mb-20">
+      <div className="rounded-lg shadow-md overflow-hidden">
         <div className="bg-nav-blue h-8 flex items-center justify-end px-4">
           <span className="text-xs font-medium text-white px-2 py-1 rounded">
             {profile?.role === "admin" ? "Admin " : "Personal "} Account
@@ -76,6 +77,8 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      <ProfileStats />
 
       <div className="hidden sm:flex items-center justify-between mb-3">
         <h2 className="text-2xl font-semibold">My Submissions</h2>
