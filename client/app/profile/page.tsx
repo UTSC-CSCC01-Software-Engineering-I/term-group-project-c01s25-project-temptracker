@@ -4,9 +4,10 @@ import { format } from "date-fns";
 import { useUser } from "@/app/context";
 import { useState } from "react";
 import { useUserSubmissions } from "@/hooks/useUserSubmissions";
+import Image from "next/image";
 
 export default function Profile() {
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const { submissions, loading } = useUserSubmissions(user?.id);
   const [useFahrenheit, setUseFahrenheit] = useState(false);
   const provider = user?.app_metadata?.provider || "email";
@@ -47,18 +48,20 @@ export default function Profile() {
       <div className="rounded-lg shadow-md overflow-hidden mb-14 lg:mb-20">
         <div className="bg-nav-blue h-8 flex items-center justify-end px-4">
           <span className="text-xs font-medium text-white px-2 py-1 rounded">
-            Personal Account
+            {profile?.role === "admin" ? "Admin " : "Personal "} Account
           </span>
         </div>
 
         <div className="flex items-center bg-white p-6 space-x-6">
-          <img
-            src={"profile.png"}
+          <Image
+            src={"/profile.png"}
             alt="Profile"
-            className="w-20 h-20 rounded-full object-cover"
+            height={80}
+            width={80}
+            className="rounded-full"
           />
           <div>
-            <h2 className="text-xl font-semibold text-dark-blue">
+            <h2 className="text-xl font-semibold text-dark-blue text-left">
               {user?.user_metadata?.username || "Username"}
             </h2>
             <p className="text-gray-600">
