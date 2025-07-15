@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import "@/styles/Home.css";
 import dynamic from "next/dynamic";
-const LazyMap = dynamic(() => import("@/components/map/Map"), {
+const LazyMap = dynamic(() => import("@/components/ui/Map"), {
   ssr: false,
   loading: () => <p>Loading...</p>,
 });
