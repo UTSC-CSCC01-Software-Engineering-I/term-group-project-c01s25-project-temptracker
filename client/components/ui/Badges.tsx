@@ -1,4 +1,10 @@
 import Image from "next/image";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import Badge from "./Badge";
 
 interface Badge {
   name: string;
@@ -26,12 +32,30 @@ function BadgeContainer({
   badges: BadgeData[];
 }) {
   return (
-    <div className="relative flex justify-center items-center select-none">
-      <Image src={`/badges/${type}.png`} alt={type} width={70} height={70} />
-      <p className="z-10 absolute text-xl font-bold text-white hover:cursor-default">
-        {badges.length}
-      </p>
-    </div>
+    <Tooltip>
+      <TooltipTrigger className="relative flex justify-center items-center select-none">
+        <Image src={`/badges/${type}.png`} alt={type} width={70} height={70} />
+        <p className="z-10 absolute text-xl font-bold text-white hover:cursor-default">
+          {badges.length}
+        </p>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p className="text-lg font-semibold mb-2 capitalize text-white">
+          {type} Badges
+        </p>
+        <div className="flex flex-col gap-2">
+          {badges.map((badge) => (
+            <div key={badge.badge.name}>
+              <h4 className="text-base text-white">
+                {badge.badge.name} | Earned on{" "}
+                {new Date(badge.earned_on).toLocaleDateString()}
+              </h4>
+              <p className={`text-sm text-muted`}>{badge.badge.description}</p>
+            </div>
+          ))}
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
