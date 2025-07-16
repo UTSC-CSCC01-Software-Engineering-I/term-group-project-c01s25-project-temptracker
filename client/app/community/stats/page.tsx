@@ -1,78 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
 import { useUser } from "@/app/context";
-
-import {
-  fetchTopByUploadCount,
-  fetchTopByLikesCount,
-  fetchTopByMaxStreak,
-  fetchCurrentUserStatsWithRank,
-} from "@/lib/services/statsService";
-
-type User = {
-  user_id: number; // used as a key when rendering the table
-  rank: number;
-  username: string;
-  uploads: number;
-  streak: number;
-  likes: number;
-};
-
-type SortKey = "upload_count" | "likes_count" | "max_streak";
-
-// ranks are broken currently because of ties
-function transformToUser(u: any, rank: number): User {
-  return {
-    user_id: u.user_id,
-    rank,
-    username: u.username,
-    uploads: u.upload_count,
-    streak: u.max_streak,
-    likes: u.likes_count,
-  };
-}
+import { useCommunityStats } from "@/hooks/useCommunityStats";
 
 export default function CommunityTab() {
   const { user } = useUser();
+  const { sortKey, users, currentUserStat, loading, setSortKey } = useCommunityStats(user?.id);
 
-  const [sortKey, setSortKey] = useState<SortKey>("upload_count");
-  const [users, setUsers] = useState<User[]>([]);
-  const [currentUserStat, setCurrentUserStat] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const maxVisible = 50;
-
-  useEffect(() => {
-    async function fetchAll() {
-      setLoading(true);
-      try {
-        let data: any[] = [];
-        if (sortKey === "upload_count")
-          data = await fetchTopByUploadCount(maxVisible);
-        else if (sortKey === "likes_count")
-          data = await fetchTopByLikesCount(maxVisible);
-        else if (sortKey === "max_streak")
-          data = await fetchTopByMaxStreak(maxVisible);
-
-        const topUsers = data.map((u) => transformToUser(u, u.rank));
-        setUsers(topUsers);
-
-        if (!user?.id) {
-          setCurrentUserStat(null);
-          return;
-        }
-
-        const stat = await fetchCurrentUserStatsWithRank(user.id, sortKey);
-        setCurrentUserStat(transformToUser(stat, stat.rank));
-      } catch (e) {
-        console.error("Error loading leaderboard:", e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchAll();
-  }, [user?.id, sortKey]);
+  const maxVisible = 50; // not used?
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
