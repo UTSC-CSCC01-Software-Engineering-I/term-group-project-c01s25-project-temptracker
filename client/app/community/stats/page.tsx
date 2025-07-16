@@ -2,6 +2,7 @@
 
 import { useUser } from "@/app/context";
 import { useCommunityStats } from "@/hooks/useCommunityStats";
+import { Badge } from "@/types/badges";
 
 export default function CommunityTab() {
   const { user } = useUser();

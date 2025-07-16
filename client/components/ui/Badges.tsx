@@ -4,25 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import Badge from "./Badge";
-
-interface Badge {
-  name: string;
-  description: string;
-  category:
-    | "contribution"
-    | "exploration"
-    | "quality"
-    | "achievement"
-    | "special";
-  difficulty: "bronze" | "silver" | "gold" | "diamond";
-  unlockedAt?: Date;
-}
-
-interface BadgeData {
-  earned_on: Date;
-  badge: Badge;
-}
+import { BadgeData } from "@/types/badges";
 
 function BadgeContainer({
   type,
