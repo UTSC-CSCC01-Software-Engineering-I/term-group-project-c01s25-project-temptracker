@@ -59,7 +59,7 @@ const Map = (props: MapProps) => {
     let grids = [];
     for (let i = 0; i < polygons.length; i++) {
       if (polygons[i].containsPoint) {
-        const grid = generateGridInPolygon(polygons[i].coordinates, 0.1);
+        const grid = generateGridInPolygon(polygons[i].coordinates, 0.01);
         grids.push({ grid: grid, polygon: polygons[i] });
       }
     }
@@ -715,9 +715,9 @@ const Map = (props: MapProps) => {
           // console.log('valid data', validData)
 
           const heatLayer = (L as any).heatLayer(validData, {
-            radius: 20,
-            blur: 12,
-            maxZoom: 6,
+            radius: 8,
+            blur: 0,
+            // maxZoom: 19,
             max: 1.0,
             minOpacity: 0.5,
             gradient: {
