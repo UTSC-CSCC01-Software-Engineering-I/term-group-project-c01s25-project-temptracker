@@ -6,6 +6,7 @@ import {
   fetchTopByMaxStreak,
   fetchCurrentUserStatsWithRank,
 } from "@/lib/services/statsService";
+import { Badge } from "@/types/badges";
 
 type User = {
   user_id: number; // used as a key when rendering the table
@@ -34,7 +35,7 @@ export function useCommunityStats(userId: string | undefined) {
   const [users, setUsers] = useState<User[]>([]);
   const [currentUserStat, setCurrentUserStat] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
-  const [allBadges, setAllBadges] = useState([]);
+  const [allBadges, setAllBadges] = useState<Badge[]>([]);
 
   const maxVisible = 50;
 
