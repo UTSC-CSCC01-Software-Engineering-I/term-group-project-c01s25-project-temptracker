@@ -5,7 +5,9 @@ import { useCommunityStats } from "@/hooks/useCommunityStats";
 
 export default function CommunityTab() {
   const { user } = useUser();
-  const { sortKey, users, currentUserStat, loading, setSortKey } = useCommunityStats(user?.id);
+  const { sortKey, users, currentUserStat, loading, setSortKey, allBadges } =
+    useCommunityStats(user?.id);
+  console.log(allBadges);
 
   const maxVisible = 50; // not used?
 
