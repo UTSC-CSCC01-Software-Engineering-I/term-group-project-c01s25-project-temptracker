@@ -1,20 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { fetchCurrentUserStatsWithRank } from "../lib/services/statsService";
 import { useUser } from "@/app/context";
 import { useUserStats } from "@/hooks/useUserStats";
-
-// todo: implement badges properly
-const badges = [
-  { label: "50 Streak", color: "bg-blue-900" },
-  { label: "Explorer", color: "bg-blue-700" },
-  { label: "User", color: "bg-blue-500" },
-];
+import Badges from "./ui/Badges";
 
 export default function ProfileStats() {
   const { user } = useUser();
-  const { streak, rank } = useUserStats(user?.id);
+  const { streak, rank, badges } = useUserStats(user?.id);
+
+  console.log(badges);
 
   return (
     <div className="rounded-lg shadow-md bg-white p-6 mb-12 lg:mb-20 flex flex-col gap-6">
@@ -44,16 +39,7 @@ export default function ProfileStats() {
 
         <div className="max-w-sm flex flex-col items-start">
           <h3 className="text-lg font-semibold text-dark-blue mb-1">Badges</h3>
-          <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto pr-1">
-            {badges?.map((badge, idx) => (
-              <span
-                key={idx}
-                className={`inline-block ${badge.color} text-white px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap cursor-pointer hover:opacity-90 transition`}
-              >
-                {badge.label}
-              </span>
-            ))}
-          </div>
+          <Badges badges={badges} />
         </div>
       </div>
 
