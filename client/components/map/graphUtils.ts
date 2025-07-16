@@ -44,7 +44,7 @@ export const pointInPolygon = (point: number[], polygon: number[][]) => {
 
 export const generateGridInPolygon = (polygon: any, gridSize = 0.1) => {
   const coords = polygon;
-
+  console.log('grid size:', gridSize);
   // Find bounding box
   const lats = coords.map((coord: [number, number]) => coord[1]);
   const lngs = coords.map((coord: [number, number]) => coord[0]);

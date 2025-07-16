@@ -75,8 +75,9 @@ const Map = (props: MapProps) => {
   const generateGrids = () => {
     let grids = [];
     for (let i = 0; i < polygons.length; i++) {
+      console.log('grid for polygon', polygons[i]);
       if (polygons[i].containsPoint) {
-        const grid = generateGridInPolygon(polygons[i].coordinates, 0.5);
+        const grid = generateGridInPolygon(polygons[i].coordinates, 0.01);
         grids.push({ grid: grid, polygon: polygons[i] });
       }
     }
@@ -137,55 +138,57 @@ const Map = (props: MapProps) => {
   // IMPORTANT
   // Uncomment below when you run: Can be unstable
   
-  // useEffect(() => {
-  //   const loadGeoJSON = async () => {
-  //     try {
-  //       setGeoData(gTest);
-  //       //geoJson is ordered [long, lat]
-  //       const coordList = geoJsonTest.geometries[0].coordinates;
-  //       const x = coordList
-  //         .slice(0, 1000)
-  //         .map((coord: any, index: number) => {
-  //           if (!coord || !Array.isArray(coord[0])) return null;
+  useEffect(() => {
+    const loadGeoJSON = async () => {
+      try {
+        // setGeoData(gTest);
+        //geoJson is ordered [long, lat]
+        const coordList = geoJsonTest.geometries[0].coordinates;
+        console.log("coordList", coordList);
+        console.log('temp data', tempData);
+        const x = coordList
+          // .slice(0, 1000)
+          .map((coord: any, index: number) => {
+            if (!coord || !Array.isArray(coord[0])) return null;
 
-  //           let containspoint = false;
-  //           for (let i = 0; i < Math.min(tempData.length, 500); i++) {
-  //             const point = tempData[i];
-  //             if (
-  //               Array.isArray(point) &&
-  //               point.length >= 2 &&
-  //               typeof point[0] === "number" &&
-  //               typeof point[1] === "number" &&
-  //               pointInPolygon([point[1], point[0]], coord[0])
-  //             ) {
-  //               containspoint = true;
-  //               break;
-  //             }
-  //           }
+            let containspoint = false;
+            //If we will have min 500, have tempData sorted by most recent to latest
+            for (let i = 0; i < Math.min(tempData.length, 500); i++) {
+              const point = tempData[i];
+              if (
+                Array.isArray(point) &&
+                point.length >= 2 &&
+                typeof point[0] === "number" &&
+                typeof point[1] === "number" &&
+                pointInPolygon([point[1], point[0]], coord[0])
+              ) {
+                containspoint = true;
+                break;
+              }
+            }
 
-  //           return {
-  //             coordinates: coord[0],
-  //             containsPoint: containspoint,
-  //           };
-  //         })
-  //         .filter(Boolean);
+            return {
+              coordinates: coord[0],
+              containsPoint: containspoint,
+            };
+          })
+          .filter(Boolean);
 
-  //       setPolygons(x);
+        setPolygons(x);
+      } catch (error) {
+        console.error("Error loading geo data:", error);
+      }
+    };
 
-  //       // const grids = generateGrids(); // This will now work with populated polygons
-  //       // setGeoGrids(grids);
-  //     } catch (error) {
-  //       console.error("Error loading geo data:", error);
-  //     }
-  //   };
-
-  //   loadGeoJSON();
-  // }, []);
+    loadGeoJSON();
+  }, []);
 
   useEffect(() => {
+    console.log('polygons', polygons);
     if (polygons.length > 0) {
       console.log("Generating grids from polygons...");
       const grids = generateGrids();
+      console.log(`Generated grid of ${grids.length} cells:`, grids);
       setGeoGrids(grids);
     }
   }, [polygons]);
@@ -298,36 +301,6 @@ const Map = (props: MapProps) => {
   const SliderLayer = () => {
     const sliderRef = useRef<HTMLDivElement>(null);
 
-    // Prevent map interactions on slider container
-    // useEffect(() => {
-    //   const sliderElement = sliderRef.current;
-    //   if (sliderElement) {
-    //     const preventMapInteraction = (e: Event) => {
-    //       e.stopPropagation();
-    //     };
-
-    //     // Add event listeners to prevent map interactions
-    //     sliderElement.addEventListener('mousedown', preventMapInteraction);
-    //     sliderElement.addEventListener('mousemove', preventMapInteraction);
-    //     sliderElement.addEventListener('mouseup', preventMapInteraction);
-    //     sliderElement.addEventListener('click', preventMapInteraction);
-    //     sliderElement.addEventListener('wheel', preventMapInteraction);
-    //     sliderElement.addEventListener('touchstart', preventMapInteraction);
-    //     sliderElement.addEventListener('touchmove', preventMapInteraction);
-    //     sliderElement.addEventListener('touchend', preventMapInteraction);
-
-    //     return () => {
-    //       sliderElement.removeEventListener('mousedown', preventMapInteraction);
-    //       sliderElement.removeEventListener('mousemove', preventMapInteraction);
-    //       sliderElement.removeEventListener('mouseup', preventMapInteraction);
-    //       sliderElement.removeEventListener('click', preventMapInteraction);
-    //       sliderElement.removeEventListener('wheel', preventMapInteraction);
-    //       sliderElement.removeEventListener('touchstart', preventMapInteraction);
-    //       sliderElement.removeEventListener('touchmove', preventMapInteraction);
-    //       sliderElement.removeEventListener('touchend', preventMapInteraction);
-    //     };
-    //   }
-    // }, []);
 
     const monthTime = new Date(
       Date.now() - (30 - currentMonthDate) * 24 * 60 * 60 * 1000
@@ -487,9 +460,9 @@ const Map = (props: MapProps) => {
           // console.log('valid data', validData)
 
           const heatLayer = (L as any).heatLayer(validData, {
-            radius: 20,
-            blur: 12,
-            maxZoom: 6,
+            radius: 8,
+            blur: 10,
+            maxZoom: 19,
             max: 1.0,
             minOpacity: 0.5,
             gradient: {
@@ -651,7 +624,6 @@ const Map = (props: MapProps) => {
   //set the grids
   useEffect(() => {
     if (polygons.length > 0 && tempData.length > 0) {
-      console.log("Generating grids...");
 
       if (props.timeRange == "week") {
         let weeklyPoints = [];
@@ -783,7 +755,7 @@ const Map = (props: MapProps) => {
   //RENDER
   // console.log('Total temp data points', interpolatedTempData.length)
   // console.log('weekbucket', weekDataBucket)
-  console.log("monthBucket after interpolation", monthDataBucket);
+  // console.log("monthBucket after interpolation", monthDataBucket);
   if (
     mapCoords.latitude &&
     mapCoords.longitude &&
