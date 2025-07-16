@@ -6,6 +6,7 @@ import { fetchCurrentUserStatsWithRank } from "@/lib/services/statsService";
 export function useUserStats(userId: string | undefined) {
   const [streak, setStreak] = useState<number | null>(null);
   const [rank, setRank] = useState<number | null>(null);
+  const [badges, setBadges] = useState([]);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -38,11 +39,9 @@ export function useUserStats(userId: string | undefined) {
           }
         );
 
-        console.log("Badges:", badgesResponse.data);
-
         setRank(stats.rank);
         setStreak(stats.curr_streak);
-        console.log("User stats:", stats);
+        setBadges(badgesResponse.data || []);
       } catch (err) {
         console.error("Failed to fetch stats:", err);
       }
@@ -50,5 +49,5 @@ export function useUserStats(userId: string | undefined) {
     loadStats();
   }, [userId]);
 
-  return { streak, rank };
+  return { streak, rank, badges };
 }

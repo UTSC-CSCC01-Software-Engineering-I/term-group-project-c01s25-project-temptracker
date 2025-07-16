@@ -27,7 +27,12 @@ async function getUserBadges(userId) {
       .select(`earned_on, badges (*)`)
       .eq("user_id", userId);
 
-    return data || [];
+    const formattedData = data?.map(({ earned_on, badges }) => ({
+      earned_on,
+      badge: badges,
+    }));
+
+    return formattedData || [];
   } catch (e) {
     console.error("Error fetching user badges:", e);
     throw e;
