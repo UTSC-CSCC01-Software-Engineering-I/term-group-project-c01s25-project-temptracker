@@ -22,6 +22,7 @@ async function awardStatsRelatedBadges(badge, userId, awardedBadges) {
         badge_id: badge.id,
         earned_on: new Date(),
       })
+      .select()
       .single();
     awardedBadges.push(data);
   }
@@ -68,15 +69,16 @@ async function awardSpecialBadges(badge, userId, awardedBadges) {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays >= badge.requirement_amount) {
-          const { data: newBadges } = await supabase
+          const { data: newBadge } = await supabase
             .from("user_badges")
             .insert({
               user_id: userId,
               badge_id: badge.id,
               earned_on: new Date(),
             })
+            .select()
             .single();
-          awardedBadges.push(newBadges);
+          awardedBadges.push(newBadge);
         }
       }
       break;
@@ -88,15 +90,16 @@ async function awardSpecialBadges(badge, userId, awardedBadges) {
         .order("upload_count", { ascending: false })
         .limit(10);
       if (topUsers.some((user) => user.user_id === userId)) {
-        const { data: newBadges } = await supabase
+        const { data: newBadge } = await supabase
           .from("user_badges")
           .insert({
             user_id: userId,
             badge_id: badge.id,
             earned_on: new Date(),
           })
+          .select()
           .single();
-        awardedBadges.push(newBadges);
+        awardedBadges.push(newBadge);
       }
       break;
     default:
