@@ -165,9 +165,8 @@ function getGreatLakesVisited(userSubmissions) {
 
 async function awardSpecialBadges(badge, userId, awardedBadges) {
   // Special badges can have unique logic, e.g., based on specific events or achievements
-
-  switch (badge.name) {
-    case "Veteran":
+  switch (badge.id) {
+    case 14: // Veteran
       const { data } = await supabase.auth.admin.getUserById(userId);
       if (data && data.user_metadata?.created_at) {
         const createdAt = new Date(data.user_metadata.created_at);
@@ -194,13 +193,14 @@ async function awardSpecialBadges(badge, userId, awardedBadges) {
         }
       }
       break;
-    case "Top 10":
+    case 12: // Top 10
       // award if user is in the top 10 data set containing users with the top 10 in upload_count
       const { data: topUsers } = await supabase
         .from("stats")
         .select("*")
         .order("upload_count", { ascending: false })
-        .limit(10);
+        .limit(badge.requirement_amount);
+
       if (topUsers.some((user) => user.user_id === userId)) {
         const { data: newBadge } = await supabase
           .from("user_badges")

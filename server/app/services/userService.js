@@ -71,16 +71,16 @@ async function awardUserBadges(userId) {
             userId,
             awardedBadges
           );
+        } else if (badge.requirement_metric === "special") {
+          await badgeAwardService.awardSpecialBadges(
+            badge,
+            userId,
+            awardedBadges
+          );
         }
-      } else if (badge.requirement_metric === "special") {
-        await badgeAwardService.awardSpecialBadges(
-          badge,
-          userId,
-          awardedBadges
-        );
       }
     }
-    
+
     return awardedBadges;
   } catch (e) {
     console.error("Error awarding user badges:", e);
