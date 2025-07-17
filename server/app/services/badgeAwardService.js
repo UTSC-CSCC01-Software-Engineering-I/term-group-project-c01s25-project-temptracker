@@ -34,26 +34,123 @@ async function awardSubmissionSpecificBadges(badge, userId, awardedBadges) {
     .select("*")
     .eq("user_id", userId);
 
-  switch (badge.name) {
-    case "Verified Contributor":
+  // recall that only one badge is award per call of this function
+  let badgeToAward = null;
+
+  switch (badge.id) {
+    case 15: // "Verified Contributor"
+      if (userSubmissions.some((submission) => submission.is_verified)) {
+        badgeToAward = badge;
+      }
       break;
-    case "Night Owl":
+    case 13: // "Night Owl"
+      if (
+        userSubmissions.some(
+          (temp) =>
+            new Date(temp.measured_on).getHours() >= 22 &&
+            new Date(temp.measured_on).getHours() <= 23
+        )
+      ) {
+        badgeToAward = badge;
+      }
       break;
-    case "Early Bird":
+    case 16: // "Early Bird"
+      if (
+        userSubmissions.some(
+          (temp) =>
+            new Date(temp.measured_on).getHours() >= 5 &&
+            new Date(temp.measured_on).getHours() <= 9
+        )
+      ) {
+        badgeToAward = badge;
+      }
       break;
-    case "Detail Oriented":
+    case 10: // "Detail Oriented"
+      if (userSubmissions.filter((temp) => temp.notes).length >= 25) {
+        badgeToAward = badge;
+      }
       break;
-    case "Local Explorer":
+    case 6: // "Local Explorer":
+      const uniqueLocations = new Set(
+        userSubmissions.map((temp) => [temp.latitude, temp.longitude].join(","))
+      );
+      if (uniqueLocations.size >= badge.requirement_amount) {
+        badgeToAward = badge;
+      }
       break;
-    case "Distance Traveler":
+    case 9: // "Distance Traveler"
       break;
-    case "Lake Hopper":
-    case "Great Lakes Master":
+    case 7: // "Lake Hopper"
+    case 8: // "Great Lakes Master"
+      const greatLakesVisited = getGreatLakesVisited(userSubmissions);
+      if (greatLakesVisited >= badge.requirement_amount) {
+        badgeToAward = badge;
+      }
       break;
     default:
       // unobtainable or unknown submission specific badge, do nothing
       return;
   }
+
+  if (badgeToAward) {
+    const { data: newBadge } = await supabase
+      .from("user_badges")
+      .insert({
+        user_id: userId,
+        badge_id: badgeToAward.id,
+        earned_on: new Date(),
+      })
+      .select()
+      .single();
+    awardedBadges.push(newBadge);
+  }
+}
+
+function getGreatLakesVisited(userSubmissions) {
+  // rough rectangular bounds for each Great Lake
+  const greatLakes = {
+    LakeSuperior: {
+      lonRange: [46.464686, 48.733387],
+      latRange: [-92.053853, -84.637782],
+    },
+    LakeMichigan: {
+      lonRange: [41.665786, 46.059437],
+      latRange: [-87.935542, -84.889314],
+    },
+    LakeHuron: {
+      lonRange: [43.051386, 45.865572],
+      latRange: [-84.701462, -81.600918],
+    },
+    LakeErie: {
+      lonRange: [41.502673, 42.79888],
+      latRange: [-83.44376, -79.007697],
+    },
+    LakeOntario: {
+      lonRange: [43.2788, 44.046544],
+      latRange: [-79.771219, -76.098678],
+    },
+  };
+
+  const visitedLakes = new Set();
+
+  userSubmissions.forEach((submission) => {
+    const { latitude, longitude } = submission;
+
+    for (const [lake, bounds] of Object.entries(greatLakes)) {
+      if (
+        latitude >= bounds.latRange[0] &&
+        latitude <= bounds.latRange[1] &&
+        longitude >= bounds.lonRange[0] &&
+        longitude <= bounds.lonRange[1]
+      ) {
+        visitedLakes.add(lake);
+      }
+    }
+  });
+
+  console.log("Visited Great Lakes:", visitedLakes);
+
+  return visitedLakes.size;
 }
 
 async function awardSpecialBadges(badge, userId, awardedBadges) {

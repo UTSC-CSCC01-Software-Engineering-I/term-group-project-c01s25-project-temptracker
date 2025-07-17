@@ -32,8 +32,8 @@ async function getUserBadges(req, res) {
 async function awardUserBadges(req, res) {
   const userId = req.params.id;
   try {
-    await userService.awardUserBadges(userId);
-    res.status(200).json({ message: "Badges awarded successfully" });
+    const badges = await userService.awardUserBadges(userId);
+    res.status(200).json(badges);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -80,9 +80,7 @@ async function awardUserBadges(userId) {
         );
       }
     }
-
-    console.log("Awarded badges:", awardedBadges);
-
+    
     return awardedBadges;
   } catch (e) {
     console.error("Error awarding user badges:", e);
