@@ -39,18 +39,6 @@ export function useUserStats(userId: string | undefined) {
           }
         );
 
-        const awardedBadges = await axios.post(
-          `${API_BASE_URL}/users/${userId}/badges/award`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-            },
-          }
-        );
-
-        console.log("awardedBadges:", awardedBadges);
-
         setRank(stats.rank);
         setStreak(stats.curr_streak);
         setBadges(badgesResponse.data || []);

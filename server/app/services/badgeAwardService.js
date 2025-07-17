@@ -24,7 +24,12 @@ async function awardStatsRelatedBadges(badge, userId, awardedBadges) {
       })
       .select()
       .single();
-    awardedBadges.push(data);
+
+    // Return the full badge information instead of just the user_badge record
+    awardedBadges.push({
+      ...badge,
+      earned_on: data.earned_on,
+    });
   }
 }
 
@@ -102,7 +107,12 @@ async function awardSubmissionSpecificBadges(badge, userId, awardedBadges) {
       })
       .select()
       .single();
-    awardedBadges.push(newBadge);
+
+    // Return the full badge information instead of just the user_badge record
+    awardedBadges.push({
+      ...badgeToAward,
+      earned_on: newBadge.earned_on,
+    });
   }
 }
 
@@ -175,7 +185,12 @@ async function awardSpecialBadges(badge, userId, awardedBadges) {
             })
             .select()
             .single();
-          awardedBadges.push(newBadge);
+
+          // Return the full badge information instead of just the user_badge record
+          awardedBadges.push({
+            ...badge,
+            earned_on: newBadge.earned_on,
+          });
         }
       }
       break;
@@ -196,7 +211,12 @@ async function awardSpecialBadges(badge, userId, awardedBadges) {
           })
           .select()
           .single();
-        awardedBadges.push(newBadge);
+
+        // Return the full badge information instead of just the user_badge record
+        awardedBadges.push({
+          ...badge,
+          earned_on: newBadge.earned_on,
+        });
       }
       break;
     default:

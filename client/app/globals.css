@@ -24,27 +24,27 @@
   }
 
   .bronze-badge {
-    @apply bg-gradient-to-br from-amber-100 to-orange-200 border-amber-400 text-amber-800;
+    @apply bg-gradient-to-br from-amber-100 to-[#ca7e4b] border-[#ca7e4b] text-amber-800;
   }
 
   .bronze-badge .badge-accent {
-    @apply bg-amber-500;
+    @apply bg-[#ca7e4b];
   }
 
   .silver-badge {
-    @apply bg-gradient-to-br from-gray-100 to-slate-200 border-gray-400 text-gray-800;
+    @apply bg-gradient-to-br from-gray-100 to-[#b6b8bc] border-[#b6b8bc] text-gray-800;
   }
 
   .silver-badge .badge-accent {
-    @apply bg-gray-500;
+    @apply bg-[#b6b8bc];
   }
 
   .gold-badge {
-    @apply bg-gradient-to-br from-yellow-100 to-amber-200 border-yellow-400 text-yellow-800;
+    @apply bg-gradient-to-br from-yellow-100 to-[#f6bd43] border-yellow-400 text-yellow-800;
   }
 
   .gold-badge .badge-accent {
-    @apply bg-yellow-500;
+    @apply bg-[#f6bd43];
   }
 
   .diamond-badge {
