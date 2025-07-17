@@ -13,7 +13,7 @@ export default function CommunityTab() {
     useCommunityStats(user?.id);
   const { badges: userBadges } = useUserStats(user?.id);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-
+  
   // Filter badges based on selected category
   const filteredBadges =
     selectedCategory === "all"

@@ -54,6 +54,9 @@ export function useCommunityStats(userId: string | undefined) {
         const topUsers = data.map((u) => transformToUser(u, u.rank));
         setUsers(topUsers);
 
+        const badgesResponse = await axios.get(`/api/general-data/badges`);
+        setAllBadges(badgesResponse.data);
+
         if (!userId) {
           setCurrentUserStat(null);
           return;
@@ -61,9 +64,6 @@ export function useCommunityStats(userId: string | undefined) {
 
         const stat = await fetchCurrentUserStatsWithRank(userId, sortKey);
         setCurrentUserStat(transformToUser(stat, stat.rank));
-
-        const badgesResponse = await axios.get(`/api/general-data/badges`);
-        setAllBadges(badgesResponse.data);
       } catch (e) {
         console.error("Error loading leaderboard:", e);
       } finally {
