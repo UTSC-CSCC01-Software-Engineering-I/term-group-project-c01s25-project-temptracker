@@ -83,7 +83,17 @@ async function awardSubmissionSpecificBadges(badge, userId, awardedBadges) {
         badgeToAward = badge;
       }
       break;
-    case 9: // "Distance Traveler"
+    case 9: // "Temperature Hunter"
+      const temperatures = userSubmissions.map((temp) => temp.temperature);
+      const minTemp = Math.min(...temperatures);
+      const maxTemp = Math.max(...temperatures);
+      const tempRange = maxTemp - minTemp;
+
+      if (tempRange >= badge.requirement_amount) {
+        // requirement_amount = 20
+        badgeToAward = badge;
+      }
+      break;
       break;
     case 7: // "Lake Hopper"
     case 8: // "Great Lakes Master"
