@@ -14,5 +14,10 @@ userRouter.get(
   userController.getUserSubmissions
 );
 userRouter.get("/:id/badges", verifySelfAccess, userController.getUserBadges);
+userRouter.post(
+  "/:id/badges/award",
+  verifySelfAccess,
+  userController.awardUserBadges
+);
 
 module.exports = userRouter;
