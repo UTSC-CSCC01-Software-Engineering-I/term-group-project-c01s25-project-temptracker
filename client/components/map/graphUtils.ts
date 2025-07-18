@@ -115,3 +115,5 @@ export const interpolation = (polygon: any, tempPoints: any, point: any) => {
   const newPoint: TemperaturePoint = [point[1], point[0], interpolatedTemp];
   return newPoint;
 };
+
+
