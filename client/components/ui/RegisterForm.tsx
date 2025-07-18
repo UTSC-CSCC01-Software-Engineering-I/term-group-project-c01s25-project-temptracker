@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/shadcn/button";
+import React from "react";
 import {
   Form,
   FormControl,
@@ -79,8 +80,8 @@ export default function RegisterForm() {
         form.setError("email", { message: error.message });
       } else {
         form.setError("root", { message: error.message });
-        toast.error(error.message);
       }
+      toast.error(error.message);
     }
   }
 
@@ -136,6 +137,7 @@ export default function RegisterForm() {
                 <Button
                   type="button"
                   variant="ghost"
+                  aria-label="Toggle password visibility"
                   className="absolute right-0 top-0 h-full cursor-pointer dark:hover:bg-transparent hover:bg-transparent"
                   onClick={() => setShowPassword((prev) => !prev)}
                 >
