@@ -152,10 +152,7 @@ const Map = (props: MapProps) => {
   useEffect(() => {
     const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
     console.log("Current date string:", dateStr);
-    setLoofsContours(null)
-    setLeofsContours(null)  
-    setLsofsContours(null)
-    setLmhofsContours(null)
+    
     const getLoofsBucketData = async () => {
       try {
         const filePath = `${dateStr}/loofs_${dateStr}.geo.json`
@@ -963,24 +960,28 @@ const Map = (props: MapProps) => {
 
         {tempVisible && loofsContours && (
           <GeoJSON
+            key={`loofs-${date.toISOString()}`}
             data={loofsContours}
             style={getFeatureStyle2}
           />
         )}
         {tempVisible && leofsContours && (
           <GeoJSON
+            key={`leofs-${date.toISOString()}`}
             data={leofsContours}
             style={getFeatureStyle2}
           />
         )}
         {tempVisible && lmhofsContours && (
           <GeoJSON
+            key={`lmhofs-${date.toISOString()}`}
             data={lmhofsContours}
             style={getFeatureStyle2}
           />
         )}
          {tempVisible && lsofsContours && (
           <GeoJSON
+            key={`lsofs-${date.toISOString()}`}
             data={lsofsContours}
             style={getFeatureStyle2}
           />

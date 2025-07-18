@@ -218,7 +218,7 @@ def generateContours(nc_file):
     except Exception as error:
         print(f"Error uploading to Supabase: {error}")
     
-dates = ['20250715','20250716', '20250717', '20250718']
+dates = ['20250712','20250713', '20250714']
 for date in dates:
 
     files = os.listdir(rf'./{date}')
