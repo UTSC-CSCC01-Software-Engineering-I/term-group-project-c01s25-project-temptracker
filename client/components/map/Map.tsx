@@ -381,7 +381,7 @@ const Map = (props: MapProps) => {
   const weekSliderChange = (_event: Event, value: number) => {
     // const newValue = Array.isArray(value) ? value[0] : value;
     console.log("changed slider to", value);
-    // setCurrentWeekday(value);
+    setCurrentWeekday(value);
     const newDate = new Date()
     newDate.setDate(date.getDate() - (7-currentWeekday))
     setDate(newDate)
@@ -896,10 +896,10 @@ const Map = (props: MapProps) => {
 
 
   //RENDER
-  console.log('loofs', loofsContours)
-  console.log('leofs', leofsContours)
-  console.log('lmhofs', lmhofsContours)
-  console.log('lsofs', lsofsContours)
+  // console.log('loofs', loofsContours)
+  // console.log('leofs', leofsContours)
+  // console.log('lmhofs', lmhofsContours)
+  // console.log('lsofs', lsofsContours)
   if (
     mapCoords.latitude &&
     mapCoords.longitude &&

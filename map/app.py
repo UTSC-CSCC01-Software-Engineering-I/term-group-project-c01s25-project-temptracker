@@ -159,6 +159,7 @@ def save_netcdf_from_url(url):
     
 
 def generateContours(nc_file):
+    #TODO - normalize coordinates (long) before sending to bucket
     ds = xr.open_dataset(nc_file)
     nv = ds['nv'].values
     triangles = []
@@ -169,6 +170,9 @@ def generateContours(nc_file):
     # Assuming you have lat, lon, and some data variable
     lats = ds['lat'].values
     lons = ds['lon'].values
+    #normalize lon
+    for i in range(len(lons)):
+        lons[i] = ((lons[i] + 180) % 360) - 180
     temp_var = ds['temp'].values[0][0]
 
 

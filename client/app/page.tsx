@@ -21,7 +21,7 @@ export default function Home() {
   const [centerLatitude, setCenterLatitude] = useState<number | null>(null);
   const [centerLongitude, setCenterLongitude] = useState<number | null>(null);
 
-  const [timeRange, setTimeRange] = useState<"all" | "week" | "month">("all");
+  const [timeRange, setTimeRange] = useState<"week" | "month">("week");
 
   const handleLatitude = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
@@ -83,7 +83,6 @@ export default function Home() {
             onChange={(e) => setTimeRange(e.target.value as any)}
             className="border rounded px-3 py-1"
           >
-            <option value="all">All Time</option>
             <option value="week">Last Week</option>
             <option value="month">Last Month</option>
           </select>
