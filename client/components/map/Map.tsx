@@ -39,7 +39,7 @@ import type {
 } from "./mapTypes";
 
 import { GeoJsonObject } from "geojson";
-import { string } from "zod/v4";
+import { file, string } from "zod/v4";
 import { cookies } from "next/headers";
 import { get } from "axios";
 import { set } from "date-fns";
@@ -86,6 +86,7 @@ const Map = (props: MapProps) => {
     const today = new Date(year, month, day);
     return today
   })
+
 
   const [unit, setUnit] = useState("Celsius");
 
@@ -151,11 +152,17 @@ const Map = (props: MapProps) => {
   useEffect(() => {
     const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
     console.log("Current date string:", dateStr);
+    setLoofsContours(null)
+    setLeofsContours(null)  
+    setLsofsContours(null)
+    setLmhofsContours(null)
     const getLoofsBucketData = async () => {
       try {
+        const filePath = `${dateStr}/loofs_${dateStr}.geo.json`
+        console.log('fetching:', filePath)
         const { data, error } = await supabase.storage
         .from('geojson')
-        .download(`${dateStr}/loofs_${dateStr}.geo.json`);
+        .download(filePath);
         if (error) {
           console.error('Error downloading loofs geojson:', error);
           return;
@@ -170,9 +177,11 @@ const Map = (props: MapProps) => {
     }
     const getLmhofsBucketData = async () => {
       try {
+        const filePath = `${dateStr}/lmhofs_${dateStr}.geo.json`
+        console.log('fetching:', filePath)
         const { data, error } = await supabase.storage
         .from('geojson')
-        .download(`${dateStr}/lmhofs_${dateStr}.geo.json`);
+        .download(filePath);
         if (error) {
           console.error('Error downloading lmhofs geojson:', error);
           return;
@@ -188,9 +197,11 @@ const Map = (props: MapProps) => {
 
     const getLeofsBucketData = async () => {
       try {
+        const filePath = `${dateStr}/leofs_${dateStr}.geo.json`
+        console.log('fetching:', filePath)
         const { data, error } = await supabase.storage
         .from('geojson')
-        .download(`${dateStr}/leofs_${dateStr}.geo.json`);
+        .download(filePath);
         if (error) {
           console.error('Error downloading leofs geojson:', error);
           return;
@@ -206,9 +217,11 @@ const Map = (props: MapProps) => {
 
     const getLsofsBucketData = async () => {
       try {
+        const filePath = `${dateStr}/lsofs_${dateStr}.geo.json`
+        console.log('fetching:', filePath)
         const { data, error } = await supabase.storage
         .from('geojson')
-        .download(`${dateStr}/lsofs_${dateStr}.geo.json`);
+        .download(filePath);
         if (error) {
           console.error('Error downloading lsofs geojson:', error);
           return;
@@ -383,7 +396,10 @@ const Map = (props: MapProps) => {
     console.log("changed slider to", value);
     setCurrentWeekday(value);
     const newDate = new Date()
-    newDate.setDate(date.getDate() - (7-currentWeekday))
+    const currentDate = new Date()
+    newDate.setDate(currentDate.getDate() - (7-value))
+    console.log('old date', date)
+    console.log('new date', newDate)
     setDate(newDate)
   };
 
@@ -406,7 +422,7 @@ const Map = (props: MapProps) => {
 
     if (props.timeRange === "week") {
       const marks = createWeekMarks();
-      console.log("week marks", marks);
+      // console.log("week marks", marks);
       return (
         <div
           ref={sliderRef}
@@ -894,6 +910,9 @@ const Map = (props: MapProps) => {
     };
   };
 
+  useEffect(() => {
+    console.log('contours changed')
+  },[loofsContours, leofsContours, lsofsContours, lmhofsContours])
 
   //RENDER
   // console.log('loofs', loofsContours)
