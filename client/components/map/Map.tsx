@@ -10,7 +10,7 @@ import MapLegend from "../ui/MapLegend";
 import "leaflet.heat";
 import "leaflet/dist/leaflet.css";
 import "react-leaflet-markercluster/styles";
-import geoJsonTest from "../../data/earth-lakes-2km5-test.geo.json";
+
 import Slider from "@mui/material/Slider";
 import "../../styles/MapSlider.css";
 
@@ -41,6 +41,8 @@ import type {
 import { GeoJsonObject } from "geojson";
 import { string } from "zod/v4";
 import { cookies } from "next/headers";
+import { get } from "axios";
+import { set } from "date-fns";
 
 const supabase = createClient(); // need to move this elsewhere
 
@@ -52,7 +54,6 @@ const Map = (props: MapProps) => {
       : { latitude: null, longitude: null };
   });
 
-  const gTest = geoJsonTest as GeoJsonObject;
 
   const [tempVisible, setTempVisible] = useState(true);
   const [geoData, setGeoData] = useState<any>(null);
@@ -66,44 +67,60 @@ const Map = (props: MapProps) => {
   const [currentWeekday, setCurrentWeekday] = useState(7);
   const [currentMonthDate, setCurrentMonthDate] = useState(30);
 
-  //click nearest point
-  const [allBucketRaw, setAllBucketRaw] = useState<any[]>([]);
-  const [weekBucketRaw, setWeekBucketRaw] = useState<any[]>([]);
-  const [montthBucketRaw, setMonthBucketRaw] = useState<any[]>([]);
+  //Contour buckets
+  const [loofsContours, setLoofsContours] = useState(null);
+  const [leofsContours, setLeofsContours] = useState(null);
+  const [lsofsContours, setLsofsContours] = useState(null);
+  const [lmhofsContours, setLmhofsContours] = useState(null);
+
+  //Points buckets
+  const [loofsPoints, setLoofsPoints] = useState(null);
+  const [leofsPoints, setLeofsPoints] = useState(null);
+  const [lsofsPoints, setLsofsPoints] = useState(null);
+  const [lmhofsPoints, setLmhofsPoints] = useState(null);
+
+  const [date, setDate] = useState(() => {
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth(); // Months are 0-indexed
+    const day = new Date().getDate();
+    const today = new Date(year, month, day);
+    return today
+  })
+
   const [unit, setUnit] = useState("Celsius");
 
-  const generateGrids = () => {
-    let grids = [];
-    for (let i = 0; i < polygons.length; i++) {
-      if (polygons[i].containsPoint) {
-        const grid = generateGridInPolygon(polygons[i].coordinates, 0.5);
-        grids.push({ grid: grid, polygon: polygons[i] });
-      }
-    }
-    return grids;
-  };
+  // const generateGrids = () => {
+  //   let grids = [];
+  //   for (let i = 0; i < polygons.length; i++) {
+  //     if (polygons[i].containsPoint) {
+  //       const grid = generateGridInPolygon(polygons[i].coordinates, 0.5);
+  //       grids.push({ grid: grid, polygon: polygons[i] });
+  //     }
+  //   }
+  //   return grids;
+  // };
 
-  const [tempData, setTempData] = useState<TemperaturePoint[]>(() => {
-    const localData = localStorage.getItem("TEMP_DATA");
-    return localData ? JSON.parse(localData) : [];
-  });
+  // const [tempData, setTempData] = useState<TemperaturePoint[]>(() => {
+  //   const localData = localStorage.getItem("TEMP_DATA");
+  //   return localData ? JSON.parse(localData) : [];
+  // });
 
-  const [interpolatedTempData, setInterpolatedTempData] = useState<
-    TemperaturePoint[]
-  >(() => {
-    const localInterData = localStorage.getItem("INTERPOLATED_TEMP_DATA");
-    return localInterData ? JSON.parse(localInterData) : [];
-  });
+  // const [interpolatedTempData, setInterpolatedTempData] = useState<
+  //   TemperaturePoint[]
+  // >(() => {
+  //   const localInterData = localStorage.getItem("INTERPOLATED_TEMP_DATA");
+  //   return localInterData ? JSON.parse(localInterData) : [];
+  // });
 
-  const [rawTempData, setRawTempData] = useState(() => {
-    const localRawData = localStorage.getItem("RAW_TEMP_DATA");
-    return localRawData ? JSON.parse(localRawData) : [];
-  });
+  // const [rawTempData, setRawTempData] = useState(() => {
+  //   const localRawData = localStorage.getItem("RAW_TEMP_DATA");
+  //   return localRawData ? JSON.parse(localRawData) : [];
+  // });
 
-  const [geoGrids, setGeoGrids] = useState(() => {
-    const localGeoGrids = localStorage.getItem("GRID_DATA");
-    return localGeoGrids ? JSON.parse(localGeoGrids) : [];
-  });
+  // const [geoGrids, setGeoGrids] = useState(() => {
+  //   const localGeoGrids = localStorage.getItem("GRID_DATA");
+  //   return localGeoGrids ? JSON.parse(localGeoGrids) : [];
+  // });
 
   const [clickedPoint, setClickedPoint] = useState({
     latitude: null as number | null,
@@ -131,8 +148,88 @@ const Map = (props: MapProps) => {
     }
   });
 
+  useEffect(() => {
+    const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+    console.log("Current date string:", dateStr);
+    const getLoofsBucketData = async () => {
+      try {
+        const { data, error } = await supabase.storage
+        .from('geojson')
+        .download(`${dateStr}/loofs_${dateStr}.geo.json`);
+        if (error) {
+          console.error('Error downloading loofs geojson:', error);
+          return;
+        } else if (data != null) {
+          const text = await data.text()
+          const jsonData = JSON.parse(text)
+          setLoofsContours(jsonData);
+        }
+      } catch (error) {
+        console.error('Error fetching bucket data:', error);
+      }
+    }
+    const getLmhofsBucketData = async () => {
+      try {
+        const { data, error } = await supabase.storage
+        .from('geojson')
+        .download(`${dateStr}/lmhofs_${dateStr}.geo.json`);
+        if (error) {
+          console.error('Error downloading lmhofs geojson:', error);
+          return;
+        } else if (data != null) {
+          const text = await data.text()
+          const jsonData = JSON.parse(text)
+          setLmhofsContours(jsonData);
+        }
+      } catch (error) {
+        console.error('Error fetching bucket data:', error);
+      }
+    }
+
+    const getLeofsBucketData = async () => {
+      try {
+        const { data, error } = await supabase.storage
+        .from('geojson')
+        .download(`${dateStr}/leofs_${dateStr}.geo.json`);
+        if (error) {
+          console.error('Error downloading leofs geojson:', error);
+          return;
+        } else if (data != null) {
+          const text = await data.text()
+          const jsonData = JSON.parse(text)
+          setLeofsContours(jsonData);
+        }
+      } catch (error) {
+        console.error('Error fetching bucket data:', error);
+      }
+    }
+
+    const getLsofsBucketData = async () => {
+      try {
+        const { data, error } = await supabase.storage
+        .from('geojson')
+        .download(`${dateStr}/lsofs_${dateStr}.geo.json`);
+        if (error) {
+          console.error('Error downloading lsofs geojson:', error);
+          return;
+        } else if (data != null) {
+          const text = await data.text()
+          const jsonData = JSON.parse(text)
+          setLsofsContours(jsonData);
+        }
+      } catch (error) {
+        console.error('Error fetching bucket data:', error);
+      }
+    }
+
+    getLoofsBucketData();
+    getLmhofsBucketData();
+    getLeofsBucketData();
+    getLsofsBucketData();
+  },[date])
+
   // console.log('geo data',geoJson)
-  console.log(tempData, "temp data points loaded");
+  // console.log(tempData, "temp data points loaded");
   
   // IMPORTANT
   // Uncomment below when you run: Can be unstable
@@ -182,36 +279,36 @@ const Map = (props: MapProps) => {
   //   loadGeoJSON();
   // }, []);
 
-  useEffect(() => {
-    if (polygons.length > 0) {
-      console.log("Generating grids from polygons...");
-      const grids = generateGrids();
-      setGeoGrids(grids);
-    }
-  }, [polygons]);
+  // useEffect(() => {
+  //   if (polygons.length > 0) {
+  //     console.log("Generating grids from polygons...");
+  //     const grids = generateGrids();
+  //     setGeoGrids(grids);
+  //   }
+  // }, [polygons]);
 
   useEffect(() => {
     localStorage.setItem("USER_LOCATION", JSON.stringify(userLocation));
   }, [userLocation]);
 
-  useEffect(() => {
-    localStorage.setItem("TEMP_DATA", JSON.stringify(tempData));
-  }, [tempData]);
+  // useEffect(() => {
+  //   localStorage.setItem("TEMP_DATA", JSON.stringify(tempData));
+  // }, [tempData]);
 
-  useEffect(() => {
-    localStorage.setItem(
-      "INTERPOLATED_TEMP_DATA",
-      JSON.stringify(interpolatedTempData)
-    );
-  }, [interpolatedTempData]);
+  // useEffect(() => {
+  //   localStorage.setItem(
+  //     "INTERPOLATED_TEMP_DATA",
+  //     JSON.stringify(interpolatedTempData)
+  //   );
+  // }, [interpolatedTempData]);
 
-  useEffect(() => {
-    localStorage.setItem("RAW_TEMP_DATA", JSON.stringify(rawTempData));
-  }, [rawTempData]);
+  // useEffect(() => {
+  //   localStorage.setItem("RAW_TEMP_DATA", JSON.stringify(rawTempData));
+  // }, [rawTempData]);
 
-  useEffect(() => {
-    localStorage.setItem("GRID_DATA", JSON.stringify(geoGrids));
-  }, [geoGrids]);
+  // useEffect(() => {
+  //   localStorage.setItem("GRID_DATA", JSON.stringify(geoGrids));
+  // }, [geoGrids]);
 
   useEffect(() => {
     const fetchUserLocation = async () => {
@@ -272,8 +369,7 @@ const Map = (props: MapProps) => {
       point.measured_on,
     ]);
 
-    setRawTempData(rawData as TimeTemperaturePoint[]);
-    setTempData(heatData as TemperaturePoint[]);
+    
   };
 
   useEffect(() => {
@@ -285,7 +381,10 @@ const Map = (props: MapProps) => {
   const weekSliderChange = (_event: Event, value: number) => {
     // const newValue = Array.isArray(value) ? value[0] : value;
     console.log("changed slider to", value);
-    setCurrentWeekday(value);
+    // setCurrentWeekday(value);
+    const newDate = new Date()
+    newDate.setDate(date.getDate() - (7-currentWeekday))
+    setDate(newDate)
   };
 
   const monthSliderChange = (_event: Event, value: number) => {
@@ -297,37 +396,6 @@ const Map = (props: MapProps) => {
   // Updated SliderLayer component:
   const SliderLayer = () => {
     const sliderRef = useRef<HTMLDivElement>(null);
-
-    // Prevent map interactions on slider container
-    // useEffect(() => {
-    //   const sliderElement = sliderRef.current;
-    //   if (sliderElement) {
-    //     const preventMapInteraction = (e: Event) => {
-    //       e.stopPropagation();
-    //     };
-
-    //     // Add event listeners to prevent map interactions
-    //     sliderElement.addEventListener('mousedown', preventMapInteraction);
-    //     sliderElement.addEventListener('mousemove', preventMapInteraction);
-    //     sliderElement.addEventListener('mouseup', preventMapInteraction);
-    //     sliderElement.addEventListener('click', preventMapInteraction);
-    //     sliderElement.addEventListener('wheel', preventMapInteraction);
-    //     sliderElement.addEventListener('touchstart', preventMapInteraction);
-    //     sliderElement.addEventListener('touchmove', preventMapInteraction);
-    //     sliderElement.addEventListener('touchend', preventMapInteraction);
-
-    //     return () => {
-    //       sliderElement.removeEventListener('mousedown', preventMapInteraction);
-    //       sliderElement.removeEventListener('mousemove', preventMapInteraction);
-    //       sliderElement.removeEventListener('mouseup', preventMapInteraction);
-    //       sliderElement.removeEventListener('click', preventMapInteraction);
-    //       sliderElement.removeEventListener('wheel', preventMapInteraction);
-    //       sliderElement.removeEventListener('touchstart', preventMapInteraction);
-    //       sliderElement.removeEventListener('touchmove', preventMapInteraction);
-    //       sliderElement.removeEventListener('touchend', preventMapInteraction);
-    //     };
-    //   }
-    // }, []);
 
     const monthTime = new Date(
       Date.now() - (30 - currentMonthDate) * 24 * 60 * 60 * 1000
@@ -528,266 +596,313 @@ const Map = (props: MapProps) => {
     return null;
   };
 
-  const findNearestTemperaturePoint = (
-    clickLat: number,
-    clickLng: number,
-    timeRange: string,
-    maxDistance: number = 0.5
-  ) => {
-    let nearest = null;
-    let minDistance = Infinity;
+  // const findNearestTemperaturePoint = (
+  //   clickLat: number,
+  //   clickLng: number,
+  //   timeRange: string,
+  //   maxDistance: number = 0.5
+  // ) => {
+  //   let nearest = null;
+  //   let minDistance = Infinity;
 
-    if (timeRange == "week") {
-      weekBucketRaw[currentWeekday - 1].forEach(
-        (point: [number, number, number]) => {
-          const distance = Math.sqrt(
-            Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-          );
-          if (distance < minDistance && distance <= 2 * maxDistance) {
-            minDistance = distance;
-            nearest = {
-              temperature: point[2],
-              latitude: point[0],
-              longitude: point[1],
-              distance: distance,
-            };
-          }
-        }
-      );
-      console.log("Nearest point:", nearest);
-    } else if (timeRange == "month") {
-      montthBucketRaw[currentMonthDate - 1].forEach(
-        (point: [number, number, number]) => {
-          const distance = Math.sqrt(
-            Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-          );
-          if (distance < minDistance && distance <= 2 * maxDistance) {
-            minDistance = distance;
-            nearest = {
-              temperature: point[2],
-              latitude: point[0],
-              longitude: point[1],
-              distance: distance,
-            };
-          }
-        }
-      );
-      console.log("Nearest point:", nearest);
-    } else {
-      allBucketRaw.forEach((point: [number, number, number]) => {
-        const distance = Math.sqrt(
-          Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-        );
-        if (distance < minDistance && distance <= maxDistance) {
-          minDistance = distance;
-          nearest = {
-            temperature: point[2],
-            latitude: point[0],
-            longitude: point[1],
-            distance: distance,
-          };
-        }
-      });
-      console.log("Nearest point:", nearest);
-    }
+  //   if (timeRange == "week") {
+  //     weekBucketRaw[currentWeekday - 1].forEach(
+  //       (point: [number, number, number]) => {
+  //         const distance = Math.sqrt(
+  //           Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
+  //         );
+  //         if (distance < minDistance && distance <= 2 * maxDistance) {
+  //           minDistance = distance;
+  //           nearest = {
+  //             temperature: point[2],
+  //             latitude: point[0],
+  //             longitude: point[1],
+  //             distance: distance,
+  //           };
+  //         }
+  //       }
+  //     );
+  //     console.log("Nearest point:", nearest);
+  //   } else if (timeRange == "month") {
+  //     montthBucketRaw[currentMonthDate - 1].forEach(
+  //       (point: [number, number, number]) => {
+  //         const distance = Math.sqrt(
+  //           Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
+  //         );
+  //         if (distance < minDistance && distance <= 2 * maxDistance) {
+  //           minDistance = distance;
+  //           nearest = {
+  //             temperature: point[2],
+  //             latitude: point[0],
+  //             longitude: point[1],
+  //             distance: distance,
+  //           };
+  //         }
+  //       }
+  //     );
+  //     console.log("Nearest point:", nearest);
+  //   } else {
+  //     allBucketRaw.forEach((point: [number, number, number]) => {
+  //       const distance = Math.sqrt(
+  //         Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
+  //       );
+  //       if (distance < minDistance && distance <= maxDistance) {
+  //         minDistance = distance;
+  //         nearest = {
+  //           temperature: point[2],
+  //           latitude: point[0],
+  //           longitude: point[1],
+  //           distance: distance,
+  //         };
+  //       }
+  //     });
+  //     console.log("Nearest point:", nearest);
+  //   }
 
-    // rawTempData.forEach((point: [number, number, number]) => {
-    //   const distance = Math.sqrt(
-    //     Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-    //   );
-    //   if (distance < minDistance && distance <= maxDistance) {
-    //     minDistance = distance;
-    //     nearest = {
-    //       temperature: point[2],
-    //       latitude: point[0],
-    //       longitude: point[1],
-    //       distance: distance,
-    //     };
-    //   }
-    // });
-    // console.log("Nearest point:", nearest);
-    return nearest;
-  };
 
-  const MapClickHandler = () => {
-    useMapEvents({
-      click: (e) => {
-        const { lat, lng } = e.latlng;
-        if (
-          typeof lat !== "number" ||
-          typeof lng !== "number" ||
-          isNaN(lat) ||
-          isNaN(lng)
-        ) {
-          console.warn("Invalid coordinates:", { lat, lng });
-          return;
-        }
-        console.log("Map clicked at:", lat, lng);
+  //   return nearest;
+  // };
 
-        const nearestPoint = findNearestTemperaturePoint(
-          lat,
-          lng,
-          props.timeRange
-        );
+  // const MapClickHandler = () => {
+  //   useMapEvents({
+  //     click: (e) => {
+  //       const { lat, lng } = e.latlng;
+  //       if (
+  //         typeof lat !== "number" ||
+  //         typeof lng !== "number" ||
+  //         isNaN(lat) ||
+  //         isNaN(lng)
+  //       ) {
+  //         console.warn("Invalid coordinates:", { lat, lng });
+  //         return;
+  //       }
+  //       console.log("Map clicked at:", lat, lng);
 
-        if (nearestPoint) {
-          setClickedPoint({
-            latitude: lat,
-            longitude: lng,
-            nearestPoint: nearestPoint,
-          });
-        } else {
-          setClickedPoint({
-            latitude: null,
-            longitude: null,
-            nearestPoint: null,
-          });
-        }
-      },
-    });
-    return null;
-  };
+  //       const nearestPoint = findNearestTemperaturePoint(
+  //         lat,
+  //         lng,
+  //         props.timeRange
+  //       );
+
+  //       if (nearestPoint) {
+  //         setClickedPoint({
+  //           latitude: lat,
+  //           longitude: lng,
+  //           nearestPoint: nearestPoint,
+  //         });
+  //       } else {
+  //         setClickedPoint({
+  //           latitude: null,
+  //           longitude: null,
+  //           nearestPoint: null,
+  //         });
+  //       }
+  //     },
+  //   });
+  //   return null;
+  // };
 
   //set the grids
-  useEffect(() => {
-    if (polygons.length > 0 && tempData.length > 0) {
-      console.log("Generating grids...");
+  // useEffect(() => {
+  //   if (polygons.length > 0 && tempData.length > 0) {
+  //     console.log("Generating grids...");
 
-      if (props.timeRange == "week") {
-        let weeklyPoints = [];
-        let weeklyPointsRaw = [];
-        const weekData = bucketWeek(rawTempData);
-        console.log("week data", weekData);
+  //     if (props.timeRange == "week") {
+  //       let weeklyPoints = [];
+  //       let weeklyPointsRaw = [];
+  //       const weekData = bucketWeek(rawTempData);
+  //       console.log("week data", weekData);
 
-        if (!weekData || !Array.isArray(weekData) || weekData.length < 7) {
-          console.warn("weekData is invalid or insufficient:", weekData);
-          setWeekDataBucket(Array(7).fill([]));
-          return;
-        }
+  //       if (!weekData || !Array.isArray(weekData) || weekData.length < 7) {
+  //         console.warn("weekData is invalid or insufficient:", weekData);
+  //         setWeekDataBucket(Array(7).fill([]));
+  //         return;
+  //       }
 
-        for (let k = 0; k < weekData.length; k++) {
-          let allNewPoints: TemperaturePoint[] = [];
-          //remove time from the data
-          if (weekData[k].length == 0 || !Array.isArray(weekData[k])) {
-            weeklyPoints.push([]); // Push empty array for this day
-            continue;
-          }
+  //       for (let k = 0; k < weekData.length; k++) {
+  //         let allNewPoints: TemperaturePoint[] = [];
+  //         //remove time from the data
+  //         if (weekData[k].length == 0 || !Array.isArray(weekData[k])) {
+  //           weeklyPoints.push([]); // Push empty array for this day
+  //           continue;
+  //         }
 
-          const weekDataWithoutTime = weekData[k].map((d: any) => {
-            return [d[0], d[1], d[2]];
-          });
+  //         const weekDataWithoutTime = weekData[k].map((d: any) => {
+  //           return [d[0], d[1], d[2]];
+  //         });
 
-          for (let i = 0; i < geoGrids.length; i++) {
-            for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
-              const point = geoGrids[i]["grid"][j];
-              const tempPoint = interpolation(
-                geoGrids[i]["polygon"].coordinates,
-                [...weekDataWithoutTime, ...allNewPoints],
-                point
-              );
-              allNewPoints.push(tempPoint);
-            }
-          }
-          //TODO - account for including the existing specific week data
-          const combine = [...weekDataWithoutTime, ...allNewPoints].map(
-            (point) => {
-              return [point[0], point[1], tempConverter(point[2])];
-            }
-          );
-          const combineRaw = [...weekDataWithoutTime, ...allNewPoints];
-          weeklyPoints.push(combine);
-          weeklyPointsRaw.push(combineRaw);
-        }
-        //set state
-        setWeekDataBucket(weeklyPoints);
-        setWeekBucketRaw(weeklyPointsRaw);
-      } else if (props.timeRange == "month") {
-        let monthlyPoints = [];
-        let monthlyPointsRaw = [];
-        const monthData = bucketMonth(rawTempData);
+  //         for (let i = 0; i < geoGrids.length; i++) {
+  //           for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
+  //             const point = geoGrids[i]["grid"][j];
+  //             const tempPoint = interpolation(
+  //               geoGrids[i]["polygon"].coordinates,
+  //               [...weekDataWithoutTime, ...allNewPoints],
+  //               point
+  //             );
+  //             allNewPoints.push(tempPoint);
+  //           }
+  //         }
+  //         //TODO - account for including the existing specific week data
+  //         const combine = [...weekDataWithoutTime, ...allNewPoints].map(
+  //           (point) => {
+  //             return [point[0], point[1], tempConverter(point[2])];
+  //           }
+  //         );
+  //         const combineRaw = [...weekDataWithoutTime, ...allNewPoints];
+  //         weeklyPoints.push(combine);
+  //         weeklyPointsRaw.push(combineRaw);
+  //       }
+  //       //set state
+  //       setWeekDataBucket(weeklyPoints);
+  //       setWeekBucketRaw(weeklyPointsRaw);
+  //     } else if (props.timeRange == "month") {
+  //       let monthlyPoints = [];
+  //       let monthlyPointsRaw = [];
+  //       const monthData = bucketMonth(rawTempData);
 
-        if (!monthData || !Array.isArray(monthData) || monthData.length < 30) {
-          console.warn("weekData is invalid or insufficient:", monthData);
-          setWeekDataBucket(Array(30).fill([]));
-          return;
-        }
+  //       if (!monthData || !Array.isArray(monthData) || monthData.length < 30) {
+  //         console.warn("weekData is invalid or insufficient:", monthData);
+  //         setWeekDataBucket(Array(30).fill([]));
+  //         return;
+  //       }
 
-        for (let k = 0; k < monthData.length; k++) {
-          let allNewPoints: TemperaturePoint[] = [];
+  //       for (let k = 0; k < monthData.length; k++) {
+  //         let allNewPoints: TemperaturePoint[] = [];
 
-          if (monthData[k].length == 0 || !Array.isArray(monthData[k])) {
-            monthlyPoints.push([]); // Push empty array for this day
-            continue;
-          }
-          //remove time from the data
-          const monthDataWithoutTime = monthData[k].map((d: any) => {
-            return [d[0], d[1], d[2]];
-          });
-          for (let i = 0; i < geoGrids.length; i++) {
-            for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
-              const point = geoGrids[i]["grid"][j];
-              const tempPoint = interpolation(
-                geoGrids[i]["polygon"].coordinates,
-                [...monthDataWithoutTime, ...allNewPoints],
-                point
-              );
-              allNewPoints.push(tempPoint);
-            }
-          }
-          //TODO - account for including the existing specific month data
-          const combine = [...monthDataWithoutTime, ...allNewPoints].map(
-            (point) => {
-              return [point[0], point[1], tempConverter(point[2])];
-            }
-          );
-          const combineRaw = [...monthDataWithoutTime, ...allNewPoints];
-          monthlyPoints.push(combine);
-          monthlyPointsRaw.push(combineRaw);
-        }
-        //set State
-        setMonthDataBucket(monthlyPoints);
-        setMonthBucketRaw(monthlyPointsRaw);
-        // console.log('MONTH BUCKET AFTER INTERPOLATION', monthlyPoints)
-      } else {
-        let allNewPoints: TemperaturePoint[] = [];
+  //         if (monthData[k].length == 0 || !Array.isArray(monthData[k])) {
+  //           monthlyPoints.push([]); // Push empty array for this day
+  //           continue;
+  //         }
+  //         //remove time from the data
+  //         const monthDataWithoutTime = monthData[k].map((d: any) => {
+  //           return [d[0], d[1], d[2]];
+  //         });
+  //         for (let i = 0; i < geoGrids.length; i++) {
+  //           for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
+  //             const point = geoGrids[i]["grid"][j];
+  //             const tempPoint = interpolation(
+  //               geoGrids[i]["polygon"].coordinates,
+  //               [...monthDataWithoutTime, ...allNewPoints],
+  //               point
+  //             );
+  //             allNewPoints.push(tempPoint);
+  //           }
+  //         }
+  //         //TODO - account for including the existing specific month data
+  //         const combine = [...monthDataWithoutTime, ...allNewPoints].map(
+  //           (point) => {
+  //             return [point[0], point[1], tempConverter(point[2])];
+  //           }
+  //         );
+  //         const combineRaw = [...monthDataWithoutTime, ...allNewPoints];
+  //         monthlyPoints.push(combine);
+  //         monthlyPointsRaw.push(combineRaw);
+  //       }
+  //       //set State
+  //       setMonthDataBucket(monthlyPoints);
+  //       setMonthBucketRaw(monthlyPointsRaw);
+  //       // console.log('MONTH BUCKET AFTER INTERPOLATION', monthlyPoints)
+  //     } else {
+  //       let allNewPoints: TemperaturePoint[] = [];
 
-        for (let i = 0; i < geoGrids.length; i++) {
-          for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
-            const point = geoGrids[i]["grid"][j];
-            const tempPoint = interpolation(
-              geoGrids[i]["polygon"].coordinates,
-              [...tempData, ...allNewPoints],
-              point
-            );
-            allNewPoints.push(tempPoint);
-          }
-        }
+  //       for (let i = 0; i < geoGrids.length; i++) {
+  //         for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
+  //           const point = geoGrids[i]["grid"][j];
+  //           const tempPoint = interpolation(
+  //             geoGrids[i]["polygon"].coordinates,
+  //             [...tempData, ...allNewPoints],
+  //             point
+  //           );
+  //           allNewPoints.push(tempPoint);
+  //         }
+  //       }
 
-        if (allNewPoints.length > 0) {
-          // console.log('new interpolated', allNewPoints)
-          const join: TemperaturePoint[] = [...tempData, ...allNewPoints].map(
-            (point) => {
-              // console.log('Temperature before conversion:', point[2]); // Add this line
-              return [point[0], point[1], tempConverter(point[2])];
-            }
-          );
-          const joinRaw: TemperaturePoint[] = [...tempData, ...allNewPoints];
+  //       if (allNewPoints.length > 0) {
+  //         // console.log('new interpolated', allNewPoints)
+  //         const join: TemperaturePoint[] = [...tempData, ...allNewPoints].map(
+  //           (point) => {
+  //             // console.log('Temperature before conversion:', point[2]); // Add this line
+  //             return [point[0], point[1], tempConverter(point[2])];
+  //           }
+  //         );
+  //         const joinRaw: TemperaturePoint[] = [...tempData, ...allNewPoints];
 
-          setInterpolatedTempData(join);
-          setAllBucketRaw(joinRaw);
-        }
-      }
+  //         setInterpolatedTempData(join);
+  //         setAllBucketRaw(joinRaw);
+  //       }
+  //     }
+  //   }
+  // }, [polygons, tempData, gridsGenerated, props.timeRange]);
+
+  const tempFunc = (temp: number) => {
+    if (temp <= 2) {
+      return "#8B00FF";
+    } else if (temp <= 4) {
+      return "#4B0082"; 
+    } else if (temp <= 6) {
+      return "#0000FF"; 
+    } else if (temp <= 8) {
+      return "#1E90FF"; 
+    } else if (temp <= 10) {
+      return "#00CED1"; 
+    } else if (temp <= 12) {
+      return "#00FA9A"; 
+    } else if (temp <= 14) {
+      return "#00FF00"; 
+    } else if (temp <= 16) {
+      return "#7CFC00"; 
+    } else if (temp <= 18) {
+      return "#ADFF2F"; 
+    } else if (temp <= 20) {
+      return "#FFD700"; 
+    } else if (temp <= 22) {
+      return "#FFA500"; 
+    } else if (temp <= 24) {
+      return "#FF8C00"; 
+    } else if (temp <= 26) {
+      return "#FF4500"; 
+    } else if (temp <= 28) {
+      return "#B22222";
+    } else {
+      return "#8B0000";
     }
-  }, [polygons, tempData, gridsGenerated, props.timeRange]);
+  }
+
+  const getFeatureStyle = (feature: any) => {
+    const temperature = feature.properties.temperature;
+    const fillColor = tempFunc(temperature)
+    
+    return {
+      fillColor: fillColor,
+      weight: 1,
+      opacity: 0.8,
+      color: fillColor,
+      fillOpacity: 1
+    };
+  };
+
+  const getFeatureStyle2 = (feature: any) => {
+    const temperature = feature.properties.fill;
+    // const fillColor = tempFunc(temperature)
+    
+    return {
+      fillColor: temperature,
+      weight: 1,
+      opacity: 0.8,
+      color: temperature,
+      fillOpacity: 1
+    };
+  };
+
 
   //RENDER
-  // console.log('Total temp data points', interpolatedTempData.length)
-  // console.log('weekbucket', weekDataBucket)
-  console.log("monthBucket after interpolation", monthDataBucket);
+  console.log('loofs', loofsContours)
+  console.log('leofs', leofsContours)
+  console.log('lmhofs', lmhofsContours)
+  console.log('lsofs', lsofsContours)
   if (
     mapCoords.latitude &&
     mapCoords.longitude &&
-    geoGrids.length > 0 &&
     !loading
   ) {
     return (
@@ -801,13 +916,13 @@ const Map = (props: MapProps) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
-        <MapClickHandler />
-        {tempVisible &&
+        {/* <MapClickHandler /> */}
+        {/* {tempVisible &&
           props.timeRange == "all" &&
           interpolatedTempData.length > 0 && (
             <HeatmapLayer data={interpolatedTempData} />
-          )}
-        {tempVisible &&
+          )} */}
+        {/* {tempVisible &&
           props.timeRange == "week" &&
           weekDataBucket.length > 0 &&
           weekDataBucket[currentWeekday - 1].length > 0 && (
@@ -818,16 +933,37 @@ const Map = (props: MapProps) => {
           monthDataBucket.length > 0 &&
           monthDataBucket[currentMonthDate - 1].length > 0 && (
             <HeatmapLayer data={monthDataBucket[currentMonthDate - 1]} />
-          )}
+          )} */}
 
-        {tempVisible && (
+          {/* {tempVisible && (
           <GeoJSON
-            data={gTest}
-            style={{
-              color: "#00ff00",
-              weight: 0.8,
-              fillOpacity: 0,
-            }}
+            data={g0}
+            style={getFeatureStyle2}
+          />
+        )} */}
+
+        {tempVisible && loofsContours && (
+          <GeoJSON
+            data={loofsContours}
+            style={getFeatureStyle2}
+          />
+        )}
+        {tempVisible && leofsContours && (
+          <GeoJSON
+            data={leofsContours}
+            style={getFeatureStyle2}
+          />
+        )}
+        {tempVisible && lmhofsContours && (
+          <GeoJSON
+            data={lmhofsContours}
+            style={getFeatureStyle2}
+          />
+        )}
+         {tempVisible && lsofsContours && (
+          <GeoJSON
+            data={lsofsContours}
+            style={getFeatureStyle2}
           />
         )}
         {/* <Marker position={[40.115211, 47.739075]} icon={customIcon}/> */}
