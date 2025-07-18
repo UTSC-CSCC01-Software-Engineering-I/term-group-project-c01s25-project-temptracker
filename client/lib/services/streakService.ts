@@ -39,3 +39,23 @@ export async function updateStreak(userId: string) {
 
   return { error: updateError };
 }
+
+export async function updateUploads(userId: string) {
+  const { data: stats, error } = await supabase
+    .from("temperatures")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (error || !stats) return { error };
+
+  const updatedUploadCount = stats.length;
+
+  const { error: updateError } = await supabase
+    .from("stats")
+    .update({
+      upload_count: updatedUploadCount,
+    })
+    .eq("user_id", userId);
+
+  return { error: updateError };
+}
