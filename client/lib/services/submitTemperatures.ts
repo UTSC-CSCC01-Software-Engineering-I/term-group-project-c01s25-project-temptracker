@@ -1,6 +1,6 @@
 import { createClient } from "../supabase/client";
 import axios from "axios";
-import { updateStreak } from "./streakService";
+import { updateStreak, updateUploads } from "./streakService";
 import { awardBadges } from "./badgeAwardService";
 
 const supabase = createClient();
@@ -42,6 +42,7 @@ export async function submitTemperature(data: TemperatureSubmission) {
 
   // currently, we record streaks by consecutive uploads
   await updateStreak(user.id);
+  await updateUploads(user.id);
 
   await awardBadges(user.id);
 }
@@ -73,4 +74,7 @@ export async function submitTemperatures(data: TemperatureSubmission[]) {
 
   // currently, we record streaks by consecutive uploads
   await updateStreak(user.id);
+  await updateUploads(user.id);
+
+  await awardBadges(user.id);
 }
