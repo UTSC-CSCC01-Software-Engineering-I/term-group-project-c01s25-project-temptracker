@@ -98,43 +98,43 @@ def save_netcdf_from_url(url):
 #         json.dump(geojson, f)
 
 # Point file
-# def netcdf_to_geojson_points(nc_file, output_file):
-#     ds = xr.open_dataset(nc_file)
+def netcdf_to_geojson_points(nc_file, output_file):
+    ds = xr.open_dataset(nc_file)
     
-#     features = []
-#     nv = ds['nv'].values
+    features = []
+    nv = ds['nv'].values
     
-#     # Assuming you have lat, lon, and some data variable
-#     lats = ds['lat'].values
-#     lons = ds['lon'].values
-#     temp_var = ds['temp'].values[0][0] # highest siglay layer
+    # Assuming you have lat, lon, and some data variable
+    lats = ds['lat'].values
+    lons = ds['lon'].values
+    temp_var = ds['temp'].values[0][0] # highest siglay layer
     
-#     for i in range(len(lats)):
-#         print(f"node {i}")
+    for i in range(len(lats)):
+        print(f"node {i}")
 
-#         if np.isnan(temp_var[i]):
-#             print(f"Skipping node {i} due to NaN temperature")
-#             continue
+        if np.isnan(temp_var[i]):
+            print(f"Skipping node {i} due to NaN temperature")
+            continue
 
-#         feature = {
-#             "type": "Feature",
-#             "geometry": {
-#                 "type": "Point",
-#                 "coordinates": [float(lons[i]), float(lats[i])]
-#                     },
-#             "properties": {
-#                 "temperature": float(temp_var[i]),
-#             }
-#         }
-#         features.append(feature)
+        feature = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [float(lons[i]), float(lats[i])]
+                    },
+            "properties": {
+                "temperature": float(temp_var[i]),
+            }
+        }
+        features.append(feature)
     
-#     geojson = {
-#         "type": "FeatureCollection",
-#         "features": features
-#     }
+    geojson = {
+        "type": "FeatureCollection",
+        "features": features
+    }
     
-#     with open(output_file, 'w') as f:
-#         json.dump(geojson, f)
+    with open(output_file, 'w') as f:
+        json.dump(geojson, f)
 
 # Usage
 
