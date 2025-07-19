@@ -14,7 +14,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --coverage",
     "start": "node index",
     "dev": "nodemon index"
   },

@@ -1,3 +1,11 @@
+beforeAll(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterAll(() => {
+  console.error.mockRestore();
+});
+
 jest.mock('../models/supabaseClient', () => ({
   from: jest.fn(() => ({
     select: jest.fn(),
