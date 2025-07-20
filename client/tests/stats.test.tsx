@@ -1,118 +1,151 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import CommunityTab from "@/app/community/stats/page";
+import { useUser } from "@/app/context";
+import { useCommunityStats } from "@/hooks/useCommunityStats";
+import { useUserStats } from "@/hooks/useUserStats";
 
-// ─── Mocks ─────────────────────────────────────────────────────
+// ─── Mocks ──────────────────────────────────────────────────────────────
 jest.mock("@/app/context", () => ({
-  useUser: () => ({ user: { id: 1 } }),
+  useUser: jest.fn(),
 }));
 
-// PREPARE: mock leaderboard data
-const uploadMock = [
-  {
-    user_id: 1,
-    username: "haseeb",
-    upload_count: 10,
-    likes_count: 20,
-    max_streak: 5,
-    rank: 1,
-  },
-];
-const likesMock = [
-  {
-    user_id: 2,
-    username: "user2",
-    upload_count: 5,
-    likes_count: 50,
-    max_streak: 3,
-    rank: 1,
-  },
-];
-const streakMock = [
-  {
-    user_id: 3,
-    username: "user3",
-    upload_count: 2,
-    likes_count: 8,
-    max_streak: 7,
-    rank: 1,
-  },
-];
-
-jest.mock("@/lib/services/statsService", () => ({
-  fetchTopByUploadCount: jest.fn(() => Promise.resolve(uploadMock)),
-  fetchTopByLikesCount: jest.fn(() => Promise.resolve(likesMock)),
-  fetchTopByMaxStreak: jest.fn(() => Promise.resolve(streakMock)),
-  fetchCurrentUserStatsWithRank: jest.fn(() =>
-    Promise.resolve({
-      user_id: 1,
-      username: "haseeb",
-      upload_count: 10,
-      likes_count: 20,
-      max_streak: 5,
-      rank: 1,
-    })
-  ),
+jest.mock("@/hooks/useCommunityStats", () => ({
+  useCommunityStats: jest.fn(),
 }));
 
-// ─── Tests ─────────────────────────────────────────────────────
+jest.mock("@/hooks/useUserStats", () => ({
+  useUserStats: jest.fn(),
+}));
+
+// ─── Test Data ──────────────────────────────────────────────────────────
+const mockUser = { id: "user1", email: "test@example.com" };
+const mockUsers = [
+  {
+    user_id: "user1",
+    rank: 1,
+    username: "Alpha",
+    uploads: 10,
+    streak: 5,
+    likes: 100,
+  },
+  {
+    user_id: "user2",
+    rank: 2,
+    username: "Beta",
+    uploads: 8,
+    streak: 3,
+    likes: 50,
+  },
+];
+const mockBadges = [
+  {
+    name: "Bronze",
+    category: "contribution",
+    description: "Basic badge",
+    image_url: "bronze.png",
+  },
+  {
+    name: "Silver",
+    category: "exploration",
+    description: "Medium badge",
+    image_url: "silver.png",
+  },
+];
+const mockUserBadges = [
+  {
+    badge: {
+      name: "Bronze",
+      category: "contribution",
+      image_url: "bronze.png",
+    },
+    earned_on: new Date().toISOString(),
+  },
+];
+
+// ─── Tests ──────────────────────────────────────────────────────────────
 describe("CommunityTab", () => {
-  test("renders leaderboard with upload data", async () => {
-    // ACT
-    render(<CommunityTab />);
+  beforeEach(() => {
+    (useUser as jest.Mock).mockReturnValue({ user: mockUser });
 
-    // VERIFY: user 'haseeb' and upload count '10' appear at least twice (main list + current user)
-    await waitFor(() => {
-      const rows = screen.getAllByText("haseeb");
-      expect(rows.length).toBeGreaterThanOrEqual(2);
-      expect(screen.getAllByText("10").length).toBeGreaterThanOrEqual(1);
+    (useCommunityStats as jest.Mock).mockReturnValue({
+      sortKey: "upload_count",
+      users: mockUsers,
+      currentUserStat: mockUsers[0],
+      loading: false,
+      setSortKey: jest.fn(),
+      allBadges: mockBadges,
+    });
+
+    (useUserStats as jest.Mock).mockReturnValue({
+      badges: mockUserBadges,
     });
   });
 
-  test("switches leaderboard sort to Likes", async () => {
-    // ACT
+  test("renders leaderboard and badges with stats", () => {
     render(<CommunityTab />);
-
-    // WAIT: for default 'Uploads' tab to finish loading
-    await waitFor(() => expect(screen.queryByText("Loading...")).toBeNull());
-
-    // ACT: switch to Likes tab
-    const likeButtons = screen.getAllByText("Likes");
-    fireEvent.click(likeButtons.find((el) => el.tagName === "BUTTON")!);
-
-    // VERIFY: likes leaderboard loads
-    await waitFor(() => {
-      expect(screen.getAllByText("user2").length).toBeGreaterThan(0);
-      expect(screen.getAllByText("50").length).toBeGreaterThan(0);
-    });
+    expect(screen.queryByText(/Community Leaderboard/i)).toBeTruthy();
+    expect(screen.queryAllByText("Alpha").length).toBeGreaterThan(0);
+    expect(screen.queryAllByText("Beta").length).toBeGreaterThan(0);
+    expect(screen.queryAllByText(/Badges/i).length).toBeGreaterThan(0); // ✅ fixed
+    expect(screen.queryByText(/Bronze/i)).toBeTruthy();
   });
 
-  test("switches leaderboard sort to Max Streak", async () => {
-    // ACT
+  test("changes sort key on button click", () => {
+    const setSortKeyMock = jest.fn();
+    (useCommunityStats as jest.Mock).mockReturnValue({
+      sortKey: "upload_count",
+      users: mockUsers,
+      currentUserStat: mockUsers[0],
+      loading: false,
+      setSortKey: setSortKeyMock,
+      allBadges: mockBadges,
+    });
+
     render(<CommunityTab />);
 
-    // WAIT: for default 'Uploads' tab to finish loading
-    await waitFor(() => expect(screen.queryByText("Loading...")).toBeNull());
+    const sortButtons = screen.getAllByRole("button", { name: /Likes/i });
+    fireEvent.click(sortButtons[0]); // Only click the one in the controls
+    expect(setSortKeyMock).toHaveBeenCalledWith("likes_count");
 
-    // ACT: switch to Max Streak tab
-    const streakButtons = screen.getAllByText("Max Streak");
-    fireEvent.click(streakButtons.find((el) => el.tagName === "BUTTON")!);
-
-    // VERIFY: streak leaderboard loads
-    await waitFor(() => {
-      expect(screen.getAllByText("user3").length).toBeGreaterThan(0);
-      expect(screen.getAllByText("7").length).toBeGreaterThan(0);
-    });
+    const streakButton = screen.getByRole("button", { name: /Max Streak/i });
+    fireEvent.click(streakButton);
+    expect(setSortKeyMock).toHaveBeenCalledWith("max_streak");
   });
 
-  test("renders current user row if user is logged in", async () => {
-    // ACT
-    render(<CommunityTab />);
-
-    // VERIFY: user 'haseeb' shows up in leaderboard + current user bar
-    await waitFor(() => {
-      const matches = screen.getAllByText("haseeb");
-      expect(matches.length).toBeGreaterThan(1);
+  test("displays loading state", () => {
+    (useCommunityStats as jest.Mock).mockReturnValue({
+      sortKey: "upload_count",
+      users: [],
+      currentUserStat: null,
+      loading: true,
+      setSortKey: jest.fn(),
+      allBadges: [],
     });
+
+    render(<CommunityTab />);
+    expect(screen.queryByText("Loading...")).toBeTruthy();
+  });
+
+  test("filters badge categories and updates header", () => {
+    render(<CommunityTab />);
+    expect(screen.queryByText(/all \(2\)/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /contribution/i }));
+    expect(screen.queryByText(/1\/1 earned contribution/i)).toBeTruthy();
+  });
+
+  test("shows empty state if no badges available", () => {
+    (useCommunityStats as jest.Mock).mockReturnValue({
+      sortKey: "upload_count",
+      users: mockUsers,
+      currentUserStat: mockUsers[0],
+      loading: false,
+      setSortKey: jest.fn(),
+      allBadges: [],
+    });
+
+    render(<CommunityTab />);
+    expect(screen.queryByText(/No badges available/i)).toBeTruthy();
   });
 });
