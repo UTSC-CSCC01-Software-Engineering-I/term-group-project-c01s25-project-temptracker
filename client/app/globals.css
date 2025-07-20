@@ -1,18 +1,12 @@
 @import "tailwindcss";
 
 @layer base {
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  p {
+  h1, h2, h3, h4, h5, h6, p {
     @apply text-foreground;
   }
-
+  
   h1 {
-    @apply scroll-m-20 text-4xl md:text-5xl font-bold tracking-tight;
+    @apply scroll-m-20 text-4xl md:text-5xl font-bold tracking-tight; 
   }
 
   h2 {
@@ -22,38 +16,6 @@
   form {
     @apply m-2 space-y-4 mx-auto p-6 rounded-lg bg-card shadow-md w-[92.5%] max-w-xl md:max-w-3xl;
   }
-
-  .bronze-badge {
-    @apply bg-gradient-to-br from-amber-100 to-[#ca7e4b] border-[#ca7e4b] text-amber-800;
-  }
-
-  .bronze-badge .badge-accent {
-    @apply bg-[#ca7e4b];
-  }
-
-  .silver-badge {
-    @apply bg-gradient-to-br from-gray-100 to-[#b6b8bc] border-[#b6b8bc] text-gray-800;
-  }
-
-  .silver-badge .badge-accent {
-    @apply bg-[#b6b8bc];
-  }
-
-  .gold-badge {
-    @apply bg-gradient-to-br from-yellow-100 to-[#f6bd43] border-yellow-400 text-yellow-800;
-  }
-
-  .gold-badge .badge-accent {
-    @apply bg-[#f6bd43];
-  }
-
-  .diamond-badge {
-    @apply bg-gradient-to-br from-blue-100 to-[#27b2ef] border-blue-400 text-blue-800;
-  }
-
-  .diamond-badge .badge-accent {
-    @apply bg-[#27b2ef];
-  }
 }
 
 @theme {
@@ -62,6 +24,7 @@
   --color-dark-blue: #09173b;
   --color-card-blue: #3d4552;
   --color-hover-blue: #b0d5e6;
+
 }
 
 /* dont use any of these for now */

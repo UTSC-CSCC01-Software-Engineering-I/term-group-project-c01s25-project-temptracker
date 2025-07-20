@@ -9,36 +9,17 @@ export default function AuthCallback() {
   const supabase = createClient();
 
   useEffect(() => {
-    const checkUser = async () => {
+    const getSession = async () => {
       const {
         data: { session },
-        error: sessionError,
       } = await supabase.auth.getSession();
 
-      if (sessionError || !session) {
-        console.error("No session found", sessionError);
-        return;
-      }
-
-      const { data: userProfile, error: profileError } = await supabase
-        .from("user_profiles") // updated here
-        .select("username")
-        .eq("id", session.user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        return;
-      }
-
-      if (!userProfile?.username) {
-        router.push("/set-username");
-      } else {
+      if (session) {
         router.push("/");
       }
     };
 
-    checkUser();
+    getSession();
   }, [router, supabase]);
 
   return <p className="text-center mt-8">Signing in...</p>;
