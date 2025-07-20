@@ -17,7 +17,7 @@ async function getUserSubmissions(userId) {
     return data || [];
   } catch (e) {
     console.error("Error fetching user submissions:", e);
-    throw e;
+    throw new Error("Database error");
   }
 }
 
@@ -36,20 +36,24 @@ async function getUserBadges(userId) {
     return formattedData || [];
   } catch (e) {
     console.error("Error fetching user badges:", e);
-    throw e;
+    throw new Error("Database error");
   }
 }
 
 async function awardUserBadges(userId) {
   try {
-    const { data: allBadges } = await supabase.from("badges").select("*");
-    const { data: userBadges } = await supabase
+    const { data: allBadges, error: badgesError } = await supabase.from("badges").select("*");
+    if (badgesError) throw new Error("Badge award error");
+
+    const { data: userBadges, error: userBadgesError } = await supabase
       .from("user_badges")
       .select("*")
       .eq("user_id", userId);
+    if (userBadgesError) throw new Error("Badge award error");
+
     const awardedBadges = [];
 
-    for (const badge of allBadges) {
+    for (const badge of allBadges || []) {
       const alreadyAwarded = userBadges.some((ub) => ub.badge_id === badge.id);
       if (!alreadyAwarded) {
         if (
@@ -84,7 +88,7 @@ async function awardUserBadges(userId) {
     return awardedBadges;
   } catch (e) {
     console.error("Error awarding user badges:", e);
-    throw e;
+    throw new Error("Badge award error");
   }
 }
 

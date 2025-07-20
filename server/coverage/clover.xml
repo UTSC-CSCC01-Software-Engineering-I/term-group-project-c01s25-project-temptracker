@@ -1,36 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1752959268625" clover="3.2.0">
-  <project timestamp="1752959268625" name="All files">
-    <metrics statements="24" coveredstatements="24" conditionals="6" coveredconditionals="6" methods="4" coveredmethods="4" elements="34" coveredelements="34" complexity="0" loc="24" ncloc="24" packages="1" files="2" classes="2"/>
-    <file name="generalDataService.js" path="C:\Users\Hp\OneDrive\Desktop\UofT\CSCC01\term-group-project-c01s25-project-temptracker\server\app\services\generalDataService.js">
-      <metrics statements="7" coveredstatements="7" conditionals="2" coveredconditionals="2" methods="1" coveredmethods="1"/>
+<coverage generated="1753055524460" clover="3.2.0">
+  <project timestamp="1753055524460" name="All files">
+    <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0" elements="4" coveredelements="4" complexity="0" loc="4" ncloc="4" packages="1" files="1" classes="1"/>
+    <file name="supabaseClient.js" path="C:\Users\Hp\OneDrive\Desktop\UofT\CSCC01\term-group-project-c01s25-project-temptracker\server\app\models\supabaseClient.js">
+      <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
       <line num="1" count="1" type="stmt"/>
-      <line num="4" count="3" type="stmt"/>
-      <line num="5" count="3" type="stmt"/>
-      <line num="7" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="2" count="1" type="stmt"/>
+      <line num="4" count="1" type="stmt"/>
       <line num="9" count="1" type="stmt"/>
-      <line num="10" count="1" type="stmt"/>
-      <line num="14" count="1" type="stmt"/>
-    </file>
-    <file name="temperatureService.js" path="C:\Users\Hp\OneDrive\Desktop\UofT\CSCC01\term-group-project-c01s25-project-temptracker\server\app\services\temperatureService.js">
-      <metrics statements="17" coveredstatements="17" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="3"/>
-      <line num="1" count="1" type="stmt"/>
-      <line num="4" count="3" type="stmt"/>
-      <line num="5" count="3" type="stmt"/>
-      <line num="6" count="3" type="stmt"/>
-      <line num="7" count="3" type="stmt"/>
-      <line num="9" count="3" type="stmt"/>
-      <line num="21" count="3" type="stmt"/>
-      <line num="27" count="2" type="stmt"/>
-      <line num="32" count="1" type="stmt"/>
-      <line num="33" count="1" type="stmt"/>
-      <line num="38" count="2" type="stmt"/>
-      <line num="39" count="2" type="stmt"/>
-      <line num="40" count="3" type="stmt"/>
-      <line num="54" count="1" type="stmt"/>
-      <line num="56" count="1" type="stmt"/>
-      <line num="57" count="1" type="stmt"/>
-      <line num="61" count="1" type="stmt"/>
     </file>
   </project>
 </coverage>
