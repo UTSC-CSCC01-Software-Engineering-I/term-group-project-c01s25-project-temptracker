@@ -31,7 +31,7 @@ import { Input } from "@/components/shadcn/input";
 import { Textarea } from "@/components/shadcn/textarea";
 import { Calendar } from "@/components/shadcn/calendar";
 import { toast } from "sonner";
-import { submitTemperature } from "@/lib/services/submit-temperatures";
+import { submitTemperature } from "@/lib/services/submitTemperatures";
 
 const formSchema = z
   .object({
