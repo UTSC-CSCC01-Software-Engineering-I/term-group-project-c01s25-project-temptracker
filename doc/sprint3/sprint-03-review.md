@@ -40,7 +40,7 @@ List process-related (i.e. team organization) decisions that, in retrospect, wer
  * Ordered from most to least important.
  * Feel free to refer/link to process artifact(s).
 
-One of the main mistakes that we made was that we refactored our code into the dedicated backend while frontend testing was being implemented. This overlap in responsibilities led to unnecessary rework. Some unit tests had to be deleted or rewritten entirely due to changes in file structure, route logic, or data-fetching methods. We should have finalized the backend structure first, or coordinated more closely between testing and refactoring tasks. This would have prevented misalignment and allowed us to save time while preserving the initial unit tests. This can be seen in tests/frontend branch and develop branch.
+One of the main mistakes that we made was that we refactored our code into the dedicated backend while frontend and backend testing was being implemented. This overlap in responsibilities led to unnecessary rework. Some unit tests had to be deleted or rewritten entirely due to changes in file structure, route logic, or data-fetching methods. We should have finalized the backend structure first, or coordinated more closely between testing and refactoring tasks. This would have prevented misalignment and allowed us to save time while preserving the initial unit tests. This can be seen in tests/frontend branch and develop branch.
 
 Ex: tests/frontend branch and develop branch.
 
