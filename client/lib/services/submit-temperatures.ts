@@ -1,6 +1,11 @@
 import { createClient } from "../supabase/client";
 import axios from "axios";
+<<<<<<< HEAD:client/lib/services/submit-temperatures.ts
 import { updateStreak } from "./streakService";
+=======
+import { updateStreak, updateUploads } from "./streakService";
+import { awardBadges } from "./badgeAwardService";
+>>>>>>> d92a80b681f88eaa9217c1c3f7a1c36252d026bb:client/lib/services/submitTemperatures.ts
 
 const supabase = createClient();
 
@@ -41,6 +46,12 @@ export async function submitTemperature(data: TemperatureSubmission) {
 
   // currently, we record streaks by consecutive uploads
   await updateStreak(user.id);
+<<<<<<< HEAD:client/lib/services/submit-temperatures.ts
+=======
+  await updateUploads(user.id);
+
+  await awardBadges(user.id);
+>>>>>>> d92a80b681f88eaa9217c1c3f7a1c36252d026bb:client/lib/services/submitTemperatures.ts
 }
 
 export async function submitTemperatures(data: TemperatureSubmission[]) {
@@ -70,4 +81,7 @@ export async function submitTemperatures(data: TemperatureSubmission[]) {
 
   // currently, we record streaks by consecutive uploads
   await updateStreak(user.id);
+  await updateUploads(user.id);
+
+  await awardBadges(user.id);
 }
