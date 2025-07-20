@@ -1,10 +1,11 @@
+// ─── Imports and Mocks ────────────────────────────────────────────────
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import '@testing-library/jest-dom';
 import RegisterForm from "@/components/ui/RegisterForm";
 import { registerUser } from "@/lib/supabase/api/register";
 import { toast } from "sonner";
 
-// ✅ Mocks
+// Mock API and toast
 jest.mock("@/lib/supabase/api/register", () => ({
   registerUser: jest.fn(),
 }));
@@ -16,10 +17,9 @@ jest.mock("sonner", () => ({
   },
 }));
 
-// ✅ Shared router mocks
+// Mock router
 const mockPush = jest.fn();
 const mockRefresh = jest.fn();
-
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
@@ -27,13 +27,17 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
+// ─── Test Suite ───────────────────────────────────────────────────────
 describe("RegisterForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it("renders all form fields", () => {
+    // ACT
     render(<RegisterForm />);
+
+    // VERIFY: input fields and submit button are present
     expect(screen.getByLabelText(/username/i)).toBeTruthy();
     expect(screen.getByLabelText(/^email/i)).toBeTruthy();
     expect(screen.getByLabelText(/^password/i)).toBeTruthy();
@@ -42,6 +46,7 @@ describe("RegisterForm", () => {
   });
 
   it("toggles password visibility", async () => {
+    // ACT
     render(<RegisterForm />);
     const passwordInput = screen.getByLabelText(/^password/i);
     const toggleButtons = screen.getAllByRole("button");
@@ -52,6 +57,7 @@ describe("RegisterForm", () => {
       return classAttr.includes("lucide-eye-off") || classAttr.includes("lucide-eye");
     });
 
+    // VERIFY: toggles password input type from 'password' to 'text'
     expect(passwordInput).toHaveAttribute("type", "password");
 
     if (visibilityToggle) {
@@ -63,6 +69,7 @@ describe("RegisterForm", () => {
   });
 
   it("shows validation error if passwords don't match", async () => {
+    // ACT: fill mismatched passwords
     render(<RegisterForm />);
     fireEvent.input(screen.getByLabelText(/username/i), {
       target: { value: "user" },
@@ -76,17 +83,19 @@ describe("RegisterForm", () => {
     fireEvent.input(screen.getByLabelText(/confirm password/i), {
       target: { value: "wrongpassword" },
     });
-
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
 
+    // VERIFY: error message appears
     await waitFor(() => {
       expect(screen.getByText("Passwords don't match")).toBeTruthy();
     });
   });
 
   it("calls registerUser and redirects on successful submit", async () => {
+    // PREPARE: mock successful registration
     (registerUser as jest.Mock).mockResolvedValueOnce(undefined);
 
+    // ACT: fill matching fields and submit
     render(<RegisterForm />);
     fireEvent.input(screen.getByLabelText(/username/i), {
       target: { value: "newuser" },
@@ -100,9 +109,9 @@ describe("RegisterForm", () => {
     fireEvent.input(screen.getByLabelText(/confirm password/i), {
       target: { value: "password123" },
     });
-
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
 
+    // VERIFY: success path triggered
     await waitFor(() => {
       expect(registerUser).toHaveBeenCalledWith({
         username: "newuser",
@@ -116,10 +125,12 @@ describe("RegisterForm", () => {
   });
 
   it("displays error toast and sets form error on API failure", async () => {
+    // PREPARE: mock rejected registration
     (registerUser as jest.Mock).mockRejectedValueOnce(
       new Error("Username already exists")
     );
 
+    // ACT: fill in fields and submit
     render(<RegisterForm />);
     fireEvent.input(screen.getByLabelText(/username/i), {
       target: { value: "existinguser" },
@@ -133,9 +144,9 @@ describe("RegisterForm", () => {
     fireEvent.input(screen.getByLabelText(/confirm password/i), {
       target: { value: "password123" },
     });
-
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
 
+    // VERIFY: toast and form error appear
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Username already exists");
       const errorEl = screen.getByText("Username already exists");

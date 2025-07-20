@@ -1,4 +1,4 @@
-// Move this up to avoid ReferenceError from hoisting
+// ─── Mock Definitions ────────────────────────────────────────────
 const mockSignInWithOAuth = jest.fn();
 
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -6,11 +6,12 @@ import LoginForm from "@/components/ui/LoginForm";
 import { toast } from "sonner";
 import { loginUser } from "@/lib/supabase/api/login";
 
-// ✅ Mock API and toast
+// Mock login API
 jest.mock("@/lib/supabase/api/login", () => ({
   loginUser: jest.fn(),
 }));
 
+//Mock toast notifications
 jest.mock("sonner", () => ({
   toast: {
     success: jest.fn(),
@@ -18,7 +19,7 @@ jest.mock("sonner", () => ({
   },
 }));
 
-// ✅ Mock router
+// Mock next/navigation router
 const mockPush = jest.fn();
 const mockRefresh = jest.fn();
 jest.mock("next/navigation", () => ({
@@ -28,7 +29,7 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
-// ✅ Mock Supabase client
+// Mock Supabase OAuth client
 jest.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: {
@@ -37,41 +38,49 @@ jest.mock("@/lib/supabase/client", () => ({
   }),
 }));
 
+// ─── Test Suite ──────────────────────────────────────────────────
 describe("LoginForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders form fields and buttons", () => {
+  test("renders form fields and buttons", () => {
+    // ACT
     render(<LoginForm />);
 
+    // VERIFY: input fields and buttons exist
     expect(screen.getByPlaceholderText("example@email.com")).toBeTruthy();
     expect(screen.getByPlaceholderText("••••••••")).toBeTruthy();
     expect(screen.getByRole("button", { name: /login/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /continue with google/i })).toBeTruthy();
   });
 
-  it("validates empty fields", async () => {
+  test("validates empty fields", async () => {
+    // ACT: submit with empty fields
     render(<LoginForm />);
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
 
+    // VERIFY: required field errors show up
     expect(await screen.findByText("Email or Username is required")).toBeTruthy();
     expect(await screen.findByText("Password is required")).toBeTruthy();
   });
 
-  it("logs in successfully", async () => {
+  test("logs in successfully", async () => {
+    // PREPARE: mock resolved login
     (loginUser as jest.Mock).mockResolvedValueOnce({});
 
     render(<LoginForm />);
+    
+    // ACT: fill in inputs and submit
     fireEvent.input(screen.getByPlaceholderText("example@email.com"), {
       target: { value: "testuser" },
     });
     fireEvent.input(screen.getByPlaceholderText("••••••••"), {
       target: { value: "password123" },
     });
-
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
 
+    // VERIFY: success path triggered
     await waitFor(() => {
       expect(loginUser).toHaveBeenCalledWith("testuser", "password123");
       expect(toast.success).toHaveBeenCalledWith("Login successful!");
@@ -80,32 +89,38 @@ describe("LoginForm", () => {
     });
   });
 
-  it("displays error from login API", async () => {
+  test("displays error from login API", async () => {
+    // PREPARE: mock rejected login
     (loginUser as jest.Mock).mockRejectedValueOnce(new Error("Invalid credentials"));
 
     render(<LoginForm />);
+    
+    // ACT: input incorrect data and submit
     fireEvent.input(screen.getByPlaceholderText("example@email.com"), {
       target: { value: "wrong" },
     });
     fireEvent.input(screen.getByPlaceholderText("••••••••"), {
       target: { value: "wrongpass" },
     });
-
     fireEvent.click(screen.getByRole("button", { name: /login/i }));
 
+    // VERIFY: error toast triggered
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Invalid credentials");
-      const error = screen.queryByText("Invalid credentials");
-      expect(error).toBeTruthy();
+      expect(screen.queryByText("Invalid credentials")).toBeTruthy();
     });
   });
 
-  it("handles Google OAuth login", async () => {
+  test("handles Google OAuth login", async () => {
+    // PREPARE: mock successful Google OAuth
     mockSignInWithOAuth.mockResolvedValueOnce({ error: null });
 
     render(<LoginForm />);
+    
+    // ACT: click Google login
     fireEvent.click(screen.getByRole("button", { name: /continue with google/i }));
 
+    // VERIFY: Google auth called with expected provider
     await waitFor(() => {
       expect(mockSignInWithOAuth).toHaveBeenCalledWith({
         provider: "google",
@@ -116,12 +131,16 @@ describe("LoginForm", () => {
     });
   });
 
-  it("shows toast if Google OAuth login fails", async () => {
+  test("shows toast if Google OAuth login fails", async () => {
+    // PREPARE: mock failed Google OAuth
     mockSignInWithOAuth.mockResolvedValueOnce({ error: { message: "OAuth failed" } });
 
     render(<LoginForm />);
+    
+    // ACT: click Google login
     fireEvent.click(screen.getByRole("button", { name: /continue with google/i }));
 
+    // VERIFY: error toast triggered
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("OAuth failed");
     });
