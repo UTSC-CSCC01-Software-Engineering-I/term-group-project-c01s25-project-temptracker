@@ -75,8 +75,10 @@ export default function RegisterForm() {
     } catch (error: any) {
       if (error.message.includes("Username")) {
         form.setError("username", { message: error.message });
+        toast.error(error.message);
       } else if (error.message.includes("Email")) {
         form.setError("email", { message: error.message });
+        toast.error(error.message);
       } else {
         form.setError("root", { message: error.message });
         toast.error(error.message);

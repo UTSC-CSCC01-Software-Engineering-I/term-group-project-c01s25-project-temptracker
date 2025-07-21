@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import Header from "@/components/Header";
+import Header from "@/components/ui/Header";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { UserProvider } from "./context";
@@ -41,7 +41,7 @@ export default function RootLayout({
             <div className="min-h-screen flex flex-col">
               <Header />
               <main className="flex-1 p-4 flex flex-col items-center">
-                <div className="mt-10 w-full">{children}</div>
+                <div className="mt-6 w-full">{children}</div>
               </main>
             </div>
           </UserProvider>

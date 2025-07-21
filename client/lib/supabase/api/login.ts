@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { awardBadges } from "@/lib/services/badgeAwardService";
 
 const supabase = createClient();
 
@@ -32,6 +33,8 @@ export async function loginUser(identifier: string, password: string) {
   if (error) {
     throw error;
   }
+
+  await awardBadges((await supabase.auth.getUser()).data.user?.id || "");
 
   return true;
 }
