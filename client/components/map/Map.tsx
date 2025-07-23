@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import { createClient } from "../../lib/supabase/client";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { Marker, Popup, GeoJSON } from "react-leaflet";
-import L, { Icon } from "leaflet";
+import L, { Icon, point } from "leaflet";
+import { getTemperatureReading } from "@/lib/services/getTemperatureReadingService"
+// import CanvasMarkersLayer from '../src/CanvasMarkersLayer';
+import "leaflet-canvas-marker"
 import { getUserLocation } from "./GeoLocation";
 import MapLegend from "../ui/MapLegend";
 import "leaflet.heat";
@@ -24,7 +27,6 @@ import {
 } from "./dateUtils";
 
 import {
-  tempConverter,
   toFarenheit,
   pointInPolygon,
   generateGridInPolygon,
@@ -41,8 +43,10 @@ import type {
 import { GeoJsonObject } from "geojson";
 import { file, string } from "zod/v4";
 import { cookies } from "next/headers";
-import { get } from "axios";
+// import { get } from "axios";
 import { set } from "date-fns";
+import ClickAwayListener from "@mui/material/ClickAwayListener";
+import { init } from "next/dist/compiled/webpack/webpack";
 
 const supabase = createClient(); // need to move this elsewhere
 
@@ -56,14 +60,10 @@ const Map = (props: MapProps) => {
 
 
   const [tempVisible, setTempVisible] = useState(true);
-  const [geoData, setGeoData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [polygons, setPolygons] = useState<any[]>([]);
-  const [gridsGenerated, setGridsGenerated] = useState(false);
+  const [dataLoading, setDataLoading] = useState(false)
 
   //Slider
-  const [weekDataBucket, setWeekDataBucket] = useState<any[]>([]);
-  const [monthDataBucket, setMonthDataBucket] = useState<any[]>([]);
   const [currentWeekday, setCurrentWeekday] = useState(7);
   const [currentMonthDate, setCurrentMonthDate] = useState(30);
 
@@ -78,50 +78,26 @@ const Map = (props: MapProps) => {
   const [leofsPoints, setLeofsPoints] = useState(null);
   const [lsofsPoints, setLsofsPoints] = useState(null);
   const [lmhofsPoints, setLmhofsPoints] = useState(null);
+  const [userPoints, setUserPoints] = useState(null)
+
+  //Point bucket tracker
+  const [pbt, setPbt] = useState(() => {
+    if (leofsPoints != null && loofsPoints != null && lmhofsPoints != null && lsofsPoints != null && userPoints != null) {
+      return true
+    }
+    return false
+  })
 
   const [date, setDate] = useState(() => {
     const year = new Date().getFullYear();
     const month = new Date().getMonth(); // Months are 0-indexed
-    const day = new Date().getDate();
+    const day = new Date().getDate(); //make July 18th
     const today = new Date(year, month, day);
     return today
   })
 
 
   const [unit, setUnit] = useState("Celsius");
-
-  // const generateGrids = () => {
-  //   let grids = [];
-  //   for (let i = 0; i < polygons.length; i++) {
-  //     if (polygons[i].containsPoint) {
-  //       const grid = generateGridInPolygon(polygons[i].coordinates, 0.5);
-  //       grids.push({ grid: grid, polygon: polygons[i] });
-  //     }
-  //   }
-  //   return grids;
-  // };
-
-  // const [tempData, setTempData] = useState<TemperaturePoint[]>(() => {
-  //   const localData = localStorage.getItem("TEMP_DATA");
-  //   return localData ? JSON.parse(localData) : [];
-  // });
-
-  // const [interpolatedTempData, setInterpolatedTempData] = useState<
-  //   TemperaturePoint[]
-  // >(() => {
-  //   const localInterData = localStorage.getItem("INTERPOLATED_TEMP_DATA");
-  //   return localInterData ? JSON.parse(localInterData) : [];
-  // });
-
-  // const [rawTempData, setRawTempData] = useState(() => {
-  //   const localRawData = localStorage.getItem("RAW_TEMP_DATA");
-  //   return localRawData ? JSON.parse(localRawData) : [];
-  // });
-
-  // const [geoGrids, setGeoGrids] = useState(() => {
-  //   const localGeoGrids = localStorage.getItem("GRID_DATA");
-  //   return localGeoGrids ? JSON.parse(localGeoGrids) : [];
-  // });
 
   const [clickedPoint, setClickedPoint] = useState({
     latitude: null as number | null,
@@ -130,8 +106,6 @@ const Map = (props: MapProps) => {
       latitude: number;
       longitude: number;
       temperature: number;
-      distance: number;
-      intensity: number;
     } | null,
   });
 
@@ -149,176 +123,339 @@ const Map = (props: MapProps) => {
     }
   });
 
-  useEffect(() => {
-    const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-    console.log("Current date string:", dateStr);
-    
-    const getLoofsBucketData = async () => {
-      try {
-        const filePath = `${dateStr}/loofs_${dateStr}.geo.json`
-        console.log('fetching:', filePath)
-        const { data, error } = await supabase.storage
-        .from('geojson')
-        .download(filePath);
-        if (error) {
-          console.error('Error downloading loofs geojson:', error);
-          return;
-        } else if (data != null) {
-          const text = await data.text()
-          const jsonData = JSON.parse(text)
-          setLoofsContours(jsonData);
-        }
-      } catch (error) {
-        console.error('Error fetching bucket data:', error);
-      }
-    }
-    const getLmhofsBucketData = async () => {
-      try {
-        const filePath = `${dateStr}/lmhofs_${dateStr}.geo.json`
-        console.log('fetching:', filePath)
-        const { data, error } = await supabase.storage
-        .from('geojson')
-        .download(filePath);
-        if (error) {
-          console.error('Error downloading lmhofs geojson:', error);
-          return;
-        } else if (data != null) {
-          const text = await data.text()
-          const jsonData = JSON.parse(text)
-          setLmhofsContours(jsonData);
-        }
-      } catch (error) {
-        console.error('Error fetching bucket data:', error);
-      }
-    }
-
-    const getLeofsBucketData = async () => {
-      try {
-        const filePath = `${dateStr}/leofs_${dateStr}.geo.json`
-        console.log('fetching:', filePath)
-        const { data, error } = await supabase.storage
-        .from('geojson')
-        .download(filePath);
-        if (error) {
-          console.error('Error downloading leofs geojson:', error);
-          return;
-        } else if (data != null) {
-          const text = await data.text()
-          const jsonData = JSON.parse(text)
-          setLeofsContours(jsonData);
-        }
-      } catch (error) {
-        console.error('Error fetching bucket data:', error);
-      }
-    }
-
-    const getLsofsBucketData = async () => {
-      try {
-        const filePath = `${dateStr}/lsofs_${dateStr}.geo.json`
-        console.log('fetching:', filePath)
-        const { data, error } = await supabase.storage
-        .from('geojson')
-        .download(filePath);
-        if (error) {
-          console.error('Error downloading lsofs geojson:', error);
-          return;
-        } else if (data != null) {
-          const text = await data.text()
-          const jsonData = JSON.parse(text)
-          setLsofsContours(jsonData);
-        }
-      } catch (error) {
-        console.error('Error fetching bucket data:', error);
-      }
-    }
-
-    getLoofsBucketData();
-    getLmhofsBucketData();
-    getLeofsBucketData();
-    getLsofsBucketData();
-  },[date])
-
-  // console.log('geo data',geoJson)
-  // console.log(tempData, "temp data points loaded");
-  
-  // IMPORTANT
-  // Uncomment below when you run: Can be unstable
-  
   // useEffect(() => {
-  //   const loadGeoJSON = async () => {
-  //     try {
-  //       setGeoData(gTest);
-  //       //geoJson is ordered [long, lat]
-  //       const coordList = geoJsonTest.geometries[0].coordinates;
-  //       const x = coordList
-  //         .slice(0, 1000)
-  //         .map((coord: any, index: number) => {
-  //           if (!coord || !Array.isArray(coord[0])) return null;
-
-  //           let containspoint = false;
-  //           for (let i = 0; i < Math.min(tempData.length, 500); i++) {
-  //             const point = tempData[i];
-  //             if (
-  //               Array.isArray(point) &&
-  //               point.length >= 2 &&
-  //               typeof point[0] === "number" &&
-  //               typeof point[1] === "number" &&
-  //               pointInPolygon([point[1], point[0]], coord[0])
-  //             ) {
-  //               containspoint = true;
-  //               break;
-  //             }
-  //           }
-
-  //           return {
-  //             coordinates: coord[0],
-  //             containsPoint: containspoint,
-  //           };
-  //         })
-  //         .filter(Boolean);
-
-  //       setPolygons(x);
-
-  //       // const grids = generateGrids(); // This will now work with populated polygons
-  //       // setGeoGrids(grids);
-  //     } catch (error) {
-  //       console.error("Error loading geo data:", error);
-  //     }
-  //   };
-
-  //   loadGeoJSON();
-  // }, []);
-
-  // useEffect(() => {
-  //   if (polygons.length > 0) {
-  //     console.log("Generating grids from polygons...");
-  //     const grids = generateGrids();
-  //     setGeoGrids(grids);
+  //   if (leofsPoints != null && loofsPoints != null && lmhofsPoints != null && lsofsPoints != null && userPoints != null) {
+  //     setPbt(true)
+  //   } else {
+  //     setPbt(false)
   //   }
-  // }, [polygons]);
+  // },[leofsPoints, loofsPoints, lmhofsPoints, lsofsPoints, userPoints])
+
+  // useEffect(() => {
+  //   const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+  //   console.log("Current date string:", dateStr);
+    
+  //   const getLoofsContourData = async () => {
+  //     try {
+  //       const filePath = `${dateStr}/loofs_${dateStr}.geo.json`
+  //       console.log('fetching:', filePath)
+  //       const { data, error } = await supabase.storage
+  //       .from('geojson')
+  //       .download(filePath);
+  //       if (error) {
+  //         console.error('Error downloading loofs contour geojson:', error);
+  //         return;
+  //       } else if (data != null) {
+  //         const text = await data.text()
+  //         const jsonData = JSON.parse(text)
+  //         setLoofsContours(jsonData);
+  //       }
+        
+  //     } catch (error) {
+  //       console.error('Error fetching loofs contour data:', error);
+  //     }
+  //   }
+
+  //   const getLoofsPointData = async () => {
+  //     setLoofsPoints(null)
+  //     try {
+  //       const filePath = `${dateStr}/loofs_${dateStr}_points.geo.json`
+  //       console.log('fetching:', filePath)
+  //       const { data, error } = await supabase.storage
+  //       .from('geojson')
+  //       .download(filePath);
+  //       if (error) {
+  //         console.error('Error downloading loofs point geojson:', error);
+  //         return;
+  //       } else if (data != null) {
+  //         const text = await data.text()
+  //         const jsonData = JSON.parse(text)
+  //         setLoofsPoints(jsonData);
+  //       }
+        
+  //     } catch (error) {
+  //       console.error('Error fetching loofs point data:', error);
+  //     }
+  //   }
+
+  //   const getLmhofsContourData = async () => {
+  //     try {
+  //       const filePath = `${dateStr}/lmhofs_${dateStr}.geo.json`
+  //       console.log('fetching:', filePath)
+  //       const { data, error } = await supabase.storage
+  //       .from('geojson')
+  //       .download(filePath);
+  //       if (error) {
+  //         console.error('Error downloading lmhofs contour geojson:', error);
+  //         return;
+  //       } else if (data != null) {
+  //         const text = await data.text()
+  //         const jsonData = JSON.parse(text)
+  //         setLmhofsContours(jsonData);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching lmhofs contour data:', error);
+  //     }
+  //   }
+
+  //   const getLmhofsPointData = async () => {
+  //     setLmhofsPoints(null)
+  //     try {
+  //       const filePath = `${dateStr}/lmhofs_${dateStr}_points.geo.json`
+  //       console.log('fetching:', filePath)
+  //       const { data, error } = await supabase.storage
+  //       .from('geojson')
+  //       .download(filePath);
+  //       if (error) {
+  //         console.error('Error downloading lmhofs point geojson:', error);
+  //         return;
+  //       } else if (data != null) {
+  //         const text = await data.text()
+  //         const jsonData = JSON.parse(text)
+  //         setLmhofsPoints(jsonData);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching lmhofs point data:', error);
+  //     }
+  //   }
+
+  //   const getLeofsContourData = async () => {
+  //     try {
+  //       const filePath = `${dateStr}/leofs_${dateStr}.geo.json`
+  //       console.log('fetching:', filePath)
+  //       const { data, error } = await supabase.storage
+  //       .from('geojson')
+  //       .download(filePath);
+  //       if (error) {
+  //         console.error('Error downloading leofs contour geojson:', error);
+  //         return;
+  //       } else if (data != null) {
+  //         const text = await data.text()
+  //         const jsonData = JSON.parse(text)
+  //         setLeofsContours(jsonData);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching leofs contour data:', error);
+  //     }
+  //   }
+
+  //   const getLeofsPointData = async () => {
+  //     setLeofsPoints(null)
+  //     try {
+  //       const filePath = `${dateStr}/leofs_${dateStr}_points.geo.json`
+  //       console.log('fetching:', filePath)
+  //       const { data, error } = await supabase.storage
+  //       .from('geojson')
+  //       .download(filePath);
+  //       if (error) {
+  //         console.error('Error downloading leofs points geojson:', error);
+  //         return;
+  //       } else if (data != null) {
+  //         const text = await data.text()
+  //         const jsonData = JSON.parse(text)
+  //         setLeofsPoints(jsonData);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching leofs point data:', error);
+  //     }
+  //   }
+
+  //   const getLsofsContourData = async () => {
+  //     try {
+  //       const filePath = `${dateStr}/lsofs_${dateStr}.geo.json`
+  //       console.log('fetching:', filePath)
+  //       const { data, error } = await supabase.storage
+  //       .from('geojson')
+  //       .download(filePath);
+  //       if (error) {
+  //         console.error('Error downloading lsofs contour geojson:', error);
+  //         return;
+  //       } else if (data != null) {
+  //         const text = await data.text()
+  //         const jsonData = JSON.parse(text)
+  //         setLsofsContours(jsonData);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching lsofs contour data:', error);
+  //     }
+  //   }
+
+  //   const getLsofsPointData = async () => {
+  //     setLsofsPoints(null)
+  //     try {
+  //       const filePath = `${dateStr}/lsofs_${dateStr}_points.geo.json`
+  //       console.log('fetching:', filePath)
+  //       const { data, error } = await supabase.storage
+  //       .from('geojson')
+  //       .download(filePath);
+  //       if (error) {
+  //         console.error('Error downloading lsofs points geojson:', error);
+  //         return;
+  //       } else if (data != null) {
+  //         const text = await data.text()
+  //         const jsonData = JSON.parse(text)
+  //         setLsofsPoints(jsonData);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching lsofs bucket data:', error);
+  //     }
+  //   }
+
+  //   const getUserPointData = async () => {
+  //     setUserPoints(null)
+  //     try {
+  //       const filePath = `${dateStr}/user_points.geo.json`
+  //       console.log('fetching:', filePath)
+  //       const { data, error } = await supabase.storage
+  //       .from('geojson')
+  //       .download(filePath);
+  //       if (error) {
+  //         console.error('Error downloading misc points geojson:', error);
+  //         return;
+  //       } else if (data != null) {
+  //         const text = await data.text()
+  //         const jsonData = JSON.parse(text)
+  //         setUserPoints(jsonData);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching misc bucket data:', error);
+  //     }
+  //   }
+
+  //   getLoofsContourData();
+  //   getLmhofsContourData();
+  //   getLeofsContourData();
+  //   getLsofsContourData();
+  //   getLoofsPointData();
+  //   getLmhofsPointData();
+  //   getLeofsPointData();
+  //   getLsofsPointData();
+  //   getUserPointData()
+  // },[date])
+
+  useEffect(() => {
+  const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+  console.log("Current date string:", dateStr);
+  
+  const fetchAllData = async () => {
+    const fetchFunctions = [
+      // Point data fetchers
+      async () => {
+        const filePath = `${dateStr}/loofs_${dateStr}_points.geo.json`;
+        const { data, error } = await supabase.storage.from('geojson').download(filePath);
+        if (error) throw new Error(`Error downloading loofs points: ${error.message}`);
+        const text = await data.text();
+        return { type: 'loofsPoints', data: JSON.parse(text) };
+      },
+      async () => {
+        const filePath = `${dateStr}/leofs_${dateStr}_points.geo.json`;
+        const { data, error } = await supabase.storage.from('geojson').download(filePath);
+        if (error) throw new Error(`Error downloading leofs points: ${error.message}`);
+        const text = await data.text();
+        return { type: 'leofsPoints', data: JSON.parse(text) };
+      },
+      async () => {
+        const filePath = `${dateStr}/lsofs_${dateStr}_points.geo.json`;
+        const { data, error } = await supabase.storage.from('geojson').download(filePath);
+        if (error) throw new Error(`Error downloading lsofs points: ${error.message}`);
+        const text = await data.text();
+        return { type: 'lsofsPoints', data: JSON.parse(text) };
+      },
+      async () => {
+        const filePath = `${dateStr}/lmhofs_${dateStr}_points.geo.json`;
+        const { data, error } = await supabase.storage.from('geojson').download(filePath);
+        if (error) throw new Error(`Error downloading lmhofs points: ${error.message}`);
+        const text = await data.text();
+        return { type: 'lmhofsPoints', data: JSON.parse(text) };
+      },
+      async () => {
+        const filePath = `${dateStr}/user_points.geo.json`;
+        const { data, error } = await supabase.storage.from('geojson').download(filePath);
+        if (error) throw new Error(`Error downloading user points: ${error.message}`);
+        const text = await data.text();
+        return { type: 'userPoints', data: JSON.parse(text) };
+      },
+      // Contour data fetchers
+      async () => {
+        const filePath = `${dateStr}/loofs_${dateStr}.geo.json`;
+        const { data, error } = await supabase.storage.from('geojson').download(filePath);
+        if (error) throw new Error(`Error downloading loofs contours: ${error.message}`);
+        const text = await data.text();
+        return { type: 'loofsContours', data: JSON.parse(text) };
+      },
+      async () => {
+        const filePath = `${dateStr}/leofs_${dateStr}.geo.json`;
+        const { data, error } = await supabase.storage.from('geojson').download(filePath);
+        if (error) throw new Error(`Error downloading leofs contours: ${error.message}`);
+        const text = await data.text();
+        return { type: 'leofsContours', data: JSON.parse(text) };
+      },
+      async () => {
+        const filePath = `${dateStr}/lsofs_${dateStr}.geo.json`;
+        const { data, error } = await supabase.storage.from('geojson').download(filePath);
+        if (error) throw new Error(`Error downloading lsofs contours: ${error.message}`);
+        const text = await data.text();
+        return { type: 'lsofsContours', data: JSON.parse(text) };
+      },
+      async () => {
+        const filePath = `${dateStr}/lmhofs_${dateStr}.geo.json`;
+        const { data, error } = await supabase.storage.from('geojson').download(filePath);
+        if (error) throw new Error(`Error downloading lmhofs contours: ${error.message}`);
+        const text = await data.text();
+        return { type: 'lmhofsContours', data: JSON.parse(text) };
+      }
+    ];
+
+    try {
+      setDataLoading(true);
+      const results = await Promise.all(fetchFunctions.map(fn => fn()));
+      
+      // Update all states at once
+      results.forEach(result => {
+        switch(result.type) {
+          case 'loofsPoints':
+            setLoofsPoints(result.data);
+            break;
+          case 'leofsPoints':
+            setLeofsPoints(result.data);
+            break;
+          case 'lsofsPoints':
+            setLsofsPoints(result.data);
+            break;
+          case 'lmhofsPoints':
+            setLmhofsPoints(result.data);
+            break;
+          case 'userPoints':
+            setUserPoints(result.data);
+            break;
+          case 'loofsContours':
+            setLoofsContours(result.data);
+            break;
+          case 'leofsContours':
+            setLeofsContours(result.data);
+            break;
+          case 'lsofsContours':
+            setLsofsContours(result.data);
+            break;
+          case 'lmhofsContours':
+            setLmhofsContours(result.data);
+            break;
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  fetchAllData();
+}, [date]);
 
   useEffect(() => {
     localStorage.setItem("USER_LOCATION", JSON.stringify(userLocation));
   }, [userLocation]);
-
-  // useEffect(() => {
-  //   localStorage.setItem("TEMP_DATA", JSON.stringify(tempData));
-  // }, [tempData]);
-
-  // useEffect(() => {
-  //   localStorage.setItem(
-  //     "INTERPOLATED_TEMP_DATA",
-  //     JSON.stringify(interpolatedTempData)
-  //   );
-  // }, [interpolatedTempData]);
-
-  // useEffect(() => {
-  //   localStorage.setItem("RAW_TEMP_DATA", JSON.stringify(rawTempData));
-  // }, [rawTempData]);
-
-  // useEffect(() => {
-  //   localStorage.setItem("GRID_DATA", JSON.stringify(geoGrids));
-  // }, [geoGrids]);
 
   useEffect(() => {
     const fetchUserLocation = async () => {
@@ -532,6 +669,77 @@ const Map = (props: MapProps) => {
     return null;
   };
 
+  const LeafletCanvasMarker = ({ 
+    loofs_points, 
+    leofs_points, 
+    lsofs_points, 
+    lmhofs_points, 
+    other_points, 
+    tempUnit 
+  }: {
+    loofs_points: any;
+    leofs_points: any;
+    lsofs_points: any;
+    lmhofs_points: any;
+    other_points: any;
+    tempUnit: string;
+  }) => {
+    const map = useMap()
+    const canvasLayerRef = useRef<any>(null)
+
+    useEffect(() => {
+      if (!map || !map.getContainer() || dataLoading) return;
+
+        try {
+          // if (canvasLayerRef.current && map.hasLayer(canvasLayerRef.current)) {
+          //   map.removeLayer(canvasLayerRef.current);
+          //   canvasLayerRef.current = null;
+          // }
+
+          if (!map.getContainer()) return
+
+          const ciLayer = (L as any).canvasIconLayer({}).addTo(map)
+          // canvasLayerRef.current = ciLayer;
+
+          var icon = L.icon({
+            iconSize: [5, 5],
+            iconAnchor: [5, 5],
+            iconUrl: '/marker-invis.png'
+          });
+
+          const markers = []
+
+          const pointGroups = [loofs_points, leofs_points, lsofs_points, lmhofs_points, other_points]
+          for (let i=0; i < pointGroups.length; i++) {
+            for (let j = 0; j < pointGroups[i]["features"].length; j++) {
+              var marker = (L as any).marker(
+                [pointGroups[i]["features"][j]["geometry"]["coordinates"][1], pointGroups[i]["features"][j]["geometry"]["coordinates"][0]],
+                {icon: icon}
+              ).bindPopup(tempUnit == 'Celsius' ? `${pointGroups[i]["features"][j]["properties"]["temperature"]} °C` : `${toFarenheit(pointGroups[i]["features"][j]["properties"]["temperature"])} °F`)
+              markers.push(marker)
+            }
+          }
+          console.log(`created ${markers.length} markers`)
+          ciLayer.addLayers(markers);
+          // ciLayer.addTo(map)
+          // return ciLayer
+          
+        } catch (error) {
+          console.error('Error initializing map marker layer:', error)
+        }
+
+
+      // // Cleanup function
+      return () => {
+        if (canvasLayerRef.current && map.hasLayer(canvasLayerRef.current)) {
+          map.removeLayer(canvasLayerRef.current);
+        }
+      };
+    }, [map, dataLoading, tempUnit])
+
+    return null
+  }
+
   const HeatmapLayer = ({
     data,
   }: {
@@ -609,289 +817,67 @@ const Map = (props: MapProps) => {
     return null;
   };
 
-  // const findNearestTemperaturePoint = (
-  //   clickLat: number,
-  //   clickLng: number,
-  //   timeRange: string,
-  //   maxDistance: number = 0.5
-  // ) => {
-  //   let nearest = null;
-  //   let minDistance = Infinity;
-
-  //   if (timeRange == "week") {
-  //     weekBucketRaw[currentWeekday - 1].forEach(
-  //       (point: [number, number, number]) => {
-  //         const distance = Math.sqrt(
-  //           Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-  //         );
-  //         if (distance < minDistance && distance <= 2 * maxDistance) {
-  //           minDistance = distance;
-  //           nearest = {
-  //             temperature: point[2],
-  //             latitude: point[0],
-  //             longitude: point[1],
-  //             distance: distance,
-  //           };
-  //         }
-  //       }
-  //     );
-  //     console.log("Nearest point:", nearest);
-  //   } else if (timeRange == "month") {
-  //     montthBucketRaw[currentMonthDate - 1].forEach(
-  //       (point: [number, number, number]) => {
-  //         const distance = Math.sqrt(
-  //           Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-  //         );
-  //         if (distance < minDistance && distance <= 2 * maxDistance) {
-  //           minDistance = distance;
-  //           nearest = {
-  //             temperature: point[2],
-  //             latitude: point[0],
-  //             longitude: point[1],
-  //             distance: distance,
-  //           };
-  //         }
-  //       }
-  //     );
-  //     console.log("Nearest point:", nearest);
-  //   } else {
-  //     allBucketRaw.forEach((point: [number, number, number]) => {
-  //       const distance = Math.sqrt(
-  //         Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-  //       );
-  //       if (distance < minDistance && distance <= maxDistance) {
-  //         minDistance = distance;
-  //         nearest = {
-  //           temperature: point[2],
-  //           latitude: point[0],
-  //           longitude: point[1],
-  //           distance: distance,
-  //         };
-  //       }
-  //     });
-  //     console.log("Nearest point:", nearest);
-  //   }
-
-
-  //   return nearest;
-  // };
-
-  // const MapClickHandler = () => {
-  //   useMapEvents({
-  //     click: (e) => {
-  //       const { lat, lng } = e.latlng;
-  //       if (
-  //         typeof lat !== "number" ||
-  //         typeof lng !== "number" ||
-  //         isNaN(lat) ||
-  //         isNaN(lng)
-  //       ) {
-  //         console.warn("Invalid coordinates:", { lat, lng });
-  //         return;
-  //       }
-  //       console.log("Map clicked at:", lat, lng);
-
-  //       const nearestPoint = findNearestTemperaturePoint(
-  //         lat,
-  //         lng,
-  //         props.timeRange
-  //       );
-
-  //       if (nearestPoint) {
-  //         setClickedPoint({
-  //           latitude: lat,
-  //           longitude: lng,
-  //           nearestPoint: nearestPoint,
-  //         });
-  //       } else {
-  //         setClickedPoint({
-  //           latitude: null,
-  //           longitude: null,
-  //           nearestPoint: null,
-  //         });
-  //       }
-  //     },
-  //   });
-  //   return null;
-  // };
-
-  //set the grids
-  // useEffect(() => {
-  //   if (polygons.length > 0 && tempData.length > 0) {
-  //     console.log("Generating grids...");
-
-  //     if (props.timeRange == "week") {
-  //       let weeklyPoints = [];
-  //       let weeklyPointsRaw = [];
-  //       const weekData = bucketWeek(rawTempData);
-  //       console.log("week data", weekData);
-
-  //       if (!weekData || !Array.isArray(weekData) || weekData.length < 7) {
-  //         console.warn("weekData is invalid or insufficient:", weekData);
-  //         setWeekDataBucket(Array(7).fill([]));
-  //         return;
-  //       }
-
-  //       for (let k = 0; k < weekData.length; k++) {
-  //         let allNewPoints: TemperaturePoint[] = [];
-  //         //remove time from the data
-  //         if (weekData[k].length == 0 || !Array.isArray(weekData[k])) {
-  //           weeklyPoints.push([]); // Push empty array for this day
-  //           continue;
-  //         }
-
-  //         const weekDataWithoutTime = weekData[k].map((d: any) => {
-  //           return [d[0], d[1], d[2]];
-  //         });
-
-  //         for (let i = 0; i < geoGrids.length; i++) {
-  //           for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
-  //             const point = geoGrids[i]["grid"][j];
-  //             const tempPoint = interpolation(
-  //               geoGrids[i]["polygon"].coordinates,
-  //               [...weekDataWithoutTime, ...allNewPoints],
-  //               point
-  //             );
-  //             allNewPoints.push(tempPoint);
-  //           }
-  //         }
-  //         //TODO - account for including the existing specific week data
-  //         const combine = [...weekDataWithoutTime, ...allNewPoints].map(
-  //           (point) => {
-  //             return [point[0], point[1], tempConverter(point[2])];
-  //           }
-  //         );
-  //         const combineRaw = [...weekDataWithoutTime, ...allNewPoints];
-  //         weeklyPoints.push(combine);
-  //         weeklyPointsRaw.push(combineRaw);
-  //       }
-  //       //set state
-  //       setWeekDataBucket(weeklyPoints);
-  //       setWeekBucketRaw(weeklyPointsRaw);
-  //     } else if (props.timeRange == "month") {
-  //       let monthlyPoints = [];
-  //       let monthlyPointsRaw = [];
-  //       const monthData = bucketMonth(rawTempData);
-
-  //       if (!monthData || !Array.isArray(monthData) || monthData.length < 30) {
-  //         console.warn("weekData is invalid or insufficient:", monthData);
-  //         setWeekDataBucket(Array(30).fill([]));
-  //         return;
-  //       }
-
-  //       for (let k = 0; k < monthData.length; k++) {
-  //         let allNewPoints: TemperaturePoint[] = [];
-
-  //         if (monthData[k].length == 0 || !Array.isArray(monthData[k])) {
-  //           monthlyPoints.push([]); // Push empty array for this day
-  //           continue;
-  //         }
-  //         //remove time from the data
-  //         const monthDataWithoutTime = monthData[k].map((d: any) => {
-  //           return [d[0], d[1], d[2]];
-  //         });
-  //         for (let i = 0; i < geoGrids.length; i++) {
-  //           for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
-  //             const point = geoGrids[i]["grid"][j];
-  //             const tempPoint = interpolation(
-  //               geoGrids[i]["polygon"].coordinates,
-  //               [...monthDataWithoutTime, ...allNewPoints],
-  //               point
-  //             );
-  //             allNewPoints.push(tempPoint);
-  //           }
-  //         }
-  //         //TODO - account for including the existing specific month data
-  //         const combine = [...monthDataWithoutTime, ...allNewPoints].map(
-  //           (point) => {
-  //             return [point[0], point[1], tempConverter(point[2])];
-  //           }
-  //         );
-  //         const combineRaw = [...monthDataWithoutTime, ...allNewPoints];
-  //         monthlyPoints.push(combine);
-  //         monthlyPointsRaw.push(combineRaw);
-  //       }
-  //       //set State
-  //       setMonthDataBucket(monthlyPoints);
-  //       setMonthBucketRaw(monthlyPointsRaw);
-  //       // console.log('MONTH BUCKET AFTER INTERPOLATION', monthlyPoints)
-  //     } else {
-  //       let allNewPoints: TemperaturePoint[] = [];
-
-  //       for (let i = 0; i < geoGrids.length; i++) {
-  //         for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
-  //           const point = geoGrids[i]["grid"][j];
-  //           const tempPoint = interpolation(
-  //             geoGrids[i]["polygon"].coordinates,
-  //             [...tempData, ...allNewPoints],
-  //             point
-  //           );
-  //           allNewPoints.push(tempPoint);
-  //         }
-  //       }
-
-  //       if (allNewPoints.length > 0) {
-  //         // console.log('new interpolated', allNewPoints)
-  //         const join: TemperaturePoint[] = [...tempData, ...allNewPoints].map(
-  //           (point) => {
-  //             // console.log('Temperature before conversion:', point[2]); // Add this line
-  //             return [point[0], point[1], tempConverter(point[2])];
-  //           }
-  //         );
-  //         const joinRaw: TemperaturePoint[] = [...tempData, ...allNewPoints];
-
-  //         setInterpolatedTempData(join);
-  //         setAllBucketRaw(joinRaw);
-  //       }
-  //     }
-  //   }
-  // }, [polygons, tempData, gridsGenerated, props.timeRange]);
-
-  const tempFunc = (temp: number) => {
-    if (temp <= 2) {
-      return "#8B00FF";
-    } else if (temp <= 4) {
-      return "#4B0082"; 
-    } else if (temp <= 6) {
-      return "#0000FF"; 
-    } else if (temp <= 8) {
-      return "#1E90FF"; 
-    } else if (temp <= 10) {
-      return "#00CED1"; 
-    } else if (temp <= 12) {
-      return "#00FA9A"; 
-    } else if (temp <= 14) {
-      return "#00FF00"; 
-    } else if (temp <= 16) {
-      return "#7CFC00"; 
-    } else if (temp <= 18) {
-      return "#ADFF2F"; 
-    } else if (temp <= 20) {
-      return "#FFD700"; 
-    } else if (temp <= 22) {
-      return "#FFA500"; 
-    } else if (temp <= 24) {
-      return "#FF8C00"; 
-    } else if (temp <= 26) {
-      return "#FF4500"; 
-    } else if (temp <= 28) {
-      return "#B22222";
-    } else {
-      return "#8B0000";
-    }
-  }
-
-  const getFeatureStyle = (feature: any) => {
-    const temperature = feature.properties.temperature;
-    const fillColor = tempFunc(temperature)
+  const findNearestTemperaturePoint = async (
+    clickLat: number,
+    clickLng: number,
+    date: string  ) => {
     
-    return {
-      fillColor: fillColor,
-      weight: 1,
-      opacity: 0.8,
-      color: fillColor,
-      fillOpacity: 1
+    const data = {
+      coord: [clickLat, clickLng],
+      date: date
+    }
+    const result = await getTemperatureReading(data)
+    const temp: number = result.data.temp
+    const lat: number = result.data.lat
+    const lng: number = result.data.lng
+    let nearest = {
+      latitude: lat,
+      longitude: lng,
+      temperature: temp,
     };
+    
+    console.log("Nearest point:", nearest);
+    
+    return nearest;
+  };
+
+  const MapClickHandler = () => {
+    useMapEvents({
+      click: async (e) => {
+        const { lat, lng } = e.latlng;
+        if (
+          typeof lat !== "number" ||
+          typeof lng !== "number" ||
+          isNaN(lat) ||
+          isNaN(lng)
+        ) {
+          console.warn("Invalid coordinates:", { lat, lng });
+          return;
+        }
+        console.log("Map clicked at:", lat, lng);
+
+        const nearestPoint = await findNearestTemperaturePoint(
+          lat,
+          lng,
+          `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`
+        );
+
+        if (nearestPoint) {
+          setClickedPoint({
+            latitude: lat,
+            longitude: lng,
+            nearestPoint: nearestPoint,
+          });
+        } else {
+          setClickedPoint({
+            latitude: null,
+            longitude: null,
+            nearestPoint: null,
+          });
+        }
+      },
+    });
+    return null;
   };
 
   const getFeatureStyle2 = (feature: any) => {
@@ -912,14 +898,12 @@ const Map = (props: MapProps) => {
   },[loofsContours, leofsContours, lsofsContours, lmhofsContours])
 
   //RENDER
-  // console.log('loofs', loofsContours)
-  // console.log('leofs', leofsContours)
-  // console.log('lmhofs', lmhofsContours)
-  // console.log('lsofs', lsofsContours)
   if (
     mapCoords.latitude &&
     mapCoords.longitude &&
-    !loading
+    !loading &&
+    loofsContours && leofsContours && lmhofsContours && lsofsContours
+    // loofsPoints && leofsPoints && lmhofsPoints && lsofsPoints && userPoints
   ) {
     return (
       <MapContainer
@@ -932,61 +916,37 @@ const Map = (props: MapProps) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
-        {/* <MapClickHandler /> */}
-        {/* {tempVisible &&
-          props.timeRange == "all" &&
-          interpolatedTempData.length > 0 && (
-            <HeatmapLayer data={interpolatedTempData} />
-          )} */}
-        {/* {tempVisible &&
-          props.timeRange == "week" &&
-          weekDataBucket.length > 0 &&
-          weekDataBucket[currentWeekday - 1].length > 0 && (
-            <HeatmapLayer data={weekDataBucket[currentWeekday - 1]} />
-          )}
-        {tempVisible &&
-          props.timeRange == "month" &&
-          monthDataBucket.length > 0 &&
-          monthDataBucket[currentMonthDate - 1].length > 0 && (
-            <HeatmapLayer data={monthDataBucket[currentMonthDate - 1]} />
-          )} */}
+        <MapClickHandler />
 
-          {/* {tempVisible && (
-          <GeoJSON
-            data={g0}
-            style={getFeatureStyle2}
-          />
-        )} */}
-
-        {tempVisible && loofsContours && (
+        {tempVisible && (
           <GeoJSON
             key={`loofs-${date.toISOString()}`}
             data={loofsContours}
             style={getFeatureStyle2}
           />
         )}
-        {tempVisible && leofsContours && (
+        {tempVisible && (
           <GeoJSON
             key={`leofs-${date.toISOString()}`}
             data={leofsContours}
             style={getFeatureStyle2}
           />
         )}
-        {tempVisible && lmhofsContours && (
+        {tempVisible && (
           <GeoJSON
             key={`lmhofs-${date.toISOString()}`}
             data={lmhofsContours}
             style={getFeatureStyle2}
           />
         )}
-         {tempVisible && lsofsContours && (
+         {tempVisible && (
           <GeoJSON
             key={`lsofs-${date.toISOString()}`}
             data={lsofsContours}
             style={getFeatureStyle2}
           />
         )}
-        {/* <Marker position={[40.115211, 47.739075]} icon={customIcon}/> */}
+
         {clickedPoint.latitude && clickedPoint.longitude && (
           <Marker
             position={[clickedPoint.latitude, clickedPoint.longitude]}

@@ -1,5 +1,6 @@
 import type { TemperaturePoint } from "./mapTypes";
 
+
 export const tempConverter = (temp: number) => {
   //celcius
   if (temp <= 0) {
@@ -115,5 +116,6 @@ export const interpolation = (polygon: any, tempPoints: any, point: any) => {
   const newPoint: TemperaturePoint = [point[1], point[0], interpolatedTemp];
   return newPoint;
 };
+
 
 

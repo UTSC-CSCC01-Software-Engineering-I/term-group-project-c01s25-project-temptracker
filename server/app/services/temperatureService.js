@@ -58,7 +58,8 @@ async function submitTemperatures(csvData) {
   }
 }
 
+
 module.exports = {
   submitTemperature,
-  submitTemperatures,
+  submitTemperatures
 };
