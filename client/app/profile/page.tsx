@@ -5,7 +5,7 @@ import { useUser } from "@/app/context";
 import { useState } from "react";
 import { useUserSubmissions } from "@/hooks/useUserSubmissions";
 import Image from "next/image";
-import ProfileStats from "@/components/ProfileStats";
+import ProfileStats from "./ProfileStats";
 
 export default function Profile() {
   const { user, profile } = useUser();

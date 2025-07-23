@@ -5,6 +5,7 @@ import Header from "@/components/ui/Header";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { UserProvider } from "./context";
+import Footer from "@/components/ui/Footer";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -41,8 +42,9 @@ export default function RootLayout({
             <div className="min-h-screen flex flex-col">
               <Header />
               <main className="flex-1 p-4 flex flex-col items-center">
-                <div className="mt-6 w-full">{children}</div>
+                <div className="mt-6 md:mt-8 w-full">{children}</div>
               </main>
+              {/* <Footer /> */}
             </div>
           </UserProvider>
           <Toaster position="top-center" richColors />

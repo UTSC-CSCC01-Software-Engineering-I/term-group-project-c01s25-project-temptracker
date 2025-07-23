@@ -1,5 +1,5 @@
-import UploadTemperatureForm from "@/components/ui/UploadSingleTempForm";
-import UploadTemperatureCSVForm from "@/components/ui/UploadTempCSV";
+import UploadTemperatureForm from "./UploadSingleTempForm";
+import UploadTemperatureCSVForm from "./UploadTempCSV";
 
 export default function UploadPage() {
   return (
