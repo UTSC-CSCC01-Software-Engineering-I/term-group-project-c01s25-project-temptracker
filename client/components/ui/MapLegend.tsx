@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../styles/MapLegend.css'; // Assuming you have a CSS file for styling the legend
+import '../../styles/MapLegend.css';
 
 
 const MapLegend = () => {

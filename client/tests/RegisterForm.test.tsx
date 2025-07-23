@@ -1,7 +1,7 @@
 // ─── Imports and Mocks ────────────────────────────────────────────────
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import '@testing-library/jest-dom';
-import RegisterForm from "@/components/ui/RegisterForm";
+import "@testing-library/jest-dom";
+import RegisterForm from "@/app/register/RegisterForm";
 import { registerUser } from "@/lib/supabase/api/register";
 import { toast } from "sonner";
 
@@ -42,7 +42,9 @@ describe("RegisterForm", () => {
     expect(screen.getByLabelText(/^email/i)).toBeTruthy();
     expect(screen.getByLabelText(/^password/i)).toBeTruthy();
     expect(screen.getByLabelText(/confirm password/i)).toBeTruthy();
-    expect(screen.getByRole("button", { name: /create account/i })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /create account/i })
+    ).toBeTruthy();
   });
 
   it("toggles password visibility", async () => {
@@ -51,10 +53,12 @@ describe("RegisterForm", () => {
     const passwordInput = screen.getByLabelText(/^password/i);
     const toggleButtons = screen.getAllByRole("button");
 
-    const visibilityToggle = toggleButtons.find(btn => {
+    const visibilityToggle = toggleButtons.find((btn) => {
       const svg = btn.querySelector("svg");
       const classAttr = svg?.getAttribute("class") || "";
-      return classAttr.includes("lucide-eye-off") || classAttr.includes("lucide-eye");
+      return (
+        classAttr.includes("lucide-eye-off") || classAttr.includes("lucide-eye")
+      );
     });
 
     // VERIFY: toggles password input type from 'password' to 'text'
