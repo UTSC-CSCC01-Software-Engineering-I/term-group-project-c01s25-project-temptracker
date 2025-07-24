@@ -1,13 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useRef, use } from "react";
+import React, { useState, useEffect, useRef, use, useOptimistic } from "react";
 import { createClient } from "../../lib/supabase/client";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { Marker, Popup, GeoJSON } from "react-leaflet";
-import L, { Icon, point } from "leaflet";
+import L, { Icon, point, divIcon } from "leaflet";
+import { subDays } from 'date-fns';
+import MarkerClusterGroup from "react-leaflet-markercluster";
 import { getTemperatureReading } from "@/lib/services/getTemperatureReadingService"
 // import CanvasMarkersLayer from '../src/CanvasMarkersLayer';
 import "leaflet-canvas-marker"
+import clusterIcon from '../../public/circle.png'
 import { getUserLocation } from "./GeoLocation";
 import MapLegend from "../ui/MapLegend";
 import "leaflet.heat";
@@ -47,6 +50,14 @@ import { cookies } from "next/headers";
 import { set } from "date-fns";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import { init } from "next/dist/compiled/webpack/webpack";
+import { Over_the_Rainbow } from "next/font/google";
+import { useParams } from "next/navigation";
+
+interface MyDataType {
+  type: string;
+  features: any[];
+  // ... other properties
+}
 
 const supabase = createClient(); // need to move this elsewhere
 
@@ -78,15 +89,8 @@ const Map = (props: MapProps) => {
   const [leofsPoints, setLeofsPoints] = useState(null);
   const [lsofsPoints, setLsofsPoints] = useState(null);
   const [lmhofsPoints, setLmhofsPoints] = useState(null);
-  const [userPoints, setUserPoints] = useState(null)
+  const [userPoints, setUserPoints] = useState<MyDataType | null>(null)
 
-  //Point bucket tracker
-  const [pbt, setPbt] = useState(() => {
-    if (leofsPoints != null && loofsPoints != null && lmhofsPoints != null && lsofsPoints != null && userPoints != null) {
-      return true
-    }
-    return false
-  })
 
   const [date, setDate] = useState(() => {
     const year = new Date().getFullYear();
@@ -123,251 +127,12 @@ const Map = (props: MapProps) => {
     }
   });
 
-  // useEffect(() => {
-  //   if (leofsPoints != null && loofsPoints != null && lmhofsPoints != null && lsofsPoints != null && userPoints != null) {
-  //     setPbt(true)
-  //   } else {
-  //     setPbt(false)
-  //   }
-  // },[leofsPoints, loofsPoints, lmhofsPoints, lsofsPoints, userPoints])
-
-  // useEffect(() => {
-  //   const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-  //   console.log("Current date string:", dateStr);
-    
-  //   const getLoofsContourData = async () => {
-  //     try {
-  //       const filePath = `${dateStr}/loofs_${dateStr}.geo.json`
-  //       console.log('fetching:', filePath)
-  //       const { data, error } = await supabase.storage
-  //       .from('geojson')
-  //       .download(filePath);
-  //       if (error) {
-  //         console.error('Error downloading loofs contour geojson:', error);
-  //         return;
-  //       } else if (data != null) {
-  //         const text = await data.text()
-  //         const jsonData = JSON.parse(text)
-  //         setLoofsContours(jsonData);
-  //       }
-        
-  //     } catch (error) {
-  //       console.error('Error fetching loofs contour data:', error);
-  //     }
-  //   }
-
-  //   const getLoofsPointData = async () => {
-  //     setLoofsPoints(null)
-  //     try {
-  //       const filePath = `${dateStr}/loofs_${dateStr}_points.geo.json`
-  //       console.log('fetching:', filePath)
-  //       const { data, error } = await supabase.storage
-  //       .from('geojson')
-  //       .download(filePath);
-  //       if (error) {
-  //         console.error('Error downloading loofs point geojson:', error);
-  //         return;
-  //       } else if (data != null) {
-  //         const text = await data.text()
-  //         const jsonData = JSON.parse(text)
-  //         setLoofsPoints(jsonData);
-  //       }
-        
-  //     } catch (error) {
-  //       console.error('Error fetching loofs point data:', error);
-  //     }
-  //   }
-
-  //   const getLmhofsContourData = async () => {
-  //     try {
-  //       const filePath = `${dateStr}/lmhofs_${dateStr}.geo.json`
-  //       console.log('fetching:', filePath)
-  //       const { data, error } = await supabase.storage
-  //       .from('geojson')
-  //       .download(filePath);
-  //       if (error) {
-  //         console.error('Error downloading lmhofs contour geojson:', error);
-  //         return;
-  //       } else if (data != null) {
-  //         const text = await data.text()
-  //         const jsonData = JSON.parse(text)
-  //         setLmhofsContours(jsonData);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching lmhofs contour data:', error);
-  //     }
-  //   }
-
-  //   const getLmhofsPointData = async () => {
-  //     setLmhofsPoints(null)
-  //     try {
-  //       const filePath = `${dateStr}/lmhofs_${dateStr}_points.geo.json`
-  //       console.log('fetching:', filePath)
-  //       const { data, error } = await supabase.storage
-  //       .from('geojson')
-  //       .download(filePath);
-  //       if (error) {
-  //         console.error('Error downloading lmhofs point geojson:', error);
-  //         return;
-  //       } else if (data != null) {
-  //         const text = await data.text()
-  //         const jsonData = JSON.parse(text)
-  //         setLmhofsPoints(jsonData);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching lmhofs point data:', error);
-  //     }
-  //   }
-
-  //   const getLeofsContourData = async () => {
-  //     try {
-  //       const filePath = `${dateStr}/leofs_${dateStr}.geo.json`
-  //       console.log('fetching:', filePath)
-  //       const { data, error } = await supabase.storage
-  //       .from('geojson')
-  //       .download(filePath);
-  //       if (error) {
-  //         console.error('Error downloading leofs contour geojson:', error);
-  //         return;
-  //       } else if (data != null) {
-  //         const text = await data.text()
-  //         const jsonData = JSON.parse(text)
-  //         setLeofsContours(jsonData);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching leofs contour data:', error);
-  //     }
-  //   }
-
-  //   const getLeofsPointData = async () => {
-  //     setLeofsPoints(null)
-  //     try {
-  //       const filePath = `${dateStr}/leofs_${dateStr}_points.geo.json`
-  //       console.log('fetching:', filePath)
-  //       const { data, error } = await supabase.storage
-  //       .from('geojson')
-  //       .download(filePath);
-  //       if (error) {
-  //         console.error('Error downloading leofs points geojson:', error);
-  //         return;
-  //       } else if (data != null) {
-  //         const text = await data.text()
-  //         const jsonData = JSON.parse(text)
-  //         setLeofsPoints(jsonData);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching leofs point data:', error);
-  //     }
-  //   }
-
-  //   const getLsofsContourData = async () => {
-  //     try {
-  //       const filePath = `${dateStr}/lsofs_${dateStr}.geo.json`
-  //       console.log('fetching:', filePath)
-  //       const { data, error } = await supabase.storage
-  //       .from('geojson')
-  //       .download(filePath);
-  //       if (error) {
-  //         console.error('Error downloading lsofs contour geojson:', error);
-  //         return;
-  //       } else if (data != null) {
-  //         const text = await data.text()
-  //         const jsonData = JSON.parse(text)
-  //         setLsofsContours(jsonData);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching lsofs contour data:', error);
-  //     }
-  //   }
-
-  //   const getLsofsPointData = async () => {
-  //     setLsofsPoints(null)
-  //     try {
-  //       const filePath = `${dateStr}/lsofs_${dateStr}_points.geo.json`
-  //       console.log('fetching:', filePath)
-  //       const { data, error } = await supabase.storage
-  //       .from('geojson')
-  //       .download(filePath);
-  //       if (error) {
-  //         console.error('Error downloading lsofs points geojson:', error);
-  //         return;
-  //       } else if (data != null) {
-  //         const text = await data.text()
-  //         const jsonData = JSON.parse(text)
-  //         setLsofsPoints(jsonData);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching lsofs bucket data:', error);
-  //     }
-  //   }
-
-  //   const getUserPointData = async () => {
-  //     setUserPoints(null)
-  //     try {
-  //       const filePath = `${dateStr}/user_points.geo.json`
-  //       console.log('fetching:', filePath)
-  //       const { data, error } = await supabase.storage
-  //       .from('geojson')
-  //       .download(filePath);
-  //       if (error) {
-  //         console.error('Error downloading misc points geojson:', error);
-  //         return;
-  //       } else if (data != null) {
-  //         const text = await data.text()
-  //         const jsonData = JSON.parse(text)
-  //         setUserPoints(jsonData);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching misc bucket data:', error);
-  //     }
-  //   }
-
-  //   getLoofsContourData();
-  //   getLmhofsContourData();
-  //   getLeofsContourData();
-  //   getLsofsContourData();
-  //   getLoofsPointData();
-  //   getLmhofsPointData();
-  //   getLeofsPointData();
-  //   getLsofsPointData();
-  //   getUserPointData()
-  // },[date])
-
-  useEffect(() => {
-  const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-  console.log("Current date string:", dateStr);
-  
   const fetchAllData = async () => {
+    const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+    console.log("Current date string:", dateStr);
+
     const fetchFunctions = [
       // Point data fetchers
-      async () => {
-        const filePath = `${dateStr}/loofs_${dateStr}_points.geo.json`;
-        const { data, error } = await supabase.storage.from('geojson').download(filePath);
-        if (error) throw new Error(`Error downloading loofs points: ${error.message}`);
-        const text = await data.text();
-        return { type: 'loofsPoints', data: JSON.parse(text) };
-      },
-      async () => {
-        const filePath = `${dateStr}/leofs_${dateStr}_points.geo.json`;
-        const { data, error } = await supabase.storage.from('geojson').download(filePath);
-        if (error) throw new Error(`Error downloading leofs points: ${error.message}`);
-        const text = await data.text();
-        return { type: 'leofsPoints', data: JSON.parse(text) };
-      },
-      async () => {
-        const filePath = `${dateStr}/lsofs_${dateStr}_points.geo.json`;
-        const { data, error } = await supabase.storage.from('geojson').download(filePath);
-        if (error) throw new Error(`Error downloading lsofs points: ${error.message}`);
-        const text = await data.text();
-        return { type: 'lsofsPoints', data: JSON.parse(text) };
-      },
-      async () => {
-        const filePath = `${dateStr}/lmhofs_${dateStr}_points.geo.json`;
-        const { data, error } = await supabase.storage.from('geojson').download(filePath);
-        if (error) throw new Error(`Error downloading lmhofs points: ${error.message}`);
-        const text = await data.text();
-        return { type: 'lmhofsPoints', data: JSON.parse(text) };
-      },
       async () => {
         const filePath = `${dateStr}/user_points.geo.json`;
         const { data, error } = await supabase.storage.from('geojson').download(filePath);
@@ -413,18 +178,6 @@ const Map = (props: MapProps) => {
       // Update all states at once
       results.forEach(result => {
         switch(result.type) {
-          case 'loofsPoints':
-            setLoofsPoints(result.data);
-            break;
-          case 'leofsPoints':
-            setLeofsPoints(result.data);
-            break;
-          case 'lsofsPoints':
-            setLsofsPoints(result.data);
-            break;
-          case 'lmhofsPoints':
-            setLmhofsPoints(result.data);
-            break;
           case 'userPoints':
             setUserPoints(result.data);
             break;
@@ -450,8 +203,13 @@ const Map = (props: MapProps) => {
     }
   };
 
-  fetchAllData();
-}, [date]);
+  useEffect(() => {
+    fetchAllData();
+  }, [date]);
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("USER_LOCATION", JSON.stringify(userLocation));
@@ -529,9 +287,9 @@ const Map = (props: MapProps) => {
     // const newValue = Array.isArray(value) ? value[0] : value;
     console.log("changed slider to", value);
     setCurrentWeekday(value);
-    const newDate = new Date()
-    const currentDate = new Date()
-    newDate.setDate(currentDate.getDate() - (7-value))
+    const today = new Date();
+    const daysBack = 7 - value;
+    const newDate = subDays(today, daysBack);
     console.log('old date', date)
     console.log('new date', newDate)
     setDate(newDate)
@@ -669,76 +427,64 @@ const Map = (props: MapProps) => {
     return null;
   };
 
-  const LeafletCanvasMarker = ({ 
-    loofs_points, 
-    leofs_points, 
-    lsofs_points, 
-    lmhofs_points, 
-    other_points, 
-    tempUnit 
-  }: {
-    loofs_points: any;
-    leofs_points: any;
-    lsofs_points: any;
-    lmhofs_points: any;
-    other_points: any;
-    tempUnit: string;
-  }) => {
-    const map = useMap()
-    const canvasLayerRef = useRef<any>(null)
+  // const LeafletCanvasMarker = ({ 
+  //   other_points, 
+  //   tempUnit 
+  // }: {
+  //   other_points: any;
+  //   tempUnit: string;
+  // }) => {
+  //   const map = useMap()
+  //   const canvasLayerRef = useRef<any>(null)
 
-    useEffect(() => {
-      if (!map || !map.getContainer() || dataLoading) return;
+  //   useEffect(() => {
+  //     if (!map || !map.getContainer() || dataLoading) return;
 
-        try {
-          // if (canvasLayerRef.current && map.hasLayer(canvasLayerRef.current)) {
-          //   map.removeLayer(canvasLayerRef.current);
-          //   canvasLayerRef.current = null;
-          // }
+  //       try {
+  //         // if (canvasLayerRef.current && map.hasLayer(canvasLayerRef.current)) {
+  //         //   map.removeLayer(canvasLayerRef.current);
+  //         //   canvasLayerRef.current = null;
+  //         // }
+  //         if (!map.getContainer()) return
 
-          if (!map.getContainer()) return
+  //         var ciLayer = (L as any).canvasIconLayer({}).addTo(map)
+  //         // canvasLayerRef.current = ciLayer;
 
-          const ciLayer = (L as any).canvasIconLayer({}).addTo(map)
-          // canvasLayerRef.current = ciLayer;
+  //         var icon = L.icon({
+  //           iconSize: [5, 5],
+  //           iconAnchor: [5, 5],
+  //           iconUrl: '/circle.png'
+  //         });
 
-          var icon = L.icon({
-            iconSize: [5, 5],
-            iconAnchor: [5, 5],
-            iconUrl: '/marker-invis.png'
-          });
-
-          const markers = []
-
-          const pointGroups = [loofs_points, leofs_points, lsofs_points, lmhofs_points, other_points]
-          for (let i=0; i < pointGroups.length; i++) {
-            for (let j = 0; j < pointGroups[i]["features"].length; j++) {
-              var marker = (L as any).marker(
-                [pointGroups[i]["features"][j]["geometry"]["coordinates"][1], pointGroups[i]["features"][j]["geometry"]["coordinates"][0]],
-                {icon: icon}
-              ).bindPopup(tempUnit == 'Celsius' ? `${pointGroups[i]["features"][j]["properties"]["temperature"]} °C` : `${toFarenheit(pointGroups[i]["features"][j]["properties"]["temperature"])} °F`)
-              markers.push(marker)
-            }
-          }
-          console.log(`created ${markers.length} markers`)
-          ciLayer.addLayers(markers);
-          // ciLayer.addTo(map)
-          // return ciLayer
+  //         const markers = []
+  //         for (let j = 0; j < other_points["features"].length; j++) {
+  //           var marker = (L as any).marker(
+  //             [other_points["features"][j]["geometry"]["coordinates"][1], other_points["features"][j]["geometry"]["coordinates"][0]],
+  //             {icon: icon}
+  //           ).bindPopup(tempUnit == 'Celsius' ? `${other_points["features"][j]["properties"]["temperature"]} °C` : `${toFarenheit(other_points["features"][j]["properties"]["temperature"])} °F`)
+  //           markers.push(marker)
+  //         }
           
-        } catch (error) {
-          console.error('Error initializing map marker layer:', error)
-        }
+  //         console.log(`created ${markers.length} markers`)
+  //         ciLayer.addLayers(markers);
+  //         // ciLayer.addTo(map)
+  //         // return ciLayer
+          
+  //       } catch (error) {
+  //         console.error('Error initializing map marker layer:', error)
+  //       }
 
 
-      // // Cleanup function
-      return () => {
-        if (canvasLayerRef.current && map.hasLayer(canvasLayerRef.current)) {
-          map.removeLayer(canvasLayerRef.current);
-        }
-      };
-    }, [map, dataLoading, tempUnit])
+  //     // // Cleanup function
+  //     return () => {
+  //       if (canvasLayerRef.current && map.hasLayer(canvasLayerRef.current)) {
+  //         map.removeLayer(canvasLayerRef.current);
+  //       }
+  //     };
+  //   }, [map, userPoints, tempUnit])
 
-    return null
-  }
+  //   return null
+  // }
 
   const HeatmapLayer = ({
     data,
@@ -826,15 +572,19 @@ const Map = (props: MapProps) => {
       coord: [clickLat, clickLng],
       date: date
     }
+    let nearest = null;
     const result = await getTemperatureReading(data)
-    const temp: number = result.data.temp
-    const lat: number = result.data.lat
-    const lng: number = result.data.lng
-    let nearest = {
-      latitude: lat,
-      longitude: lng,
-      temperature: temp,
-    };
+    if (result.data) {
+        const temp: number = result.data.temp
+        const lat: number = result.data.lat
+        const lng: number = result.data.lng
+        nearest = {
+          latitude: lat,
+          longitude: lng,
+          temperature: temp,
+        };
+    }
+    
     
     console.log("Nearest point:", nearest);
     
@@ -863,6 +613,7 @@ const Map = (props: MapProps) => {
         );
 
         if (nearestPoint) {
+          console.log('set clicked point')
           setClickedPoint({
             latitude: lat,
             longitude: lng,
@@ -893,18 +644,29 @@ const Map = (props: MapProps) => {
     };
   };
 
-  useEffect(() => {
-    console.log('contours changed')
-  },[loofsContours, leofsContours, lsofsContours, lmhofsContours])
+  const customUserIcon = new Icon({
+    iconUrl: "/circle.png",
+    iconSize: [20, 20],
+    iconAnchor: [0, 0],
+    popupAnchor: [10, 0],
+  })
 
+  const createCustomClusterIcon = (cluster: any) => {
+    return L.divIcon({
+      html: `<div class="cluster-icon">${cluster.getChildCount()}</div>`,
+      iconSize: point(26,26,true)    })
+  }
+
+  
   //RENDER
   if (
     mapCoords.latitude &&
     mapCoords.longitude &&
     !loading &&
-    loofsContours && leofsContours && lmhofsContours && lsofsContours
+    loofsContours && leofsContours && lmhofsContours && lsofsContours && userPoints
     // loofsPoints && leofsPoints && lmhofsPoints && lsofsPoints && userPoints
   ) {
+    console.log('user points', userPoints)
     return (
       <MapContainer
         key={`${mapCoords.latitude},${mapCoords.longitude}`}
@@ -917,6 +679,26 @@ const Map = (props: MapProps) => {
           maxZoom={19}
         />
         <MapClickHandler />
+        <MarkerClusterGroup
+          chunkedLoading
+          iconCreateFunction={createCustomClusterIcon}
+        >
+          {userPoints != null && (userPoints as MyDataType).features.map((item,index) => {
+            console.log('Adding user point')
+            return (
+              <Marker
+              key={index}
+                position={[item.geometry.coordinates[1], item.geometry.coordinates[0]]}
+                icon={customUserIcon}
+                >
+                <Popup>
+                  {unit == 'Celsius' ? `${item.properties.temperature} °C` : `${toFarenheit(item.properties.temperature)} °F`}
+                </Popup>
+              </Marker>
+            )
+          })
+          }
+        </MarkerClusterGroup>
 
         {tempVisible && (
           <GeoJSON

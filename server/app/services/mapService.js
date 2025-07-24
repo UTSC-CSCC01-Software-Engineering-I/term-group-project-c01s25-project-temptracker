@@ -9,6 +9,7 @@ async function getTemperatureReading(coordinates,date) {
   const arr = [`loofs_${date}_points.geo.json`,`leofs_${date}_points.geo.json`,`lsofs_${date}_points.geo.json`,`lmhofs_${date}_points.geo.json`,'user_points.geo.json']
   console.log('Beginning loop')
   for (let i=0; i< arr.length; i++){
+    console.log('checking', arr[i])
     try {
       const { data } = await supabase.storage.from('geojson').download(`${date}/${arr[i]}`)
       const text = await data.text();
@@ -30,9 +31,9 @@ async function getTemperatureReading(coordinates,date) {
         console.error("getTemperatureReading error:", e);
         throw e;
     }
-    console.log('No nearest point found')
-    return { message: "Temperature reading unsuccessful", data: null}
   }
+  console.log('No nearest point found')
+  return { message: "Temperature reading unsuccessful", data: null}
 
 }
 
