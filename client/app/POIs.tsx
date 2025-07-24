@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 import { getClosestPOIs } from "@/lib/services/POIsService";
 
-const locations = [
-  { id: 1, name: "Location A", temperature: "22°C" },
-  { id: 2, name: "Location B", temperature: "19°C" },
-  { id: 3, name: "Location C", temperature: "25°C" },
-];
+type POI = {
+  id: number;
+  Name: string;
+  Latitude: number;
+  Longitude: number;
+  Lake: string;
+  distance: number;
+};
 
 export default function POIs() {
   const [userLocation, setUserLocation] = useState<{
@@ -16,7 +19,7 @@ export default function POIs() {
   } | null>(null);
 
   const [error, setError] = useState<string | null>(null);
-  const [closestNames, setClosestNames] = useState("");
+  const [closestPOIs, setClosestPOIs] = useState<POI[]>([]);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -32,7 +35,7 @@ export default function POIs() {
 
         const results = await getClosestPOIs(lat, lon);
         // @ts-ignore
-        setClosestNames(results);
+        setClosestPOIs(results);
       },
       (err) => {
         setError(err.message);
@@ -44,26 +47,23 @@ export default function POIs() {
     <section className="locations-section">
       <h2 className="m-0">Points of Interest</h2>
 
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      <p>Popular water spots near you</p>
 
-      {userLocation && (
+      {error && <p className="text-red-500 mt-2">Error: {error}
+        <br></br>Please try enabling your location or refresh your browser to view POIs</p>}
+
+      {/* {userLocation && (
         <p className="m-4">
           Latitude: {userLocation.latitude.toFixed(4)}, Longitude:{" "}
           {userLocation.longitude.toFixed(4)}
         </p>
-      )}
+      )} */}
 
-      <textarea
-        className="m-4 p-2 w-full h-40 border rounded"
-        value={JSON.stringify(closestNames, null, 2)}
-        readOnly
-      />
-
-      <div className="locations-list">
-        {locations.map(({ id, name, temperature }) => (
+      <div className="locations-list mt-6">
+        {closestPOIs.map(({ id, Name, distance }) => (
           <div key={id} className="location-card">
-            <span>{name}</span>
-            <span>{temperature}</span>
+            <span>{Name}</span>
+            <span>{distance.toFixed(2)} km away</span>
           </div>
         ))}
       </div>
