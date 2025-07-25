@@ -218,10 +218,13 @@ for url in url_list:
         # call convert and upload to storage
         generate_contours(retrieved_file,current_date)
         generate_points(retrieved_file,current_date)
-        generate_misc_points(current_date)
 
         # delte staging file
         os.remove(retrieved_file)
 
     except Exception as e:
         print('Exception requesting file:', e)
+try:
+    generate_misc_points(current_date)
+except Exception as e:
+    print("Error uploading user points:", e)
