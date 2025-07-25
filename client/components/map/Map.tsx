@@ -56,7 +56,6 @@ import { useParams } from "next/navigation";
 interface MyDataType {
   type: string;
   features: any[];
-  // ... other properties
 }
 
 const supabase = createClient(); // need to move this elsewhere
@@ -85,10 +84,6 @@ const Map = (props: MapProps) => {
   const [lmhofsContours, setLmhofsContours] = useState(null);
 
   //Points buckets
-  const [loofsPoints, setLoofsPoints] = useState(null);
-  const [leofsPoints, setLeofsPoints] = useState(null);
-  const [lsofsPoints, setLsofsPoints] = useState(null);
-  const [lmhofsPoints, setLmhofsPoints] = useState(null);
   const [userPoints, setUserPoints] = useState<MyDataType | null>(null)
 
 
@@ -128,8 +123,9 @@ const Map = (props: MapProps) => {
   });
 
   const fetchAllData = async () => {
+    //fetches geo json data from the supabase storage
     const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-    console.log("Current date string:", dateStr);
+    console.log("Current fetch date string:", dateStr);
 
     const fetchFunctions = [
       // Point data fetchers
@@ -204,6 +200,7 @@ const Map = (props: MapProps) => {
   };
 
   useEffect(() => {
+    console.log("date state changed");
     fetchAllData();
   }, [date]);
 
@@ -230,9 +227,7 @@ const Map = (props: MapProps) => {
     popupAnchor: [0, -41],
   });
 
-  // utility functions
-
-  /////////////////////
+  
   const getData = async (timeRange: "all" | "week" | "month") => {
     let fromDate: string | null = null;
 
@@ -258,7 +253,6 @@ const Map = (props: MapProps) => {
       return;
     }
 
-    console.log("Filtered data:", data);
 
     const heatData = data.map((point) => [
       point.latitude,
@@ -284,20 +278,24 @@ const Map = (props: MapProps) => {
   }, [props.timeRange]);
 
   const weekSliderChange = (_event: Event, value: number) => {
-    // const newValue = Array.isArray(value) ? value[0] : value;
-    console.log("changed slider to", value);
-    setCurrentWeekday(value);
+    // changes the position of the thumb on the weekday slider
+    
     const today = new Date();
     const daysBack = 7 - value;
     const newDate = subDays(today, daysBack);
     console.log('old date', date)
     console.log('new date', newDate)
     setDate(newDate)
+
+    setTimeout(() => {
+      console.log("slider currently at:", currentWeekday);
+      console.log("changing slider to:", value)
+      setCurrentWeekday(value);
+    },500)
   };
 
   const monthSliderChange = (_event: Event, value: number) => {
-    // const newValue = Array.isArray(value) ? value[0] : value;
-    console.log("changed slider to", value);
+    // Changes the position of the thumb on the month day slider
     setCurrentMonthDate(value);
   };
 
@@ -486,84 +484,85 @@ const Map = (props: MapProps) => {
   //   return null
   // }
 
-  const HeatmapLayer = ({
-    data,
-  }: {
-    data: Array<[number, number, number]>;
-  }) => {
-    const map = useMap();
+  // const HeatmapLayer = ({
+  //   data,
+  // }: {
+  //   data: Array<[number, number, number]>;
+  // }) => {
+  //   const map = useMap();
 
-    useEffect(() => {
-      if (!map || !data || data.length === 0) return;
+  //   useEffect(() => {
+  //     if (!map || !data || data.length === 0) return;
 
-      const validData = data.filter((point) => {
-        const [lat, lng, intensity] = point;
+  //     const validData = data.filter((point) => {
+  //       const [lat, lng, intensity] = point;
 
-        // Check if coordinates are valid numbers
-        if (
-          typeof lat !== "number" ||
-          typeof lng !== "number" ||
-          typeof intensity !== "number" ||
-          isNaN(lat) ||
-          isNaN(lng) ||
-          isNaN(intensity)
-        ) {
-          console.warn("Invalid coordinates or intensity:", {
-            lat,
-            lng,
-            intensity,
-          });
-          return false;
-        }
-        return true;
-      });
-      if (validData.length > 0) {
-        const addHeatmap = () => {
-          // console.log('valid data', validData)
+  //       // Check if coordinates are valid numbers
+  //       if (
+  //         typeof lat !== "number" ||
+  //         typeof lng !== "number" ||
+  //         typeof intensity !== "number" ||
+  //         isNaN(lat) ||
+  //         isNaN(lng) ||
+  //         isNaN(intensity)
+  //       ) {
+  //         console.warn("Invalid coordinates or intensity:", {
+  //           lat,
+  //           lng,
+  //           intensity,
+  //         });
+  //         return false;
+  //       }
+  //       return true;
+  //     });
+  //     if (validData.length > 0) {
+  //       const addHeatmap = () => {
+  //         // console.log('valid data', validData)
 
-          const heatLayer = (L as any).heatLayer(validData, {
-            radius: 20,
-            blur: 12,
-            maxZoom: 6,
-            max: 1.0,
-            minOpacity: 0.5,
-            gradient: {
-              0.0: "#350273",
-              0.2: "blue",
-              0.4: "lime",
-              0.6: "#FCED21",
-              0.8: "#FF8001",
-              0.9: "#E4080A",
-              1.0: "#A40203",
-            },
-          });
+  //         const heatLayer = (L as any).heatLayer(validData, {
+  //           radius: 20,
+  //           blur: 12,
+  //           maxZoom: 6,
+  //           max: 1.0,
+  //           minOpacity: 0.5,
+  //           gradient: {
+  //             0.0: "#350273",
+  //             0.2: "blue",
+  //             0.4: "lime",
+  //             0.6: "#FCED21",
+  //             0.8: "#FF8001",
+  //             0.9: "#E4080A",
+  //             1.0: "#A40203",
+  //           },
+  //         });
 
-          heatLayer.addTo(map);
-          return heatLayer;
-        };
+  //         heatLayer.addTo(map);
+  //         return heatLayer;
+  //       };
 
-        let heatLayer: any;
+  //       let heatLayer: any;
 
-        if (map.getContainer()) {
-          heatLayer = addHeatmap();
-        } else {
-          map.whenReady(() => {
-            heatLayer = addHeatmap();
-          });
-        }
+  //       if (map.getContainer()) {
+  //         heatLayer = addHeatmap();
+  //       } else {
+  //         map.whenReady(() => {
+  //           heatLayer = addHeatmap();
+  //         });
+  //       }
 
-        return () => {
-          if (heatLayer && map.hasLayer(heatLayer)) {
-            map.removeLayer(heatLayer);
-          }
-        };
-      }
-    }, [map, data]);
+  //       return () => {
+  //         if (heatLayer && map.hasLayer(heatLayer)) {
+  //           map.removeLayer(heatLayer);
+  //         }
+  //       };
+  //     }
+  //   }, [map, data]);
 
-    return null;
-  };
+  //   return null;
+  // };
 
   const findNearestTemperaturePoint = async (
+    // calls a backend service to find the nearest temperature point to a given lat and long on a specific date
     clickLat: number,
     clickLng: number,
     date: string  ) => {
@@ -586,7 +585,7 @@ const Map = (props: MapProps) => {
     }
     
     
-    console.log("Nearest point:", nearest);
+    // console.log("Nearest point:", nearest);
     
     return nearest;
   };
@@ -604,7 +603,7 @@ const Map = (props: MapProps) => {
           console.warn("Invalid coordinates:", { lat, lng });
           return;
         }
-        console.log("Map clicked at:", lat, lng);
+        // console.log("Map clicked at:", lat, lng);
 
         const nearestPoint = await findNearestTemperaturePoint(
           lat,
@@ -613,7 +612,7 @@ const Map = (props: MapProps) => {
         );
 
         if (nearestPoint) {
-          console.log('set clicked point')
+          // console.log('set clicked point')
           setClickedPoint({
             latitude: lat,
             longitude: lng,
@@ -632,8 +631,8 @@ const Map = (props: MapProps) => {
   };
 
   const getFeatureStyle2 = (feature: any) => {
+    // colors the geo json contours on the map
     const temperature = feature.properties.fill;
-    // const fillColor = tempFunc(temperature)
     
     return {
       fillColor: temperature,
@@ -664,9 +663,8 @@ const Map = (props: MapProps) => {
     mapCoords.longitude &&
     !loading &&
     loofsContours && leofsContours && lmhofsContours && lsofsContours && userPoints
-    // loofsPoints && leofsPoints && lmhofsPoints && lsofsPoints && userPoints
   ) {
-    console.log('user points', userPoints)
+    // console.log('user points', userPoints)
     return (
       <MapContainer
         key={`${mapCoords.latitude},${mapCoords.longitude}`}
@@ -682,12 +680,13 @@ const Map = (props: MapProps) => {
         <MarkerClusterGroup
           chunkedLoading
           iconCreateFunction={createCustomClusterIcon}
+          key={`markers-${date.toDateString()}`}
         >
           {userPoints != null && (userPoints as MyDataType).features.map((item,index) => {
-            console.log('Adding user point')
+            // console.log('Adding user point')
             return (
               <Marker
-              key={index}
+              key={`marker-${index}-${date.toDateString()}`}
                 position={[item.geometry.coordinates[1], item.geometry.coordinates[0]]}
                 icon={customUserIcon}
                 >
