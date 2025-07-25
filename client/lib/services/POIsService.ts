@@ -4,10 +4,10 @@ const supabase = createClient();
 
 type POI = {
   id: number;
-  Name: string;
-  Latitude: number;
-  Longitude: number;
-  Lake: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  lake: string;
 };
 
 // this function calculates the Haversine distance between two points with given (lat, long)
@@ -35,7 +35,7 @@ export async function getClosestPOIs(
 ): Promise<POI[]> {
   const { data, error } = await supabase
     .from("points_of_interest")
-    .select("id, Name, Latitude, Longitude, Lake");
+    .select("id, name, latitude, longitude, lake");
 
   if (error || !data) {
     console.error("Supabase error:", error);
@@ -48,12 +48,12 @@ export async function getClosestPOIs(
       distance: haversineDistance(
         userLat,
         userLon,
-        poi.Latitude,
-        poi.Longitude
+        poi.latitude,
+        poi.longitude
       ),
     }))
     .sort((a, b) => a.distance - b.distance)
     .slice(0, limit);
-
+    console.log("Sorted POIs:", sorted);
   return sorted;
 }
