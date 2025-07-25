@@ -14,7 +14,10 @@ type POI = {
 };
 
 export default function POIs() {
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [closestPOIs, setClosestPOIs] = useState<POI[]>([]);
   const [avgTemps, setAvgTemps] = useState<Record<number, number | null>>({});
@@ -37,7 +40,10 @@ export default function POIs() {
 
         const tempsMap: Record<number, number | null> = {};
         for (const poi of results) {
-          const avgTemp = await getAverageClosestTemperature(poi.latitude, poi.longitude);
+          const avgTemp = await getAverageClosestTemperature(
+            poi.latitude,
+            poi.longitude
+          );
           tempsMap[poi.id] = avgTemp;
         }
         setAvgTemps(tempsMap);
@@ -50,8 +56,9 @@ export default function POIs() {
 
   return (
     <section className="locations-section">
-      <h2 className="m-0">Points of Interest</h2>
-      <p>Popular water spots near you</p>
+      <h2 className="mb-2">Points of Interest</h2>
+      <p>Popular nearby Great Lakes attractions with their water temperatures!</p>
+      <p className="text-sm italic mb-8">Note that due to the proximity of data, places may have similar temperatures</p>
 
       {error && (
         <p className="text-red-500 mt-2">
@@ -63,14 +70,22 @@ export default function POIs() {
 
       <div className="locations-list mt-6">
         {closestPOIs.map(({ id, name, distance }) => (
-          <div key={id} className="location-card">
-            <span>{name}</span>
-            <span>{distance.toFixed(2)} km away</span>
-            <span>
+          <div
+            key={id}
+            className="location-card flex justify-between items-center text-left"
+            style={{ gap: "1rem" }}
+          >
+            <div>
+              <div>{name}</div>
+              <div className="text-sm text-gray-500 text-left">
+                {distance.toFixed(2)} km away
+              </div>
+            </div>
+            <div className="text-lg font-semibold">
               {avgTemps[id] !== undefined
-                ? `${avgTemps[id]?.toFixed(2)}°`
+                ? `${avgTemps[id]?.toFixed(2)}°C`
                 : "..."}
-            </span>
+            </div>
           </div>
         ))}
       </div>

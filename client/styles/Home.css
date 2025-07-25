@@ -37,7 +37,7 @@
 
 /* move locations to another component (w/ tailwind) later */
 .locations-section {
-    max-width: 600px;
+    max-width: 650px;
     margin: 1em;
     text-align: center;
     margin-bottom: 6em;
@@ -58,7 +58,6 @@
 .location-card {
     color: var(--dark-blue);
     width: 100%;
-    max-width: 500px;
     background: #fff;
     border-radius: 0.75rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
