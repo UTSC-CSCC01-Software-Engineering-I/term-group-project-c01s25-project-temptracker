@@ -8,11 +8,16 @@ const userRouter = Router();
 
 userRouter.use(authenticateUser);
 userRouter.get("/", requireAdmin, userController.getUsers);
+
 userRouter.get(
   "/:id/submissions",
   verifySelfAccess,
   userController.getUserSubmissions
 );
+userRouter.get("/:id/stats", verifySelfAccess, userController.getUserStats);
+userRouter.post("/:id/streak", verifySelfAccess, userController.updateUserStreak);
+userRouter.post("/:id/submissions", verifySelfAccess, userController.updateUserSubmission);
+
 userRouter.get("/:id/badges", verifySelfAccess, userController.getUserBadges);
 userRouter.post(
   "/:id/badges/award",
