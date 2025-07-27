@@ -42,7 +42,9 @@ async function getUserBadges(userId) {
 
 async function awardUserBadges(userId) {
   try {
-    const { data: allBadges, error: badgesError } = await supabase.from("badges").select("*");
+    const { data: allBadges, error: badgesError } = await supabase
+      .from("badges")
+      .select("*");
     if (badgesError) throw new Error("Badge award error");
 
     const { data: userBadges, error: userBadgesError } = await supabase
