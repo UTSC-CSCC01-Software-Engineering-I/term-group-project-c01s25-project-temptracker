@@ -29,6 +29,27 @@ async function getUserStats(req, res) {
   }
 }
 
+async function updateUserStreak(req, res) {
+  const userId = req.params.id;
+  try {
+    const updatedUser = await userService.updateUserStreak(userId);
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+
+async function updateUserSubmission(req, res) {
+  const userId = req.params.id;
+  try {
+    const updatedSubmission = await userService.updateUserSubmission(userId);
+    res.json(updatedSubmission);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async function getUserBadges(req, res) {
   const userId = req.params.id;
   try {
@@ -53,6 +74,8 @@ module.exports = {
   getUsers,
   getUserSubmissions,
   getUserStats,
+  updateUserStreak,
+  updateUserSubmission,
   getUserBadges,
   awardUserBadges,
 };
