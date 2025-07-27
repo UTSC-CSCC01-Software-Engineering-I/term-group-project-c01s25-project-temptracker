@@ -54,7 +54,7 @@ import { Over_the_Rainbow } from "next/font/google";
 import { useParams } from "next/navigation";
 
 interface MyDataType {
-  type: string;
+  latitude: string;
   features: any[];
 }
 
@@ -84,7 +84,7 @@ const Map = (props: MapProps) => {
   const [lmhofsContours, setLmhofsContours] = useState(null);
 
   //Points buckets
-  const [userPoints, setUserPoints] = useState<MyDataType | null>(null)
+  const [userPoints, setUserPoints] = useState([])
 
 
   const [date, setDate] = useState(() => {
@@ -137,12 +137,22 @@ const Map = (props: MapProps) => {
 
     const fetchFunctions = [
       // Point data fetchers
+      // async () => {
+      //   const filePath = `${dateStr}/user_points.geo.json`;
+      //   const { data, error } = await supabase.storage.from('geojson').download(filePath);
+      //   if (error) throw new Error(`Error downloading user points: ${error.message}`);
+      //   const text = await data.text();
+      //   return { type: 'userPoints', data: JSON.parse(text) };
+      // },
+      // Database uploads
       async () => {
-        const filePath = `${dateStr}/user_points.geo.json`;
-        const { data, error } = await supabase.storage.from('geojson').download(filePath);
-        if (error) throw new Error(`Error downloading user points: ${error.message}`);
-        const text = await data.text();
-        return { type: 'userPoints', data: JSON.parse(text) };
+        const { data, error } = await supabase.from('temperatures').select('latitude,longitude,temperature')
+        .gte('measured_on', `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}T00:00:00.000Z`)
+        .lt('measured_on', `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${(date.getDate()+1).toString().padStart(2, '0')}T00:00:00.000Z`);
+
+        if (error) throw new Error(`Error reading user uploads: ${error.message}`);
+        console.log('user uploads:', data)
+        return { type: 'userPoints', data: data };
       },
       // Contour data fetchers
       async () => {
@@ -237,55 +247,11 @@ const Map = (props: MapProps) => {
     popupAnchor: [0, -41],
   });
 
-  
-  const getData = async (timeRange: "all" | "week" | "month") => {
-    let fromDate: string | null = null;
-
-    if (props.timeRange === "week") {
-      fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    } else if (props.timeRange === "month") {
-      fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    }
-
-    // need to change this
-    const query = supabase
-      .from("temperatures")
-      .select("latitude, longitude, temperature, measured_on");
-
-    if (fromDate) {
-      query.gte("measured_on", fromDate);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Error fetching data:", error);
-      return;
-    }
-
-
-    const heatData = data.map((point) => [
-      point.latitude,
-      point.longitude,
-      point.temperature,
-      // point.measured_on
-    ]);
-
-    const rawData = data.map((point) => [
-      point.latitude,
-      point.longitude,
-      point.temperature,
-      point.measured_on,
-    ]);
-
-    
-  };
-
-  useEffect(() => {
-    if (props.timeRange) {
-      getData(props.timeRange);
-    }
-  }, [props.timeRange]);
+  // useEffect(() => {
+  //   if (props.timeRange) {
+  //     getData(props.timeRange);
+  //   }
+  // }, [props.timeRange]);
 
   const weekSliderChange = (_event: Event, value: number) => {
     // changes the position of the thumb on the weekday slider
@@ -376,7 +342,7 @@ const Map = (props: MapProps) => {
           />
         </div>
       );
-    } else if (props.timeRange === "month") {
+    } else if (props.timeRange === "today") {
       const marks = createMonthMarks();
       return (
         <div
@@ -493,83 +459,6 @@ const Map = (props: MapProps) => {
 
   //   return null
   // }
-
-  // const HeatmapLayer = ({
-  //   data,
-  // }: {
-  //   data: Array<[number, number, number]>;
-  // }) => {
-  //   const map = useMap();
-
-  //   useEffect(() => {
-  //     if (!map || !data || data.length === 0) return;
-
-  //     const validData = data.filter((point) => {
-  //       const [lat, lng, intensity] = point;
-
-  //       // Check if coordinates are valid numbers
-  //       if (
-  //         typeof lat !== "number" ||
-  //         typeof lng !== "number" ||
-  //         typeof intensity !== "number" ||
-  //         isNaN(lat) ||
-  //         isNaN(lng) ||
-  //         isNaN(intensity)
-  //       ) {
-  //         console.warn("Invalid coordinates or intensity:", {
-  //           lat,
-  //           lng,
-  //           intensity,
-  //         });
-  //         return false;
-  //       }
-  //       return true;
-  //     });
-  //     if (validData.length > 0) {
-  //       const addHeatmap = () => {
-  //         // console.log('valid data', validData)
-
-  //         const heatLayer = (L as any).heatLayer(validData, {
-  //           radius: 20,
-  //           blur: 12,
-  //           maxZoom: 6,
-  //           max: 1.0,
-  //           minOpacity: 0.5,
-  //           gradient: {
-  //             0.0: "#350273",
-  //             0.2: "blue",
-  //             0.4: "lime",
-  //             0.6: "#FCED21",
-  //             0.8: "#FF8001",
-  //             0.9: "#E4080A",
-  //             1.0: "#A40203",
-  //           },
-  //         });
-
-  //         heatLayer.addTo(map);
-  //         return heatLayer;
-  //       };
-
-  //       let heatLayer: any;
-
-  //       if (map.getContainer()) {
-  //         heatLayer = addHeatmap();
-  //       } else {
-  //         map.whenReady(() => {
-  //           heatLayer = addHeatmap();
-  //         });
-  //       }
-
-  //       return () => {
-  //         if (heatLayer && map.hasLayer(heatLayer)) {
-  //           map.removeLayer(heatLayer);
-  //         }
-  //       };
-  //     }
-  //   }, [map, data]);
-
-  //   return null;
-  // };
 
   const findNearestTemperaturePoint = async (
     // calls a backend service to find the nearest temperature point to a given lat and long on a specific date
@@ -692,16 +581,16 @@ const Map = (props: MapProps) => {
           iconCreateFunction={createCustomClusterIcon}
           key={`markers-${date.toDateString()}`}
         >
-          {userPoints != null && (userPoints as MyDataType).features.map((item,index) => {
+          {userPoints.length > 0 && userPoints.map((item,index) => {
             // console.log('Adding user point')
             return (
               <Marker
               key={`marker-${index}-${date.toDateString()}`}
-                position={[item.geometry.coordinates[1], item.geometry.coordinates[0]]}
+                position={[item['latitude'], item['longitude']]}
                 icon={customUserIcon}
                 >
                 <Popup>
-                  {unit == 'Celsius' ? `${item.properties.temperature} °C` : `${toFarenheit(item.properties.temperature)} °F`}
+                  {unit == 'Celsius' ? `${item['temperature']} °C` : `${toFarenheit(item['temperature'])} °F`}
                 </Popup>
               </Marker>
             )

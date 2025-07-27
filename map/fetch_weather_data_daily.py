@@ -202,29 +202,43 @@ url_list = []
 lakes = ['loofs', 'leofs', 'lsofs', 'lmhofs']
 for lake in lakes:
     url_list.append(f"https://noaa-nos-ofs-pds.s3.amazonaws.com/{lake}/netcdf/{current_year_str}/{current_month_str}/{current_day_str}/{lake}.t{t_number}z.{current_date}.fields.n{n_number}.nc")
+    # for hour in range(0, 24, 4):
+    #         f_number = f"{hour:03}"
+    #         url_list.append(
+    #             f"https://noaa-nos-ofs-pds.s3.amazonaws.com/{lake}/netcdf/{current_year_str}/{current_month_str}/{current_day_str}/{lake}.t{t_number}z.{current_date}.fields.f{f_number}.nc")
 
 
 # generate 
-for url in url_list:
-    print('url:',url)
-    # create staging file
-    name = url.split('/')[-1]
-    with open(f'glofs/{name}', 'w') as f:
-        pass
-    try:
-        retrieved_file = save_netcdf_from_url(url)
-        print(retrieved_file)
+try:
+    for url in url_list:
+        print('url:',url)
+        # create staging file
+        name = url.split('/')[-1]
+        with open(f'glofs/{name}', 'w') as f:
+            pass
 
-        # call convert and upload to storage
-        generate_contours(retrieved_file,current_date)
-        generate_points(retrieved_file,current_date)
+            retrieved_file = save_netcdf_from_url(url)
+            print('retrieved file:',retrieved_file)
+            # print('file identifier:', name[-7])
+            # check whether the data is forcasted or not
+            # if name[-7] == 'n':
+                # call convert and upload to storage
+            generate_contours(retrieved_file,current_date)
+            generate_points(retrieved_file,current_date)
+            # else:
+            #     pass
 
-        # delte staging file
+            # delte staging file
         os.remove(retrieved_file)
 
-    except Exception as e:
-        print('Exception requesting file:', e)
-try:
+        
     generate_misc_points(current_date)
+
+    with open('daily_log.txt', 'a') as log:
+        log.write(f'Passed on {current_date}\n')
+
 except Exception as e:
-    print("Error uploading user points:", e)
+    print("Error:", e)
+
+    with open('daily_log.txt', 'a') as log:
+        log.write(f'Failed on {current_date}. Error: {e}\n')

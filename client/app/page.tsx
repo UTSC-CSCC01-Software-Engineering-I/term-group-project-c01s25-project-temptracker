@@ -21,7 +21,7 @@ export default function Home() {
   const [centerLatitude, setCenterLatitude] = useState<number | null>(null);
   const [centerLongitude, setCenterLongitude] = useState<number | null>(null);
 
-  const [timeRange, setTimeRange] = useState<"week" | "month">("week");
+  const [timeRange, setTimeRange] = useState<"week" | "today">("week");
 
   const handleLatitude = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
