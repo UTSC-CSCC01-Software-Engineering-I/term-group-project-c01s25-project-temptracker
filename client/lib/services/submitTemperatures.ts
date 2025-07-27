@@ -1,6 +1,5 @@
 import { createClient } from "../supabase/client";
 import axios from "axios";
-import { updateStreak, updateUploads } from "./streakService";
 import { awardBadges } from "./badgeAwardService";
 
 const supabase = createClient();
@@ -40,9 +39,26 @@ export async function submitTemperature(data: TemperatureSubmission) {
 
   console.log("Temperature submission response:", res.data);
 
-  // currently, we record streaks by consecutive uploads
-  await updateStreak(user.id);
-  await updateUploads(user.id);
+  // update streak and uploads after submission
+  await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/streak`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    }
+  );
+
+  await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/submissions`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    }
+  );
 
   await awardBadges(user.id);
 }
@@ -72,9 +88,26 @@ export async function submitTemperatures(data: TemperatureSubmission[]) {
 
   console.log("Temperature submission response:", res.data);
 
-  // currently, we record streaks by consecutive uploads
-  await updateStreak(user.id);
-  await updateUploads(user.id);
+  // update streak and uploads after submission
+  await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/streak`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    }
+  );
+
+  await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/submissions`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+    }
+  );
 
   await awardBadges(user.id);
 }

@@ -42,7 +42,7 @@ export default function Home() {
   };
 
   return (
-    <div className="main-container w-full max-w-[1800px] md:mt-4">
+    <div className="main-container w-full max-w-[1800px] mx-auto md:mt-4">
       <div className="flex flex-col md:flex-row items-center justify-space-between md:px-12 gap-3">
         <div className="flex md:items-center gap-1 flex-col md:flex-row">
           <Label htmlFor="latitude" className="text-lg">

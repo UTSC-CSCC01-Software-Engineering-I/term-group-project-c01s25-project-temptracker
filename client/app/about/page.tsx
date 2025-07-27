@@ -22,19 +22,16 @@ const features = [
     icon: "🌡️",
     title: "Real-Time Data",
     desc: "Access data submitted by user readings to stay informed about local temperatures.",
-    gradient: "from-blue-500/40 to-cyan-500/40",
   },
   {
     icon: "📊",
     title: "Compare Archives",
     desc: "Look through numerous ancestral data to compare current temperatures with historical records.",
-    gradient: "from-purple-500/40 to-pink-500/40",
   },
   {
     icon: "🌍",
     title: "Community Impact",
     desc: "Encourages the community to contribute with their own readings, chart their user submissions, and make a positive impact on local water bodies.",
-    gradient: "from-green-500/40 to-emerald-500/40",
   },
 ];
 
@@ -134,7 +131,7 @@ export default function About() {
           <h2 className="text-3xl font-semibold">Platform Features</h2>
         </div>
         <div className="grid gap-12 md:grid-cols-3">
-          {features.map(({ icon, title, desc, gradient }, index) => (
+          {features.map(({ icon, title, desc}, index) => (
             <div
               key={title}
               className={`group relative bg-gray-50 dark:bg-gray-900 rounded-lg p-6 shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-500 text-center border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 ${
@@ -143,11 +140,11 @@ export default function About() {
               style={{ animationDelay: `${index * 0.2}s` }}
             >
               <div
-                className={`absolute -inset-px bg-gradient-to-r ${gradient} rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+                className={`absolute -inset-px bg-gradient-to-r rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
               ></div>
               <div className="relative">
                 <div
-                  className={`inline-flex items-center justify-center w-16 h-16 mt-2 rounded-2xl bg-gradient-to-r ${gradient} mb-5 text-6xl text-white group-hover:scale-110 transition-transform duration-300`}
+                  className={`inline-flex items-center justify-center w-16 h-16 mt-2 rounded-2xl bg-gradient-to-r mb-5 text-6xl text-white group-hover:scale-110 transition-transform duration-300`}
                 >
                   {icon}
                 </div>

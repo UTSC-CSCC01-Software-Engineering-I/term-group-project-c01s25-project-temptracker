@@ -57,7 +57,7 @@ useEffect(() => {
       <button
         onClick={() => setOpen((prev) => !prev)}
         type="button"
-        className="flex items-center md:gap-x-2 gap-x-0.5 cursor-pointer justify-center p-1.5 rounded-full transition border-2 border-black focus:outline-none focus:ring-1 focus:ring-nav-blue focus:ring-offset-0"
+        className="flex items-center md:gap-x-2 gap-x-0.5 cursor-pointer justify-center p-1.25 rounded-full transition border-2 border-black focus:outline-none focus:ring-1 focus:ring-nav-blue focus:ring-offset-0"
       >
         <Image
           src="/profile.png"

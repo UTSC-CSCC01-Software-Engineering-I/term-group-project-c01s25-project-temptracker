@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useUser } from "@/app/context";
 import { useUserStats } from "@/hooks/useUserStats";
-import Badges from "./ui/Badges";
+import Badges from "./Badges";
 
 export default function ProfileStats() {
   const { user } = useUser();

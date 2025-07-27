@@ -209,13 +209,13 @@ export default function UploadTemperatureForm() {
             Date and Time of Reading
           </FormLabel>
 
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-3">
             {/* Date */}
             <FormField
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="flex-1">
+                <FormItem className="min-w-[160px] flex-1">
                   <FormControl>
                     <Popover>
                       <PopoverTrigger asChild>
