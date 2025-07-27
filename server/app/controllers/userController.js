@@ -19,6 +19,16 @@ async function getUserSubmissions(req, res) {
   }
 }
 
+async function getUserStats(req, res) {
+  const userId = req.params.id;
+  try {
+    const stats = await userService.getUserStats(userId);
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async function getUserBadges(req, res) {
   const userId = req.params.id;
   try {
@@ -42,6 +52,7 @@ async function awardUserBadges(req, res) {
 module.exports = {
   getUsers,
   getUserSubmissions,
+  getUserStats,
   getUserBadges,
   awardUserBadges,
 };

@@ -1,4 +1,3 @@
-// RECONSIDER: currently a full frontend service
 import { createClient } from "../supabase/client";
 import axios from "axios";
 
@@ -13,7 +12,7 @@ function assignRanksWithTies(
   let lastValue: number | null = null;
   let countSame = 0;
 
-  return data.map((item, index) => {
+  return data.map((item) => {
     const currentValue = item[orderBy];
 
     if (currentValue !== lastValue) {
@@ -92,36 +91,39 @@ export async function fetchCurrentUserStatsWithRank(
   userId: string,
   orderBy: "upload_count" | "likes_count" | "max_streak"
 ) {
-  const { data: userRow, error } = await supabase
-    .from("stats")
-    .select(
-      `
-      curr_streak,
-      max_streak,
-      upload_count,
-      likes_count,
-      user_profile:user_profiles(username)
-    `
-    )
-    .eq("user_id", userId)
-    .single();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (error || !userRow) throw error ?? new Error("User not found");
+  if (!session?.access_token) {
+    throw new Error("No access token found");
+  }
 
-  const { data: allData, error: allError } = await supabase
-    .from("stats")
-    .select(`user_id, ${orderBy}`)
-    .order(orderBy, { ascending: false });
+  const userStatsRes = await axios.get(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}/stats`,
+    {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    }
+  );
 
-  if (allError || !allData)
-    throw allError ?? new Error("Failed to fetch rankings");
+  if (userStatsRes.status !== 200 || !userStatsRes.data)
+    throw new Error("Failed to fetch user stats");
 
-  const ranked = assignRanksWithTies(allData, orderBy);
+  const res = await axios.get(
+    `${process.env.NEXT_PUBLIC_API_URL}/general-data/top-user-stats/${orderBy}`
+  );
+
+  if (res.status !== 200 || !res.data)
+    throw new Error("Failed to fetch rankings");
+
+  const ranked = assignRanksWithTies(res.data, orderBy);
 
   const userRank = ranked.find((r) => r.user_id === userId)?.rank ?? -1;
+  const userRow = userStatsRes.data;
 
   return {
-    // @ts-ignore
     username: userRow.user_profile?.username ?? "Unknown",
     curr_streak: userRow.curr_streak,
     max_streak: userRow.max_streak,

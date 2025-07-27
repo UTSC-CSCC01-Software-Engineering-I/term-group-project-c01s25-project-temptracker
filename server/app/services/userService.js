@@ -21,6 +21,29 @@ async function getUserSubmissions(userId) {
   }
 }
 
+async function getUserStats(userId) {
+  try {
+    const { data } = await supabase
+      .from("stats")
+      .select(
+        `
+      curr_streak,
+      max_streak,
+      upload_count,
+      likes_count,
+      user_profile:user_profiles(username)
+    `
+      )
+      .eq("user_id", userId)
+      .single();
+
+    return data;
+  } catch (e) {
+    console.error("Error fetching user stats:", e);
+    throw new Error("Database error");
+  }
+}
+
 async function getUserBadges(userId) {
   try {
     const { data } = await supabase
@@ -97,6 +120,7 @@ async function awardUserBadges(userId) {
 module.exports = {
   getAllUsers,
   getUserSubmissions,
+  getUserStats,
   getUserBadges,
   awardUserBadges,
 };

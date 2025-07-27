@@ -13,6 +13,7 @@ userRouter.get(
   verifySelfAccess,
   userController.getUserSubmissions
 );
+userRouter.get("/:id/stats", verifySelfAccess, userController.getUserStats);
 userRouter.get("/:id/badges", verifySelfAccess, userController.getUserBadges);
 userRouter.post(
   "/:id/badges/award",
