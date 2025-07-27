@@ -95,6 +95,14 @@ const Map = (props: MapProps) => {
     return today
   })
 
+  const [tempDate, setTempDate] = useState(() => {
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth(); // Months are 0-indexed
+    const day = new Date().getDate(); //make July 18th
+    const today = new Date(year, month, day);
+    return today
+  })
+
 
   const [unit, setUnit] = useState("Celsius");
 
@@ -191,6 +199,8 @@ const Map = (props: MapProps) => {
             break;
         }
       });
+
+      setTempDate(date)
       
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -701,28 +711,28 @@ const Map = (props: MapProps) => {
 
         {tempVisible && (
           <GeoJSON
-            key={`loofs-${date.toISOString()}`}
+            key={`loofs-${tempDate.toISOString()}`}
             data={loofsContours}
             style={getFeatureStyle2}
           />
         )}
         {tempVisible && (
           <GeoJSON
-            key={`leofs-${date.toISOString()}`}
+            key={`leofs-${tempDate.toISOString()}`}
             data={leofsContours}
             style={getFeatureStyle2}
           />
         )}
         {tempVisible && (
           <GeoJSON
-            key={`lmhofs-${date.toISOString()}`}
+            key={`lmhofs-${tempDate.toISOString()}`}
             data={lmhofsContours}
             style={getFeatureStyle2}
           />
         )}
          {tempVisible && (
           <GeoJSON
-            key={`lsofs-${date.toISOString()}`}
+            key={`lsofs-${tempDate.toISOString()}`}
             data={lsofsContours}
             style={getFeatureStyle2}
           />
