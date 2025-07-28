@@ -1,0 +1,35 @@
+name: CI/CD
+run-name: ${{ github.actor }} is running ${{ github.workflow }} on ${{ github.repository }}
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install and test frontend
+        working-directory: client
+        run: |
+          npm ci
+          npm test
+      - name: Install and test backend
+        working-directory: server
+        run: |
+          npm ci
+          npm test
