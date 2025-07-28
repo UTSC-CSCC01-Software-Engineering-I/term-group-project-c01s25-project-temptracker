@@ -65,8 +65,6 @@ Create `.env.local` in the client directory:
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SENDGRID_API_KEY=your_sendgrid_api_key
-SENDGRID_SENDER=email@example.com
 ```
 
 4. Start the development servers:
