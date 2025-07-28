@@ -41,6 +41,29 @@ export default function Home() {
     );
   };
 
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        setSearchLatitude(lat);
+        setSearchLongitude(lng);
+        setCenterLatitude(lat);
+        setCenterLongitude(lng);
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+        alert("Unable to retrieve your location.");
+      }
+    );
+  };
+
   return (
     <div className="main-container w-full max-w-[1800px] mx-auto md:mt-4">
       <div className="flex flex-col md:flex-row items-center justify-space-between md:px-12 gap-3">
@@ -53,6 +76,7 @@ export default function Home() {
             type="number"
             step="0.000001"
             name="latitude"
+            value={searchLatitude ?? ""}
             onChange={handleLatitude}
           />
         </div>
@@ -65,6 +89,7 @@ export default function Home() {
             type="number"
             step="0.000001"
             name="longitude"
+            value={searchLongitude ?? ""}
             onChange={handleLongitude}
           />
         </div>
@@ -75,6 +100,16 @@ export default function Home() {
         >
           Search
         </button>
+        
+        <div className="space-y-4"> 
+          <button
+            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors cursor-pointer w-full md:w-fit"
+            onClick={getCurrentLocation}
+          >
+            Use My Location
+          </button>
+        </div>
+
         <div className="flex items-center gap-2">
           <Label htmlFor="timeRange">Time Range</Label>
           <select
