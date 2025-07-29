@@ -55,6 +55,8 @@ Create `.env` in the server directory:
 PORT=8080
 SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_SENDER=email@example.com
 ```
 
 Create `.env.local` in the client directory:

@@ -1,0 +1,114 @@
+"use client";
+
+import Image from "next/image";
+import type { Photo } from "@/lib/services/photoRetrievalService";
+import { Button } from "@/components/shadcn/button";
+import { useState } from "react";
+import { useUser } from "@/app/context";
+import { likePhoto, unlikePhoto } from "@/lib/services/photoLikeService";
+
+interface PhotoModalProps {
+  photo: Photo;
+  onClose: () => void;
+  onLikeChange: (id: number, liked: boolean, likes: number) => void;
+}
+
+export default function PhotoModal({
+  photo,
+  onClose,
+  onLikeChange,
+}: PhotoModalProps) {
+  const [liked, setLiked] = useState(photo.likedByCurrentUser ?? false);
+  const [likeCount, setLikeCount] = useState(photo.likes);
+  const { user } = useUser();
+
+  async function handleLikeClick() {
+    if (!user) return;
+
+    const wasLiked = liked; // current state before toggle
+    setLiked(!wasLiked);
+    setLikeCount((count) => count + (wasLiked ? -1 : 1));
+
+    try {
+      if (!wasLiked) {
+        await likePhoto(photo.id, user.id);
+      } else {
+        await unlikePhoto(photo.id, user.id);
+      }
+      // notify parent about the change:
+      onLikeChange(photo.id, !wasLiked, likeCount + (!wasLiked ? 1 : -1));
+    } catch (err) {
+      // rollback UI
+      setLiked(wasLiked);
+      setLikeCount((count) => count + (wasLiked ? 1 : -1));
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-transparent flex items-center justify-center z-50 p-6"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-md shadow-lg max-w-2xl w-full overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative w-full h-96 bg-gray-300">
+          <Image
+            src={photo.url}
+            alt={photo.title || "Photo"}
+            fill
+            style={{ objectFit: "contain" }}
+            priority
+          />
+          <button
+            className="absolute top-4 right-6 text-gray-700 text-4xl font-bold hover:opacity-80 transition cursor-pointer"
+            onClick={onClose}
+            aria-label="Close modal"
+          >
+            &times;
+          </button>
+        </div>
+        <div className="px-3 py-2 text-gray-900 text-sm">
+          <h2 className="text-lg p-0 font-semibold truncate">
+            {photo.title || "Untitled"}
+          </h2>
+          <p className="italic underline">
+            {photo.caption || "No caption available"}
+          </p>
+          <div className="my-2 text-xs text-gray-600 flex flex-wrap gap-x-2 gap-y-1 lg:gap-x-8 items-center">
+            {/* <div className="w-1/2 lg:w-auto">
+              <strong>ID:</strong> {photo.id}
+            </div> */}
+            <div className="w-1/2 lg:w-auto">
+              <strong>Lake:</strong>{" "}
+              {photo.location.split(" ")[1] ?? photo.location}
+            </div>
+            <div className="w-1/2 lg:w-auto">
+              <strong>By:</strong> {photo.username || "Unknown"}
+            </div>
+            <div className="w-1/2 lg:w-auto">
+              <strong>Date:</strong>{" "}
+              {photo.created_at
+                ? new Date(photo.created_at).toLocaleDateString()
+                : "Unknown"}
+            </div>
+          </div>
+
+          <div className="relative">
+            <Button
+              onClick={handleLikeClick}
+              className={`flex items-center gap-2 absolute bottom-0 right-0 mb-2 mr-2 shadow-lg transition-colors ${
+                liked ? "bg-pink-600 hover:bg-pink-700" : ""
+              }`}
+            >
+              <span className="text-white font-medium">
+                {likeCount} {likeCount === 1 ? "Like" : "Likes"}
+              </span>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
