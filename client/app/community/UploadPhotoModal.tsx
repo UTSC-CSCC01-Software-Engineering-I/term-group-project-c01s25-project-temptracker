@@ -39,11 +39,11 @@ type UploadPhotoModalProps = {
 };
 
 const LOCATIONS = [
-  "Toronto",
-  "Chicago",
-  "New York",
-  "Lake Erie",
   "Lake Ontario",
+  "Lake Erie",
+  "Lake Michigan",
+  "Lake Superior",
+  "Lake Huron",
 ];
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -98,8 +98,8 @@ export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
 
   return (
     <>
-      <Button variant="default" size="sm" onClick={() => setOpen(true)}>
-        Upload a Photo
+      <Button variant="default" size="lg" onClick={() => setOpen(true)}>
+        Upload Photo
       </Button>
 
       {open && (

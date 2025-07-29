@@ -4,11 +4,11 @@ const supabase = createClient();
 
 export const LOCATIONS = [
   "All",
-  "Toronto",
-  "Chicago",
-  "New York",
-  "Lake Erie",
   "Lake Ontario",
+  "Lake Erie",
+  "Lake Michigan",
+  "Lake Superior",
+  "Lake Huron",
 ] as const;
 export type Location = (typeof LOCATIONS)[number];
 
@@ -17,7 +17,7 @@ export type TimeRange = (typeof TIME_RANGES)[number];
 
 export type Photo = {
   id: number;
-  uuid: string;        // user id
+  user_id: string;        // user id
   location: Location;
   title: string;
   caption: string;
@@ -34,6 +34,7 @@ export async function getPhotos({
   location: Location;
   timeRange: TimeRange;
 }): Promise<Photo[]> {
+    console.log("Fetching photos with filters:", { location, timeRange });
   let query = supabase.from("photo_uploads").select("*");
 
   if (location !== "All") {
