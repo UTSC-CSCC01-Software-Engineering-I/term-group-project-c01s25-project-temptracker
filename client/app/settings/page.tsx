@@ -146,13 +146,7 @@ export default function SettingsPage() {
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-6">
             <Button variant="ghost" onClick={handleReset}>
-              Reset to Defaults
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => console.log("Cancel clicked")}
-            >
-              Cancel
+              Reset Changes
             </Button>
             <Button onClick={handleSave} className="min-w-32">
               Save Changes
