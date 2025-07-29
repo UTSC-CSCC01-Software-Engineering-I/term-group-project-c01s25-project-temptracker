@@ -157,7 +157,8 @@ export default function UploadTemperatureForm() {
         </div>
 
         {/* Location */}
-        <FormLabel className="text-base font-semibold">Location</FormLabel>
+        <div className="space-y-0.5">
+          <FormLabel className="text-base font-semibold">Location</FormLabel>
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
             <FormField
               control={form.control}
@@ -223,11 +224,13 @@ export default function UploadTemperatureForm() {
                   }
                 );
               }}
-              className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+              className="text-white px-4 py-2 rounded-md"
             >
               Use My Location
             </Button>
           </div>
+        </div>
+
         {/* Date and Time */}
         <div className="space-y-0.5">
           <FormLabel className="text-base font-semibold">
@@ -333,7 +336,7 @@ export default function UploadTemperatureForm() {
           </div>
 
           <FormDescription>
-            Uses current date and time if not specified
+            Uses current date/time if not specified
           </FormDescription>
         </div>
 
@@ -353,7 +356,7 @@ export default function UploadTemperatureForm() {
                   />
                 </FormControl>
                 <FormDescription>
-                  Optional: Add any relevant observations about the measurement
+                  Optional: Add any relevant notes about the measurement
                   conditions
                 </FormDescription>
                 <FormMessage />

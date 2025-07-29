@@ -65,7 +65,7 @@ export default function Badges({ badges }: { badges: BadgeData[] }) {
   });
 
   return (
-    <div className="grid grid-cols-2 gap-y-2 w-full md:flex md:flex-row gap-4">
+    <div className="grid grid-cols-2 gap-y-2 w-full md:flex md:flex-row gap-4 sm:gap-0">
       <BadgeContainer type="bronze" badges={bronzeBadges} />
       <BadgeContainer type="silver" badges={silverBadges} />
       <BadgeContainer type="gold" badges={goldBadges} />
