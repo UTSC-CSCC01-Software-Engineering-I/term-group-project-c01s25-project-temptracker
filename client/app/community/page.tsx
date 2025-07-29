@@ -1,14 +1,19 @@
 "use client";
 
 import UploadPhotoModal from "./UploadPhotoModal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { onUpload } from "@/lib/services/photoUploadService";
 import { useUser } from "@/app/context";
 import { toast } from "sonner";
+import {
+  getPhotos,
+  TimeRange,
+  Location,
+} from "@/lib/services/photoRetrievalService";
 
-const LOCATIONS = [
+const LOCATIONS: Location[] = [
   "All",
   "Toronto",
   "Chicago",
@@ -16,31 +21,33 @@ const LOCATIONS = [
   "Lake Erie",
   "Lake Ontario",
 ];
-const TIME_RANGES = ["Last 72 hours", "Last Month", "All Time"];
+
+const TIME_RANGES: TimeRange[] = ["Last 72 hours", "Last Month", "All Time"];
 
 export default function CommunityPage() {
   const { user } = useUser();
-  const [photos, setPhotos] = useState<string[]>([
-    "/sample1.jpg",
-    "/sample2.jpg",
-    "/sample3.jpg",
-    "/sample4.jpg",
-    "/sample5.jpg",
-  ]);
 
-  const [location, setLocation] = useState("All");
-  const [timeRange, setTimeRange] = useState("Last 72 hours");
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [location, setLocation] = useState<Location>("All");
+  const [timeRange, setTimeRange] = useState<TimeRange>("Last 72 hours");
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    const urls = Array.from(files).map((file) => URL.createObjectURL(file));
-    setPhotos((prev) => [...urls, ...prev]);
-  };
+  useEffect(() => {
+    async function loadPhotos() {
+      try {
+        const result = await getPhotos({ location, timeRange });
+        const urls = result.map((p) => p.url);
+        setPhotos(urls);
+      } catch (e) {
+        toast.error("Failed to load photos.");
+      }
+    }
+
+    loadPhotos();
+  }, [location, timeRange]);
 
   async function handleUpload(data: {
     file: File;
-    location: string;
+    location: Location;
     title: string;
     caption: string;
   }) {
@@ -73,6 +80,7 @@ export default function CommunityPage() {
           See top contributors and badges earned
         </p>
       </Link>
+
       <h2 className="text-3xl font-bold mt-16 text-dark-blue">
         GLOW Photo Gallery
       </h2>
@@ -84,7 +92,7 @@ export default function CommunityPage() {
             <select
               className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={(e) => setTimeRange(e.target.value as TimeRange)}
             >
               {TIME_RANGES.map((range) => (
                 <option key={range} value={range}>
@@ -99,7 +107,7 @@ export default function CommunityPage() {
             <select
               className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => setLocation(e.target.value as Location)}
             >
               {LOCATIONS.map((loc) => (
                 <option key={loc} value={loc}>
@@ -108,12 +116,11 @@ export default function CommunityPage() {
               ))}
             </select>
           </div>
-
+          {/* @ts-ignore */}
           <UploadPhotoModal onUpload={handleUpload} />
         </div>
       </div>
 
-      {/* grid of photos */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {photos.map((src, i) => (
           <div
@@ -125,6 +132,7 @@ export default function CommunityPage() {
               alt={`Photo ${i + 1}`}
               fill
               className="object-cover"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
           </div>
         ))}
