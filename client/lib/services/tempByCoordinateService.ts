@@ -20,8 +20,8 @@ export async function getClosestVerifiedTemps(
   recentInterval: string
 ): Promise<TemperaturePoint[]> {
   const { data, error } = await supabase.rpc("get_closest_verified_temps", {
-    user_latitude: userLon,
-    user_longitude: userLat,
+    user_latitude: userLat,
+    user_longitude: userLon,
     limit_results: limit,
     recent_interval: recentInterval,
   });
@@ -38,10 +38,10 @@ export async function getClosestVerifiedTemps(
 export async function getAverageClosestTemperature(
   userLat: number,
   userLon: number,
-  limit = 1, // keep it to 1 right now, because POIs are very close to each other 
+  limit = 2, // keep it to 2 right now, because POIs are very close to each other
   recentInterval = "30 days" // temporary default, can be adjusted
 ): Promise<number | null> {
-  //   console.log(`Arguments:`, {
+  // console.log(`Arguments:`, {
   //   userLat,
   //   userLon,
   //   limit,
@@ -49,6 +49,7 @@ export async function getAverageClosestTemperature(
   // });
 
   const temps = await getClosestVerifiedTemps(userLat, userLon, limit, recentInterval);
+  // uncomment below to debug
   // console.log("Results:", temps);
 
   if (temps.length === 0) return null;
