@@ -19,6 +19,7 @@ export type TimeRange = (typeof TIME_RANGES)[number];
 export type Photo = {
   id: number;
   user_id: string;
+  username: string;
   location: Location;
   title: string;
   caption: string;
@@ -39,9 +40,10 @@ export async function getPhotos({
 }): Promise<Photo[]> {
   // first, get photos with likes count
   let query = supabase.from("photo_uploads").select(`
-    *,
-    photo_likes(count)
-  `);
+  *,
+  photo_likes(count),
+  user_profiles:user_id(username)
+`);
 
   if (location !== "All") {
     query = query.eq("location", location);
@@ -86,6 +88,8 @@ export async function getPhotos({
   const mapped_data = data.map((photo) => ({
     id: photo.id,
     user_id: photo.user_id,
+    username: photo.user_profiles?.username ?? "",
+
     location: photo.location,
     title: photo.title,
     caption: photo.caption,
@@ -96,6 +100,6 @@ export async function getPhotos({
     likedByCurrentUser: likedPhotoIds.has(photo.id),
   }));
 
-  console.log("Mapped data:", mapped_data);
+  // console.log("Mapped data:", mapped_data);
   return mapped_data;
 }

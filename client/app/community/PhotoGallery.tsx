@@ -31,13 +31,11 @@ function sleep(ms: number) {
 }
 
 export default function PhotoGallery() {
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [location, setLocation] = useState<Location>("All");
   const [timeRange, setTimeRange] = useState<TimeRange>("Last 72 hours");
   const [loading, setLoading] = useState(false);
-
-  // State to track the photo selected for modal
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
   function handleLikeChange(id: number, liked: boolean, likes: number) {
@@ -46,7 +44,7 @@ export default function PhotoGallery() {
         p.id === id ? { ...p, likedByCurrentUser: liked, likes } : p
       )
     );
-    // Also update selectedPhoto if it’s the current one:
+    // also update selectedPhoto if it’s the current one:
     setSelectedPhoto((photo) =>
       photo && photo.id === id
         ? { ...photo, likedByCurrentUser: liked, likes }
@@ -57,7 +55,7 @@ export default function PhotoGallery() {
   useEffect(() => {
     async function loadPhotos() {
       setLoading(true);
-      // we need to wait a bit to get the user context
+      // we need to wait a bit to get the user context (its also technically async)
       try {
         await sleep(200); // wait 200ms
         const result = await getPhotos({
@@ -83,11 +81,11 @@ export default function PhotoGallery() {
     title: string;
     caption: string;
   }) {
-    if (!user?.id) {
+    if (!user?.id || !profile) {
       toast.error("You must be logged in to upload a photo");
       return;
     }
-    await onUpload({ ...data, userId: user.id });
+    await onUpload({ ...data, role:profile.role, userId: user.id });
   }
 
   return (
@@ -125,6 +123,8 @@ export default function PhotoGallery() {
           </div>
 
           {/* @ts-ignore */}
+          <UploadPhotoModal onUpload={handleUpload} />
+
           {selectedPhoto && (
             <PhotoModal
               photo={selectedPhoto}

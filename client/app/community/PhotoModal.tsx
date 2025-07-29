@@ -13,9 +13,12 @@ interface PhotoModalProps {
   onLikeChange: (id: number, liked: boolean, likes: number) => void;
 }
 
-export default function PhotoModal({ photo, onClose, onLikeChange }: PhotoModalProps) {
+export default function PhotoModal({
+  photo,
+  onClose,
+  onLikeChange,
+}: PhotoModalProps) {
   const [liked, setLiked] = useState(photo.likedByCurrentUser ?? false);
-  console.log(liked);
   const [likeCount, setLikeCount] = useState(photo.likes);
   const { user } = useUser();
 
@@ -32,10 +35,10 @@ export default function PhotoModal({ photo, onClose, onLikeChange }: PhotoModalP
       } else {
         await unlikePhoto(photo.id, user.id);
       }
-      // Notify parent about the change:
+      // notify parent about the change:
       onLikeChange(photo.id, !wasLiked, likeCount + (!wasLiked ? 1 : -1));
     } catch (err) {
-      // Rollback UI
+      // rollback UI
       setLiked(wasLiked);
       setLikeCount((count) => count + (wasLiked ? 1 : -1));
     }
@@ -73,14 +76,25 @@ export default function PhotoModal({ photo, onClose, onLikeChange }: PhotoModalP
           <p className="italic underline">
             {photo.caption || "No caption available"}
           </p>
-          <div className="my-2 text-xs text-gray-600 flex gap-8 items-center">
-            <div>
+          <div className="my-2 text-xs text-gray-600 flex flex-wrap gap-x-2 gap-y-1 lg:gap-x-8 items-center">
+            {/* <div className="w-1/2 lg:w-auto">
               <strong>ID:</strong> {photo.id}
+            </div> */}
+            <div className="w-1/2 lg:w-auto">
+              <strong>Lake:</strong>{" "}
+              {photo.location.split(" ")[1] ?? photo.location}
             </div>
-            <div>
-              <strong>Lake:</strong> {photo.location}
+            <div className="w-1/2 lg:w-auto">
+              <strong>By:</strong> {photo.username || "Unknown"}
+            </div>
+            <div className="w-1/2 lg:w-auto">
+              <strong>Date:</strong>{" "}
+              {photo.created_at
+                ? new Date(photo.created_at).toLocaleDateString()
+                : "Unknown"}
             </div>
           </div>
+
           <div className="relative">
             <Button
               onClick={handleLikeClick}
