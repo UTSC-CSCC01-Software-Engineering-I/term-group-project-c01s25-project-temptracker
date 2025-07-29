@@ -15,7 +15,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="w-full bg-nav-blue border-b border-dark-blue sticky top-0 z-100">
+    <header className="w-full bg-nav-blue border-b border-dark-blue sticky top-0 z-50">
       <div className="pt-1.25 pb-1 lg:py-1 sm:py-2 md:py-3 lg:px-12 px-4 flex items-center justify-between w-full">
         {/* Mobile menu toggle */}
         <button

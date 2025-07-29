@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  images: {
+    domains: ['vertksxuryrywouipodt.supabase.co'], // public hostname
+  },
 };
 
 export default nextConfig;
