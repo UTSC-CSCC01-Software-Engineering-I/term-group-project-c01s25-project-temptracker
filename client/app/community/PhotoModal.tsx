@@ -10,13 +10,36 @@ import { likePhoto, unlikePhoto } from "@/lib/services/photoLikeService";
 interface PhotoModalProps {
   photo: Photo;
   onClose: () => void;
+  onLikeChange: (id: number, liked: boolean, likes: number) => void;
 }
 
-export default function PhotoModal({ photo, onClose }: PhotoModalProps) {
+export default function PhotoModal({ photo, onClose, onLikeChange }: PhotoModalProps) {
   const [liked, setLiked] = useState(photo.likedByCurrentUser ?? false);
   console.log(liked);
   const [likeCount, setLikeCount] = useState(photo.likes);
   const { user } = useUser();
+
+  async function handleLikeClick() {
+    if (!user) return;
+
+    const wasLiked = liked; // current state before toggle
+    setLiked(!wasLiked);
+    setLikeCount((count) => count + (wasLiked ? -1 : 1));
+
+    try {
+      if (!wasLiked) {
+        await likePhoto(photo.id, user.id);
+      } else {
+        await unlikePhoto(photo.id, user.id);
+      }
+      // Notify parent about the change:
+      onLikeChange(photo.id, !wasLiked, likeCount + (!wasLiked ? 1 : -1));
+    } catch (err) {
+      // Rollback UI
+      setLiked(wasLiked);
+      setLikeCount((count) => count + (wasLiked ? 1 : -1));
+    }
+  }
 
   return (
     <div
@@ -60,24 +83,7 @@ export default function PhotoModal({ photo, onClose }: PhotoModalProps) {
           </div>
           <div className="relative">
             <Button
-              onClick={async () => {
-                if (!user) return;
-
-                setLiked((prev) => !prev);
-                setLikeCount((count) => count + (liked ? -1 : 1));
-
-                try {
-                  if (!liked) {
-                    await likePhoto(photo.id, user.id);
-                  } else {
-                    await unlikePhoto(photo.id, user.id);
-                  }
-                } catch (err) {
-                  // rollback UI if the request fails
-                  setLiked((prev) => !prev);
-                  setLikeCount((count) => count + (liked ? 1 : -1));
-                }
-              }}
+              onClick={handleLikeClick}
               className={`flex items-center gap-2 absolute bottom-0 right-0 mb-2 mr-2 shadow-lg transition-colors ${
                 liked ? "bg-pink-600 hover:bg-pink-700" : ""
               }`}

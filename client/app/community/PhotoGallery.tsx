@@ -40,6 +40,20 @@ export default function PhotoGallery() {
   // State to track the photo selected for modal
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
+  function handleLikeChange(id: number, liked: boolean, likes: number) {
+    setPhotos((photos) =>
+      photos.map((p) =>
+        p.id === id ? { ...p, likedByCurrentUser: liked, likes } : p
+      )
+    );
+    // Also update selectedPhoto if it’s the current one:
+    setSelectedPhoto((photo) =>
+      photo && photo.id === id
+        ? { ...photo, likedByCurrentUser: liked, likes }
+        : photo
+    );
+  }
+
   useEffect(() => {
     async function loadPhotos() {
       setLoading(true);
@@ -111,7 +125,13 @@ export default function PhotoGallery() {
           </div>
 
           {/* @ts-ignore */}
-          <UploadPhotoModal onUpload={handleUpload} />
+          {selectedPhoto && (
+            <PhotoModal
+              photo={selectedPhoto}
+              onClose={() => setSelectedPhoto(null)}
+              onLikeChange={handleLikeChange}
+            />
+          )}
         </div>
       </div>
 
@@ -155,6 +175,7 @@ export default function PhotoGallery() {
         <PhotoModal
           photo={selectedPhoto}
           onClose={() => setSelectedPhoto(null)}
+          onLikeChange={handleLikeChange}
         />
       )}
     </>
