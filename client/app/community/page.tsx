@@ -1,5 +1,6 @@
 "use client";
 
+import UploadPhotoModal from "./UploadPhoto"; // adjust the path as needed
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -92,23 +93,12 @@ export default function CommunityPage() {
             </select>
           </div>
 
-          <div className="flex flex-col">
-            <label className="text-sm text-gray-600 mb-1">Upload Photo</label>
-            <label
-              htmlFor="upload"
-              className="inline-block bg-nav-blue text-white text-sm px-4 py-2 rounded-xl cursor-pointer shadow hover:opacity-90"
-            >
-              Choose File
-            </label>
-            <input
-              id="upload"
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div>
+          <UploadPhotoModal
+            onUpload={({ file }) => {
+              const url = URL.createObjectURL(file);
+              setPhotos((prev) => [url, ...prev]);
+            }}
+          />
         </div>
       </div>
 
