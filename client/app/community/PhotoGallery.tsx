@@ -26,9 +26,12 @@ const LOCATIONS: Location[] = [
 
 const TIME_RANGES: TimeRange[] = ["Last 72 hours", "Last Month", "All Time"];
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default function PhotoGallery() {
   const { user } = useUser();
-
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [location, setLocation] = useState<Location>("All");
   const [timeRange, setTimeRange] = useState<TimeRange>("Last 72 hours");
@@ -40,8 +43,14 @@ export default function PhotoGallery() {
   useEffect(() => {
     async function loadPhotos() {
       setLoading(true);
+      // we need to wait a bit to get the user context
       try {
-        const result = await getPhotos({ location, timeRange });
+        await sleep(200); // wait 200ms
+        const result = await getPhotos({
+          location,
+          timeRange,
+          userId: user?.id,
+        });
         setPhotos(result);
       } catch {
         toast.error("Failed to load photos.");
@@ -52,7 +61,7 @@ export default function PhotoGallery() {
     }
 
     loadPhotos();
-  }, [location, timeRange]);
+  }, [location, timeRange, user]);
 
   async function handleUpload(data: {
     file: File;

@@ -1,3 +1,4 @@
+import { use } from "react";
 import { createClient } from "../supabase/client";
 
 const supabase = createClient();
@@ -17,32 +18,36 @@ export type TimeRange = (typeof TIME_RANGES)[number];
 
 export type Photo = {
   id: number;
-  user_id: string;        // user id
+  user_id: string;
   location: Location;
   title: string;
   caption: string;
-  likes: number;
   created_at: string;
-  file: string; // storage path like "photos/xxx.jpg"
-  url: string; // full public URL to the image
+  file: string;
+  url: string;
+  likes: number;
+  likedByCurrentUser?: boolean;
 };
-
 export async function getPhotos({
   location,
   timeRange,
+  userId,
 }: {
   location: Location;
   timeRange: TimeRange;
+  userId?: string;
 }): Promise<Photo[]> {
-    console.log("Fetching photos with filters:", { location, timeRange });
-  let query = supabase.from("photo_uploads").select("*");
+  // first, get photos with likes count
+  let query = supabase.from("photo_uploads").select(`
+    *,
+    photo_likes(count)
+  `);
 
   if (location !== "All") {
     query = query.eq("location", location);
   }
 
   const now = new Date();
-
   if (timeRange === "Last 72 hours") {
     const cutoff = new Date(now.getTime() - 72 * 60 * 60 * 1000);
     query = query.gte("created_at", cutoff.toISOString());
@@ -50,26 +55,47 @@ export async function getPhotos({
     const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     query = query.gte("created_at", cutoff.toISOString());
   }
-  // No time filter for "All Time"
 
-  query = query.order("likes", { ascending: false });
+  query = query.order("created_at", { ascending: false });
 
   const { data, error } = await query;
-  console.log("Retrieved photos:", data);
-  if (error) {
-    throw new Error(error.message);
+  if (error) throw new Error(error.message);
+  if (!data) return [];
+
+  // get photo IDs from data
+  const photoIds = data.map((p) => p.id);
+
+  // then query photo_likes for current user and these photo IDs
+  let likedPhotoIds = new Set<number>();
+  if (userId && photoIds.length > 0) {
+    const { data: userLikes, error: likeError } = await supabase
+      .from("photo_likes")
+      .select("photo_id")
+      .in("photo_id", photoIds)
+      .eq("user_id", userId);
+
+    if (likeError) {
+      throw new Error(likeError.message);
+    }
+    likedPhotoIds = new Set(userLikes?.map((like) => like.photo_id));
   }
 
-  if (!data) {
-    return [];
-  }
+  const BASE_URL =
+    "https://vertksxuryrywouipodt.supabase.co/storage/v1/object/public/photos/";
 
-  const BASE_URL = "https://vertksxuryrywouipodt.supabase.co/storage/v1/object/public/photos/"; // public bucket, move to env variable later
+  const mapped_data = data.map((photo) => ({
+    id: photo.id,
+    user_id: photo.user_id,
+    location: photo.location,
+    title: photo.title,
+    caption: photo.caption,
+    created_at: photo.created_at,
+    file: photo.file,
+    url: BASE_URL + photo.file,
+    likes: photo.photo_likes?.[0]?.count ?? 0,
+    likedByCurrentUser: likedPhotoIds.has(photo.id),
+  }));
 
-  const photos = data.map((photo) => {
-    const url = BASE_URL + photo.file;
-    return { ...photo, url };
-  });
-
-  return photos;
+  console.log("Mapped data:", mapped_data);
+  return mapped_data;
 }
