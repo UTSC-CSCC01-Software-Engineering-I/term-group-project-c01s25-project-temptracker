@@ -7,7 +7,7 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 import os
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from urllib import request
 import matplotlib.tri as tri
 import matplotlib.pyplot as plt
@@ -28,8 +28,12 @@ current_month_str = f"{current_month:02d}"
 current_day = datetime.now().day
 current_day_str = f"{current_day:02d}"
 current_date = f"{current_year:04d}{current_month:02d}{current_day:02d}"
+
+tomorrow = datetime.now() + timedelta(days=1)
+tomorrows_date = f"{tomorrow.year:04d}{tomorrow.month:02d}{tomorrow.day:02d}"
 t_number = '00'  
 n_number = '006'
+f_number = '036'
 
 def save_netcdf_from_url(url):
     """ Download a NetCDF file from a URL and save it locally. """
@@ -72,11 +76,11 @@ def generate_points(nc_file,date):
         "features": features
     }
     geojson_str = json.dumps(geojson)
-    filename = nc_file.split('/')[1].split('.')[0] + f'_{date}_points.geo.json'
+    filename = nc_file.split('/')[1].split('.')[0] + f'_{tomorrows_date}_points.geo.json'
     try:
         response = supabase.storage.from_('geojson').upload(
                 file=geojson_str.encode('utf-8'),
-                path=f'{current_date}/{filename}',
+                path=f'{tomorrows_date}/{filename}',
                 file_options={
                         "content-type": "application/json",
                         "cache-control": "3600",
@@ -129,12 +133,12 @@ def generate_contours(nc_file,date):
 
     geojson_obj = json.loads(geojson)
     geojson_str = json.dumps(geojson_obj)
-    filename = nc_file.split('/')[1].split('.')[0] + f'_{date}.geo.json'
+    filename = nc_file.split('/')[1].split('.')[0] + f'_{tomorrows_date}.geo.json'
     
     try:
         response = supabase.storage.from_('geojson').upload(
                 file=geojson_str.encode('utf-8'),
-                path=f'{current_date}/{filename}',
+                path=f'{tomorrows_date}/{filename}',
                 file_options={
                         "content-type": "application/json",
                         "cache-control": "3600",
@@ -197,11 +201,13 @@ def generate_misc_points(d):
         print(f'supabase database error:', e)
 
 
-print(current_date)
+print('today:',current_date)
+print('tomorrow:', tomorrows_date)
 url_list = []
 lakes = ['loofs', 'leofs', 'lsofs', 'lmhofs']
 for lake in lakes:
-    url_list.append(f"https://noaa-nos-ofs-pds.s3.amazonaws.com/{lake}/netcdf/{current_year_str}/{current_month_str}/{current_day_str}/{lake}.t{t_number}z.{current_date}.fields.n{n_number}.nc")
+    # url_list.append(f"https://noaa-nos-ofs-pds.s3.amazonaws.com/{lake}/netcdf/{current_year_str}/{current_month_str}/{current_day_str}/{lake}.t{t_number}z.{current_date}.fields.n{n_number}.nc")
+    url_list.append(f"https://noaa-nos-ofs-pds.s3.amazonaws.com/{lake}/netcdf/{current_year_str}/{current_month_str}/{current_day_str}/{lake}.t{t_number}z.{current_date}.fields.f{f_number}.nc")
     # for hour in range(0, 24, 4):
     #         f_number = f"{hour:03}"
     #         url_list.append(
@@ -232,7 +238,18 @@ try:
         os.remove(retrieved_file)
 
         
-    generate_misc_points(current_date)
+    # generate_misc_points(current_date)
+
+    # delete older file from one week ago
+    remove_date = datetime.now() - timedelta(days=7)
+    remove_date_str = f"{remove_date.year:04d}{remove_date.month:02d}{remove_date.day:02d}"
+    print('file removal date:', remove_date_str)
+    delete_list = []
+    for lake in lakes:
+        delete_list.append(f'{remove_date_str}/{lake}_{remove_date_str}.geo.json')
+        delete_list.append(f'{remove_date_str}/{lake}_{remove_date_str}_points.geo.json')
+    delete_list.append(f'{remove_date_str}/user_points.geo.json')
+    response = supabase.storage.from_('geojson').remove(delete_list)
 
     with open('daily_log.txt', 'a') as log:
         log.write(f'Passed on {current_date}\n')

@@ -29,7 +29,8 @@ async function getTemperatureReading(coordinates,date) {
       
     } catch(e) {
         console.error("getTemperatureReading error:", e);
-        throw e;
+        // throw e;
+        return { message: "Temperature reading unsuccessful", data: null}
     }
   }
   console.log('No nearest point found')

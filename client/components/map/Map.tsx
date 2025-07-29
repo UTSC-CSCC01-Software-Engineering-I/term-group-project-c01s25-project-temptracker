@@ -20,6 +20,8 @@ import "react-leaflet-markercluster/styles";
 import Slider from "@mui/material/Slider";
 import "../../styles/MapSlider.css";
 
+// use 12 pm forcasted data for weekly, and regular 4 hrs apart forcasted data for today slider?
+
 import {
   getNext7Days,
   getNext30Days,
