@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/shadcn/button";
 import { Input } from "@/components/shadcn/input";
 import { Label } from "@/components/shadcn/label";
@@ -9,16 +9,27 @@ import SettingsSection from "./SettingsSection";
 import ToggleSwitch from "./ToggleSwitch";
 import NotificationItem from "./NotificationItem";
 import SecurityButton from "./SecurityButton";
+import { useUser } from "../context";
 
 export default function SettingsPage() {
-  // State for form inputs
+  const { profile } = useUser();
+
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
 
-  // State for toggles
   const [publicProfile, setPublicProfile] = useState(false);
-  const [badgeNotifications, setBadgeNotifications] = useState(true);
-  const [communityUpdates, setCommunityUpdates] = useState(true);
+  const [badgeNotifications, setBadgeNotifications] = useState(false);
+  const [communityUpdates, setCommunityUpdates] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setDisplayName(profile.username);
+      setBio(profile.bio);
+      setPublicProfile(profile.is_public);
+      setBadgeNotifications(profile.badge_notifications);
+      setCommunityUpdates(profile.community_updates);
+    }
+  }, [profile]);
 
   const handleSave = () => {
     // TODO: Implement save functionality
@@ -26,12 +37,11 @@ export default function SettingsPage() {
   };
 
   const handleReset = () => {
-    // TODO: Implement reset functionality
-    setDisplayName("");
-    setBio("");
-    setPublicProfile(false);
-    setBadgeNotifications(true);
-    setCommunityUpdates(true);
+    setDisplayName(profile?.username || "");
+    setBio(profile?.bio || "");
+    setPublicProfile(profile?.is_public || false);
+    setBadgeNotifications(profile?.badge_notifications || false);
+    setCommunityUpdates(profile?.community_updates || false);
   };
 
   return (
