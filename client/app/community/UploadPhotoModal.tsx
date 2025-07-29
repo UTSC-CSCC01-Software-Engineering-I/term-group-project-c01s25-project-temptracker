@@ -35,7 +35,7 @@ type UploadPhotoModalProps = {
     location: string;
     title: string;
     caption: string;
-  }) => void;
+  }) => Promise<void>;
 };
 
 const LOCATIONS = [
@@ -50,6 +50,7 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -60,7 +61,7 @@ export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     if (!data.file) {
       toast.error("Photo is required");
       return;
@@ -78,9 +79,21 @@ export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
       return;
     }
 
-    onUpload(data);
-    form.reset();
-    setOpen(false);
+    setLoading(true);
+    try {
+      await onUpload({
+        file: data.file,
+        location: data.location,
+        title: data.title,
+        caption: data.caption,
+      });
+      form.reset();
+      setOpen(false);
+    } catch (e) {
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -94,7 +107,7 @@ export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
           {/* Overlay */}
           <div
             className="fixed inset-0 bg-black/10 backdrop-blur-[1px]"
-            onClick={() => setOpen(false)}
+            onClick={() => !loading && setOpen(false)}
             aria-hidden="true"
           />
 
@@ -105,19 +118,17 @@ export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
                 Upload a Photo
               </h2>
               <button
-                onClick={() => setOpen(false)}
+                onClick={() => !loading && setOpen(false)}
                 className="absolute right-0 top-0 text-gray-500 hover:text-black text-3xl"
                 aria-label="Close modal"
+                disabled={loading}
               >
                 ×
               </button>
             </div>
 
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 {/* File */}
                 <FormField
                   control={form.control}
@@ -142,6 +153,7 @@ export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
                             field.onChange(file);
                           }}
                           className="w-full border border-gray-300 rounded px-3 py-2"
+                          disabled={loading}
                         />
                       </FormControl>
                       <FormMessage />
@@ -163,6 +175,7 @@ export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
                           placeholder="Enter a title"
                           {...field}
                           value={field.value || ""}
+                          disabled={loading}
                         />
                       </FormControl>
                       <FormMessage />
@@ -184,6 +197,7 @@ export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
                           onValueChange={field.onChange}
                           value={field.value}
                           defaultValue=""
+                          disabled={loading}
                         >
                           <SelectTrigger className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm">
                             <SelectValue placeholder="Select Location" />
@@ -214,6 +228,7 @@ export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
                           placeholder="Add a caption"
                           {...field}
                           value={field.value || ""}
+                          disabled={loading}
                         />
                       </FormControl>
                       <FormMessage />
@@ -223,8 +238,8 @@ export default function UploadPhotoModal({ onUpload }: UploadPhotoModalProps) {
 
                 {/* Submit */}
                 <div className="w-full">
-                  <Button type="submit" className="w-full">
-                    Submit
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Uploading..." : "Submit"}
                   </Button>
                 </div>
               </form>

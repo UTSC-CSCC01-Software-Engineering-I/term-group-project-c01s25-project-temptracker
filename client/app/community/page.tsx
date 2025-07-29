@@ -1,9 +1,12 @@
 "use client";
 
-import UploadPhotoModal from "./UploadPhoto"; // adjust the path as needed
+import UploadPhotoModal from "./UploadPhotoModal";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { onUpload } from "@/lib/services/photoUploadService";
+import { useUser } from "@/app/context";
+import { toast } from "sonner";
 
 const LOCATIONS = [
   "All",
@@ -16,6 +19,7 @@ const LOCATIONS = [
 const TIME_RANGES = ["Last 72 hours", "Last Month", "All Time"];
 
 export default function CommunityPage() {
+  const { user } = useUser();
   const [photos, setPhotos] = useState<string[]>([
     "/sample1.jpg",
     "/sample2.jpg",
@@ -33,6 +37,19 @@ export default function CommunityPage() {
     const urls = Array.from(files).map((file) => URL.createObjectURL(file));
     setPhotos((prev) => [...urls, ...prev]);
   };
+
+  async function handleUpload(data: {
+    file: File;
+    location: string;
+    title: string;
+    caption: string;
+  }) {
+    if (!user?.id) {
+      toast.error("You must be logged in to upload a photo");
+      return;
+    }
+    await onUpload({ ...data, userId: user.id });
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 pt-8 pb-4 space-y-10">
@@ -57,7 +74,6 @@ export default function CommunityPage() {
         </p>
       </Link>
       <h2 className="text-3xl font-bold mt-16 text-dark-blue">
-        {" "}
         GLOW Photo Gallery
       </h2>
 
@@ -93,12 +109,7 @@ export default function CommunityPage() {
             </select>
           </div>
 
-          <UploadPhotoModal
-            onUpload={({ file }) => {
-              const url = URL.createObjectURL(file);
-              setPhotos((prev) => [url, ...prev]);
-            }}
-          />
+          <UploadPhotoModal onUpload={handleUpload} />
         </div>
       </div>
 
