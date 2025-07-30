@@ -120,6 +120,10 @@ export default function Home() {
       </div>
       <div className="map-placeholder">
         <LazyMap
+          key={centerLatitude != null && centerLongitude != null 
+            ? `${centerLatitude}-${centerLongitude}` 
+            : 'null'
+          }
           centerLatitude={centerLatitude}
           centerLongitude={centerLongitude}
           timeRange={timeRange}

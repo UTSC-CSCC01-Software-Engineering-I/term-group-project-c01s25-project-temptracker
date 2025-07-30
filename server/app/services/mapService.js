@@ -4,7 +4,7 @@ async function getTemperatureReading(coordinates,date,hour) {
   const [lat, lng] = coordinates
   // const date = new Date()
   // const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`
-  const max_distance = 0.7
+  const max_distance = 0.5
   let min_distance = Infinity
   const arr = [`loofs_${date}_points_${hour}.geo.json`,`leofs_${date}_points_${hour}.geo.json`,`lsofs_${date}_points_${hour}.geo.json`,`lmhofs_${date}_points_${hour}.geo.json`,'user_points.geo.json']
   console.log('Beginning loop')

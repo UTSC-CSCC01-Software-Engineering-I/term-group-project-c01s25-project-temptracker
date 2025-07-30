@@ -605,12 +605,13 @@ const Map = (props: MapProps) => {
   
   //RENDER
   if (
-    mapCoords.latitude &&
-    mapCoords.longitude &&
+    mapCoords.latitude != null &&
+    mapCoords.longitude != null &&
     !loading &&
     loofsContours && leofsContours && lmhofsContours && lsofsContours && userPoints
   ) {
     console.log('identifier:', identifier)
+    console.log('map key:', `${mapCoords.latitude},${mapCoords.longitude}`)
     return (
       <MapContainer
         key={`${mapCoords.latitude},${mapCoords.longitude}`}
