@@ -1,10 +1,14 @@
 name: CI/CD
 run-name: ${{ github.actor }} is running ${{ github.workflow }} on ${{ github.repository }}
+
 on:
   push:
     branches:
       - main
       - develop
+      - feat/ci-setup #temporary branch for CI setup
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - main
@@ -14,6 +18,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -23,13 +28,71 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install and test frontend
-        working-directory: client
+      ### Inject backend env
+      - name: Create server/.env
+        working-directory: server
         run: |
-          npm ci
-          npm test
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
+          echo "SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}" >> .env
+          echo "SENDGRID_SENDER=${{ secrets.SENDGRID_SENDER }}" >> .env
+
       - name: Install and test backend
         working-directory: server
         run: |
           npm ci
           npm test
+
+      ### Inject frontend env
+      - name: Create client/.env.local and .env.test
+        working-directory: client
+        run: |
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env.local
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> .env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.local
+          cp .env.local .env.test
+
+      - name: Install and test frontend
+        working-directory: client
+        run: |
+          npm ci
+          npm test
+
+      ### Docker login
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      ### Build & push server image (latest)
+      - name: Build and push server (latest)
+        if: github.ref_type == 'branch'
+        working-directory: server
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-server:latest
+
+      ### Build & push server image (versioned)
+      - name: Tag and push server (versioned)
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: server
+        run: |
+          VERSION=${GITHUB_REF##*/}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION
+
+      ### Build & push client image (latest)
+      - name: Build and push client (latest)
+        if: github.ref_type == 'branch'
+        working-directory: client
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-client:latest
+
+      ### Build & push client image (versioned)
+      - name: Tag and push client (versioned)
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: client
+        run: |
+          VERSION=${GITHUB_REF##*/}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION
