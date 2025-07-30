@@ -105,6 +105,19 @@ async function updateUserSubmission(userId) {
   }
 }
 
+async function updateUserSettings(userId, settings) {
+  try {
+    await supabase
+      .from("user_profiles")
+      .update(settings)
+      .eq("id", userId)
+      .single();
+  } catch (e) {
+    console.error("Error updating user settings:", e);
+    throw new Error("Database error");
+  }
+}
+
 async function getUserBadges(userId) {
   try {
     const { data } = await supabase
@@ -184,6 +197,7 @@ module.exports = {
   getUserStats,
   updateUserStreak,
   updateUserSubmission,
+  updateUserSettings,
   getUserBadges,
   awardUserBadges,
 };

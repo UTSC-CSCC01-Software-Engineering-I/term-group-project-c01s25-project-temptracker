@@ -10,12 +10,16 @@ import ToggleSwitch from "./ToggleSwitch";
 import NotificationItem from "./NotificationItem";
 import SecurityButton from "./SecurityButton";
 import { useUser } from "../context";
+import axios from "axios";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const { profile } = useUser();
+  const supabase = createClient();
 
-  const [displayName, setDisplayName] = useState("");
-  const [bio, setBio] = useState("");
+  const [username, setUsername] = useState("");
+  const [biography, setbiographygraphy] = useState("");
 
   const [publicProfile, setPublicProfile] = useState(false);
   const [badgeNotifications, setBadgeNotifications] = useState(false);
@@ -23,22 +27,45 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (profile) {
-      setDisplayName(profile.username);
-      setBio(profile.bio);
+      setUsername(profile.username);
+      setbiographygraphy(profile.bio);
       setPublicProfile(profile.is_public);
       setBadgeNotifications(profile.badge_notifications);
       setCommunityUpdates(profile.community_updates);
     }
   }, [profile]);
 
-  const handleSave = () => {
-    // TODO: Implement save functionality
-    console.log("Saving settings...");
+  const handleSave = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const res = await axios.put(
+      `${process.env.NEXT_PUBLIC_API_URL}/users/${profile?.id}/settings`,
+      {
+        username,
+        biography,
+        is_public: publicProfile,
+        badge_notifications: badgeNotifications,
+        community_updates: communityUpdates,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      }
+    );
+
+    if (res.status === 200) {
+      toast.success("Settings updated successfully!");
+    } else {
+      toast.error("Failed to update settings.");
+    }
   };
 
   const handleReset = () => {
-    setDisplayName(profile?.username || "");
-    setBio(profile?.bio || "");
+    setUsername(profile?.username || "");
+    setbiographygraphy(profile?.bio || "");
     setPublicProfile(profile?.is_public || false);
     setBadgeNotifications(profile?.badge_notifications || false);
     setCommunityUpdates(profile?.community_updates || false);
@@ -63,25 +90,25 @@ export default function SettingsPage() {
             subheading="Update your personal information"
           >
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
+              <Label htmlFor="username">Display Name</Label>
               <Input
-                id="displayName"
+                id="username"
                 type="text"
                 placeholder="Enter your display name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
+              <Label htmlFor="biography">biography</Label>
               <Textarea
-                id="bio"
+                id="biography"
                 placeholder="Tell others about yourself and your research interests..."
                 rows={4}
-                value={bio}
+                value={biography}
                 maxLength={200}
-                onChange={(e) => setBio(e.target.value)}
+                onChange={(e) => setbiographygraphy(e.target.value)}
                 className="resize-none"
               />
             </div>

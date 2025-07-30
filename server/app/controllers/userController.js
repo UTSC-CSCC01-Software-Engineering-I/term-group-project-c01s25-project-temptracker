@@ -50,6 +50,17 @@ async function updateUserSubmission(req, res) {
   }
 }
 
+async function updateUserSettings(req, res) {
+  const userId = req.params.id;
+  const settings = req.body;
+  try {
+    const updatedSettings = await userService.updateUserSettings(userId, settings);
+    res.json(updatedSettings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async function getUserBadges(req, res) {
   const userId = req.params.id;
   try {
@@ -76,6 +87,7 @@ module.exports = {
   getUserStats,
   updateUserStreak,
   updateUserSubmission,
+  updateUserSettings,
   getUserBadges,
   awardUserBadges,
 };
