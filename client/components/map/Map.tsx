@@ -23,20 +23,14 @@ import "../../styles/MapSlider.css";
 // use 12 pm forcasted data for weekly, and regular 4 hrs apart forcasted data for today slider?
 
 import {
-  getNext7Days,
-  getNext30Days,
-  bucketWeek,
-  bucketMonth,
   createWeekMarks,
-  createMonthMarks,
+  createTodayMarks,
 } from "./dateUtils";
 
 import {
   toFarenheit,
   pointInPolygon,
-  generateGridInPolygon,
   distance,
-  interpolation,
 } from "./graphUtils";
 
 import type {
@@ -45,7 +39,6 @@ import type {
   TimeTemperaturePoint,
 } from "./mapTypes";
 
-import { GeoJsonObject } from "geojson";
 import { file, string } from "zod/v4";
 import { cookies } from "next/headers";
 // import { get } from "axios";
@@ -73,11 +66,53 @@ const Map = (props: MapProps) => {
 
   const [tempVisible, setTempVisible] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [dataLoading, setDataLoading] = useState(false)
+  const [identifier, setIdentifier] = useState("")
+
+  const toggleUpdateComplete = () => {
+    if (props.timeRange == 'week') {
+      const id = `${tempDate.getFullYear()}-${(tempDate.getMonth()+1).toString().padStart(2, '0')}-${tempDate.getDate().toString().padStart(2, '0')}-12`
+      setIdentifier(id)
+    } else {
+      const id = `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}-${tempHour}`
+      setIdentifier(id)
+    }
+  }
 
   //Slider
   const [currentWeekday, setCurrentWeekday] = useState(7);
-  const [currentMonthDate, setCurrentMonthDate] = useState(30);
+  const [currentHour, setCurrentHour] = useState(() => {
+    let hour = new Date().getHours()
+    if (hour < 4) {
+      return 0
+    } else if (hour < 8) {
+      return 4
+    } else if (hour < 12) {
+      return 8
+    } else if (hour < 16) {
+      return 12
+    } else if (hour < 20) {
+      return 16
+    } else {
+      return 20
+    }
+  });
+
+  const [tempHour, setTempHour] = useState(() => {
+    let hour = new Date().getHours()
+    if (hour < 4) {
+      return 0
+    } else if (hour < 8) {
+      return 4
+    } else if (hour < 12) {
+      return 8
+    } else if (hour < 16) {
+      return 12
+    } else if (hour < 20) {
+      return 16
+    } else {
+      return 20
+    }
+  });
 
   //Contour buckets
   const [loofsContours, setLoofsContours] = useState(null);
@@ -91,19 +126,28 @@ const Map = (props: MapProps) => {
 
   const [date, setDate] = useState(() => {
     const year = new Date().getFullYear();
-    const month = new Date().getMonth(); // Months are 0-indexed
-    const day = new Date().getDate(); //make July 18th
+    const month = new Date().getMonth(); // 
+    const day = new Date().getDate(); 
+    const today = new Date(year, month, day);
+    return today
+  })
+
+  const [today, setToday] = useState(() => {
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth(); //
+    const day = new Date().getDate(); 
     const today = new Date(year, month, day);
     return today
   })
 
   const [tempDate, setTempDate] = useState(() => {
     const year = new Date().getFullYear();
-    const month = new Date().getMonth(); // Months are 0-indexed
-    const day = new Date().getDate(); //make July 18th
+    const month = new Date().getMonth(); // 
+    const day = new Date().getDate(); //make 
     const today = new Date(year, month, day);
     return today
   })
+
 
 
   const [unit, setUnit] = useState("Celsius");
@@ -134,61 +178,101 @@ const Map = (props: MapProps) => {
 
   const fetchAllData = async () => {
     //fetches geo json data from the supabase storage
-    const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-    console.log("Current fetch date string:", dateStr);
+    let fetchFunctions;
+    if (props.timeRange == "week") {
+      const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+      console.log("Current fetch date string:", dateStr);
 
-    const fetchFunctions = [
-      // Point data fetchers
-      // async () => {
-      //   const filePath = `${dateStr}/user_points.geo.json`;
-      //   const { data, error } = await supabase.storage.from('geojson').download(filePath);
-      //   if (error) throw new Error(`Error downloading user points: ${error.message}`);
-      //   const text = await data.text();
-      //   return { type: 'userPoints', data: JSON.parse(text) };
-      // },
-      // Database uploads
-      async () => {
-        const { data, error } = await supabase.from('temperatures').select('latitude,longitude,temperature')
-        .gte('measured_on', `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}T00:00:00.000Z`)
-        .lt('measured_on', `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${(date.getDate()+1).toString().padStart(2, '0')}T00:00:00.000Z`);
+      fetchFunctions = [
+        // Database uploads
+        async () => {
+          const { data, error } = await supabase.from('temperatures').select('latitude,longitude,temperature')
+          .gte('measured_on', `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}T00:00:00.000Z`)
+          .lt('measured_on', `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${(date.getDate()+1).toString().padStart(2, '0')}T00:00:00.000Z`);
 
-        if (error) throw new Error(`Error reading user uploads: ${error.message}`);
-        console.log('user uploads:', data)
-        return { type: 'userPoints', data: data };
-      },
-      // Contour data fetchers
-      async () => {
-        const filePath = `${dateStr}/loofs_${dateStr}.geo.json`;
-        const { data, error } = await supabase.storage.from('geojson').download(filePath);
-        if (error) throw new Error(`Error downloading loofs contours: ${error.message}`);
-        const text = await data.text();
-        return { type: 'loofsContours', data: JSON.parse(text) };
-      },
-      async () => {
-        const filePath = `${dateStr}/leofs_${dateStr}.geo.json`;
-        const { data, error } = await supabase.storage.from('geojson').download(filePath);
-        if (error) throw new Error(`Error downloading leofs contours: ${error.message}`);
-        const text = await data.text();
-        return { type: 'leofsContours', data: JSON.parse(text) };
-      },
-      async () => {
-        const filePath = `${dateStr}/lsofs_${dateStr}.geo.json`;
-        const { data, error } = await supabase.storage.from('geojson').download(filePath);
-        if (error) throw new Error(`Error downloading lsofs contours: ${error.message}`);
-        const text = await data.text();
-        return { type: 'lsofsContours', data: JSON.parse(text) };
-      },
-      async () => {
-        const filePath = `${dateStr}/lmhofs_${dateStr}.geo.json`;
-        const { data, error } = await supabase.storage.from('geojson').download(filePath);
-        if (error) throw new Error(`Error downloading lmhofs contours: ${error.message}`);
-        const text = await data.text();
-        return { type: 'lmhofsContours', data: JSON.parse(text) };
-      }
-    ];
+          if (error) throw new Error(`Error reading user uploads: ${error.message}`);
+          console.log('user uploads:', data)
+          return { type: 'userPoints', data: data };
+        },
+        // Contour data fetchers
+        async () => {
+          const filePath = `${dateStr}/loofs_${dateStr}_12.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading loofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'loofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${dateStr}/leofs_${dateStr}_12.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading leofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'leofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${dateStr}/lsofs_${dateStr}_12.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading lsofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'lsofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${dateStr}/lmhofs_${dateStr}_12.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading lmhofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'lmhofsContours', data: JSON.parse(text) };
+        }
+      ];
+    } else {
+      const todayStr = `${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
+        console.log("Current fetch date string:", todayStr);
+
+      fetchFunctions = [
+        // Database uploads
+        async () => {
+          const { data, error } = await supabase.from('temperatures').select('latitude,longitude,temperature')
+          .gte('measured_on', `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}T${currentHour.toString().padStart(2, '0')}:00:00.000Z`)
+          .lt('measured_on', `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}T${(currentHour+4).toString().padStart(2, '0')}:00:00.000Z`);
+
+          if (error) throw new Error(`Error reading user uploads: ${error.message}`);
+          console.log('user uploads:', data)
+          return { type: 'userPoints', data: data };
+        },
+        // Contour data fetchers
+        async () => {
+          const filePath = `${todayStr}/loofs_${todayStr}_${currentHour.toString().padStart(2, '0')}.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading loofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'loofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${todayStr}/leofs_${todayStr}_${currentHour.toString().padStart(2, '0')}.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading leofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'leofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${todayStr}/lsofs_${todayStr}_${currentHour.toString().padStart(2, '0')}.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading lsofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'lsofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${todayStr}/lmhofs_${todayStr}_${currentHour.toString().padStart(2, '0')}.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading lmhofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'lmhofsContours', data: JSON.parse(text) };
+        }
+      ];
+
+    }
 
     try {
-      setDataLoading(true);
       const results = await Promise.all(fetchFunctions.map(fn => fn()));
       
       // Update all states at once
@@ -211,20 +295,24 @@ const Map = (props: MapProps) => {
             break;
         }
       });
+      if (props.timeRange == "week") {
+        setTempDate(date)
+      } else {
+        setTempHour(currentHour)
+      }
 
-      setTempDate(date)
+      toggleUpdateComplete() // makr this a marker of the current date and hour
+
       
     } catch (error) {
       console.error('Error fetching data:', error);
-    } finally {
-      setDataLoading(false);
-    }
+    } 
   };
 
   useEffect(() => {
     console.log("date state changed");
     fetchAllData();
-  }, [date]);
+  }, [date, currentHour, props.timeRange]);
 
   useEffect(() => {
     fetchAllData();
@@ -272,18 +360,20 @@ const Map = (props: MapProps) => {
     },500)
   };
 
-  const monthSliderChange = (_event: Event, value: number) => {
+  const hourSliderChange = (_event: Event, value: number) => {
     // Changes the position of the thumb on the month day slider
-    setCurrentMonthDate(value);
+
+    setTimeout(() => {
+      console.log("slider currently at:", (currentHour/4)+1);
+      console.log("changing slider to:", value)
+      setCurrentHour((value-1)*4);
+    },500)
   };
 
   // Updated SliderLayer component:
   const SliderLayer = () => {
     const sliderRef = useRef<HTMLDivElement>(null);
 
-    const monthTime = new Date(
-      Date.now() - (30 - currentMonthDate) * 24 * 60 * 60 * 1000
-    );
     const weekTime = new Date(
       Date.now() - (7 - currentWeekday) * 24 * 60 * 60 * 1000
     );
@@ -345,7 +435,7 @@ const Map = (props: MapProps) => {
         </div>
       );
     } else if (props.timeRange === "today") {
-      const marks = createMonthMarks();
+      const marks = createTodayMarks();
       return (
         <div
           ref={sliderRef}
@@ -363,18 +453,18 @@ const Map = (props: MapProps) => {
               marginBottom: "15px",
             }}
           >
-            {`${monthTime.toLocaleString("en-US", {
+            {`${today.toLocaleString("en-US", {
               month: "long",
-            })} ${monthTime.getDate()} ${monthTime.getFullYear()}`}
+            })} ${today.getDate()} ${today.getFullYear()}`}
           </h2>
           <Slider
-            onChange={monthSliderChange}
-            value={currentMonthDate}
+            onChange={hourSliderChange}
+            value={(currentHour / 4) + 1}
             aria-label="Temperature"
             step={null}
             marks={marks}
             min={1}
-            max={marks.length}
+            max={6}
             sx={{
               "& .MuiSlider-markLabel": {
                 fontSize: "16px",
@@ -403,74 +493,18 @@ const Map = (props: MapProps) => {
     return null;
   };
 
-  // const LeafletCanvasMarker = ({ 
-  //   other_points, 
-  //   tempUnit 
-  // }: {
-  //   other_points: any;
-  //   tempUnit: string;
-  // }) => {
-  //   const map = useMap()
-  //   const canvasLayerRef = useRef<any>(null)
-
-  //   useEffect(() => {
-  //     if (!map || !map.getContainer() || dataLoading) return;
-
-  //       try {
-  //         // if (canvasLayerRef.current && map.hasLayer(canvasLayerRef.current)) {
-  //         //   map.removeLayer(canvasLayerRef.current);
-  //         //   canvasLayerRef.current = null;
-  //         // }
-  //         if (!map.getContainer()) return
-
-  //         var ciLayer = (L as any).canvasIconLayer({}).addTo(map)
-  //         // canvasLayerRef.current = ciLayer;
-
-  //         var icon = L.icon({
-  //           iconSize: [5, 5],
-  //           iconAnchor: [5, 5],
-  //           iconUrl: '/circle.png'
-  //         });
-
-  //         const markers = []
-  //         for (let j = 0; j < other_points["features"].length; j++) {
-  //           var marker = (L as any).marker(
-  //             [other_points["features"][j]["geometry"]["coordinates"][1], other_points["features"][j]["geometry"]["coordinates"][0]],
-  //             {icon: icon}
-  //           ).bindPopup(tempUnit == 'Celsius' ? `${other_points["features"][j]["properties"]["temperature"]} °C` : `${toFarenheit(other_points["features"][j]["properties"]["temperature"])} °F`)
-  //           markers.push(marker)
-  //         }
-          
-  //         console.log(`created ${markers.length} markers`)
-  //         ciLayer.addLayers(markers);
-  //         // ciLayer.addTo(map)
-  //         // return ciLayer
-          
-  //       } catch (error) {
-  //         console.error('Error initializing map marker layer:', error)
-  //       }
-
-
-  //     // // Cleanup function
-  //     return () => {
-  //       if (canvasLayerRef.current && map.hasLayer(canvasLayerRef.current)) {
-  //         map.removeLayer(canvasLayerRef.current);
-  //       }
-  //     };
-  //   }, [map, userPoints, tempUnit])
-
-  //   return null
-  // }
 
   const findNearestTemperaturePoint = async (
     // calls a backend service to find the nearest temperature point to a given lat and long on a specific date
     clickLat: number,
     clickLng: number,
-    date: string  ) => {
+    date: string,
+    hour: string  ) => {
     
     const data = {
       coord: [clickLat, clickLng],
-      date: date
+      date: date,
+      hour: hour
     }
     let nearest = null;
     const result = await getTemperatureReading(data)
@@ -505,12 +539,23 @@ const Map = (props: MapProps) => {
           return;
         }
         // console.log("Map clicked at:", lat, lng);
-
-        const nearestPoint = await findNearestTemperaturePoint(
-          lat,
-          lng,
-          `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`
-        );
+        let nearestPoint;
+        if (props.timeRange == 'week') {
+          nearestPoint = await findNearestTemperaturePoint(
+            lat,
+            lng,
+            `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`,
+            '12'
+          );
+        } else {
+          nearestPoint = await findNearestTemperaturePoint(
+            lat,
+            lng,
+            `${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`,
+            currentHour.toString().padStart(2, '0')
+          );
+        }
+        
 
         if (nearestPoint) {
           // console.log('set clicked point')
@@ -565,7 +610,7 @@ const Map = (props: MapProps) => {
     !loading &&
     loofsContours && leofsContours && lmhofsContours && lsofsContours && userPoints
   ) {
-    // console.log('user points', userPoints)
+    console.log('identifier:', identifier)
     return (
       <MapContainer
         key={`${mapCoords.latitude},${mapCoords.longitude}`}
@@ -602,28 +647,28 @@ const Map = (props: MapProps) => {
 
         {tempVisible && (
           <GeoJSON
-            key={`loofs-${tempDate.toISOString()}`}
+            key={`loofs-${identifier}`}
             data={loofsContours}
             style={getFeatureStyle2}
           />
         )}
         {tempVisible && (
           <GeoJSON
-            key={`leofs-${tempDate.toISOString()}`}
+            key={`leofs-${identifier}`}
             data={leofsContours}
             style={getFeatureStyle2}
           />
         )}
         {tempVisible && (
           <GeoJSON
-            key={`lmhofs-${tempDate.toISOString()}`}
+            key={`lmhofs-${identifier}`}
             data={lmhofsContours}
             style={getFeatureStyle2}
           />
         )}
          {tempVisible && (
           <GeoJSON
-            key={`lsofs-${tempDate.toISOString()}`}
+            key={`lsofs-${identifier}`}
             data={lsofsContours}
             style={getFeatureStyle2}
           />

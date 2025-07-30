@@ -1,13 +1,8 @@
 import xarray as xr
-from io import BytesIO
-import netCDF4 as nc
 import json
 import numpy as np
-import pandas as pd
-import geopandas as gpd
-from shapely.geometry import Point
 import os
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 from urllib import request
 import matplotlib.tri as tri
 import matplotlib.pyplot as plt
@@ -25,21 +20,19 @@ current_year = datetime.now().year
 current_year_str = f"{current_year:04d}"
 current_month = datetime.now().month
 current_month_str = f"{current_month:02d}"
-current_day = datetime.now().day
+current_day = datetime.now().day - 1 # TEMP
 current_day_str = f"{current_day:02d}"
 current_date = f"{current_year:04d}{current_month:02d}{current_day:02d}"
 
-tomorrow = datetime.now() + timedelta(days=1)
+tomorrow = datetime.now() + timedelta(days=0) # TEMP
 tomorrows_date = f"{tomorrow.year:04d}{tomorrow.month:02d}{tomorrow.day:02d}"
 t_number = '00'  
 n_number = '006'
-f_number = '036'
+# f_number = '036'
 
 def save_netcdf_from_url(url):
     """ Download a NetCDF file from a URL and save it locally. """
-    print(url)
     filename = url[url.rfind("/") + 1:]
-    print('new local name:', filename)
     (new_file, headers) = request.urlretrieve(url, f"glofs/{filename}")
     return new_file
 
@@ -76,11 +69,11 @@ def generate_points(nc_file,date):
         "features": features
     }
     geojson_str = json.dumps(geojson)
-    filename = nc_file.split('/')[1].split('.')[0] + f'_{tomorrows_date}_points.geo.json'
+    filename = nc_file.split('/')[1].split('.')[0] + f'_{date}_points_{(int(nc_file.split('.')[-2][2:])-24):02d}.geo.json'
     try:
         response = supabase.storage.from_('geojson').upload(
                 file=geojson_str.encode('utf-8'),
-                path=f'{tomorrows_date}/{filename}',
+                path=f'{date}/{filename}',
                 file_options={
                         "content-type": "application/json",
                         "cache-control": "3600",
@@ -124,6 +117,7 @@ def generate_contours(nc_file,date):
     triangulation = tri.Triangulation(lons, lats, triangles)
     contours = ax.tricontourf(triangulation, temp_var, levels=contour_levels, colors=custom_colors)
 
+
     geojson = geojsoncontour.contourf_to_geojson(
         contourf=contours,
         min_angle_deg=3.0,
@@ -133,12 +127,14 @@ def generate_contours(nc_file,date):
 
     geojson_obj = json.loads(geojson)
     geojson_str = json.dumps(geojson_obj)
-    filename = nc_file.split('/')[1].split('.')[0] + f'_{tomorrows_date}.geo.json'
+    filename = nc_file.split('/')[1].split('.')[0] + f'_{date}_{(int(nc_file.split('.')[-2][2:])-24):02d}.geo.json'
+
+    plt.close()
     
     try:
         response = supabase.storage.from_('geojson').upload(
                 file=geojson_str.encode('utf-8'),
-                path=f'{tomorrows_date}/{filename}',
+                path=f'{date}/{filename}',
                 file_options={
                         "content-type": "application/json",
                         "cache-control": "3600",
@@ -150,68 +146,17 @@ def generate_contours(nc_file,date):
         print(f"Error uploading to Supabase: {error}")
 
 
-def generate_misc_points(d):
-    year = int(d[:4])
-    month = int(d[4:6])
-    day = int(d[6:])
-    target_date = date(year,month,day)
-    print('target date',target_date)
-    start_datetime = datetime.combine(target_date, datetime.min.time())
-    end_datetime = datetime.combine(target_date, datetime.max.time())
-
-    try:
-        data = supabase.table("temperatures").select("temperature, longitude, latitude, measured_on, is_verified") \
-        .gte('measured_on', start_datetime.isoformat()) \
-        .lte('measured_on', end_datetime.isoformat()).execute()
-
-        features = []
-
-        for row in data.data:
-            print(row)
-            feature = {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [float(((row["longitude"] + 180) % 360) - 180), float(row["latitude"])]
-                        },
-                "properties": {
-                    "temperature": float(row["temperature"]),
-                }
-            }
-            features.append(feature)
-
-        geojson = {
-            "type": "FeatureCollection",
-            "features": features
-        }
-        geojson_str = json.dumps(geojson)
-        filename = f'{target_date.strftime('%Y%m%d')}/user_points.geo.json'
-        response = supabase.storage.from_('geojson').upload(
-                file=geojson_str.encode('utf-8'),
-                path=filename,
-                file_options={
-                        "content-type": "application/json",
-                        "cache-control": "3600",
-                        "upsert": "true" 
-                    }
-            )
-        print(f"Successfully uploaded {filename} to Supabase")
-
-    except Exception as e:
-        print(f'supabase database error:', e)
-
-
 print('today:',current_date)
 print('tomorrow:', tomorrows_date)
 url_list = []
 lakes = ['loofs', 'leofs', 'lsofs', 'lmhofs']
 for lake in lakes:
     # url_list.append(f"https://noaa-nos-ofs-pds.s3.amazonaws.com/{lake}/netcdf/{current_year_str}/{current_month_str}/{current_day_str}/{lake}.t{t_number}z.{current_date}.fields.n{n_number}.nc")
-    url_list.append(f"https://noaa-nos-ofs-pds.s3.amazonaws.com/{lake}/netcdf/{current_year_str}/{current_month_str}/{current_day_str}/{lake}.t{t_number}z.{current_date}.fields.f{f_number}.nc")
-    # for hour in range(0, 24, 4):
-    #         f_number = f"{hour:03}"
-    #         url_list.append(
-    #             f"https://noaa-nos-ofs-pds.s3.amazonaws.com/{lake}/netcdf/{current_year_str}/{current_month_str}/{current_day_str}/{lake}.t{t_number}z.{current_date}.fields.f{f_number}.nc")
+    # url_list.append(f"https://noaa-nos-ofs-pds.s3.amazonaws.com/{lake}/netcdf/{current_year_str}/{current_month_str}/{current_day_str}/{lake}.t{t_number}z.{current_date}.fields.f{f_number}.nc")
+    for hour in range(24, 48, 4):
+            f_number = f"{hour:03}"
+            url_list.append(
+                f"https://noaa-nos-ofs-pds.s3.amazonaws.com/{lake}/netcdf/{current_year_str}/{current_month_str}/{current_day_str}/{lake}.t{t_number}z.{current_date}.fields.f{f_number}.nc")
 
 
 # generate 
@@ -225,31 +170,31 @@ try:
 
             retrieved_file = save_netcdf_from_url(url)
             print('retrieved file:',retrieved_file)
-            # print('file identifier:', name[-7])
-            # check whether the data is forcasted or not
-            # if name[-7] == 'n':
-                # call convert and upload to storage
-            generate_contours(retrieved_file,current_date)
-            generate_points(retrieved_file,current_date)
-            # else:
-            #     pass
-
-            # delte staging file
+            
+            generate_contours(retrieved_file,tomorrows_date)
+            generate_points(retrieved_file,tomorrows_date)
+            print('\n')
+            
         os.remove(retrieved_file)
 
         
-    # generate_misc_points(current_date)
 
-    # delete older file from one week ago
-    remove_date = datetime.now() - timedelta(days=7)
+    # delete older files from 2 days ago, except 12 pm fileso
+    remove_date = datetime.now() - timedelta(days=2)
     remove_date_str = f"{remove_date.year:04d}{remove_date.month:02d}{remove_date.day:02d}"
     print('file removal date:', remove_date_str)
     delete_list = []
     for lake in lakes:
-        delete_list.append(f'{remove_date_str}/{lake}_{remove_date_str}.geo.json')
-        delete_list.append(f'{remove_date_str}/{lake}_{remove_date_str}_points.geo.json')
-    delete_list.append(f'{remove_date_str}/user_points.geo.json')
+        for hour in ['00','04','08','16','20']:
+            delete_list.append(f'{remove_date_str}/{lake}_{remove_date_str}_{hour}.geo.json')
+            delete_list.append(f'{remove_date_str}/{lake}_{remove_date_str}_points_{hour}.geo.json')
     response = supabase.storage.from_('geojson').remove(delete_list)
+
+    # delete older folder from one week ago
+    remove_date = datetime.now() - timedelta(days=7)
+    remove_date_str = f"{remove_date.year:04d}{remove_date.month:02d}{remove_date.day:02d}"
+    print('file removal date:', remove_date_str)
+    response = supabase.storage.from_('geojson').remove([remove_date_str])
 
     with open('daily_log.txt', 'a') as log:
         log.write(f'Passed on {current_date}\n')
