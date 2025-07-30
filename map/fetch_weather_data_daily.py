@@ -20,11 +20,11 @@ current_year = datetime.now().year
 current_year_str = f"{current_year:04d}"
 current_month = datetime.now().month
 current_month_str = f"{current_month:02d}"
-current_day = datetime.now().day - 1 # TEMP
+current_day = datetime.now().day
 current_day_str = f"{current_day:02d}"
 current_date = f"{current_year:04d}{current_month:02d}{current_day:02d}"
 
-tomorrow = datetime.now() + timedelta(days=0) # TEMP
+tomorrow = datetime.now() + timedelta(days=1)
 tomorrows_date = f"{tomorrow.year:04d}{tomorrow.month:02d}{tomorrow.day:02d}"
 t_number = '00'  
 n_number = '006'
@@ -145,7 +145,30 @@ def generate_contours(nc_file,date):
     except Exception as error:
         print(f"Error uploading to Supabase: {error}")
 
-
+def delete_folder_contents(bucket_name, folder_path):
+    try:
+        # List all files in the folder
+        files = supabase.storage.from_(bucket_name).list(folder_path)
+        
+        if files:
+            # Create list of file paths to delete
+            file_paths = []
+            for file in files:
+                file_path = f"{folder_path}/{file['name']}"
+                file_paths.append(file_path)
+            
+            # Delete all files in the folder
+            result = supabase.storage.from_(bucket_name).remove(file_paths)
+            
+            return result
+        else:
+            print(f"No files found in folder: {folder_path}")
+            return None
+            
+    except Exception as e:
+        print(f"Error deleting folder contents: {e}")
+        return None
+    
 print('today:',current_date)
 print('tomorrow:', tomorrows_date)
 url_list = []
@@ -179,8 +202,8 @@ try:
 
         
 
-    # delete older files from 2 days ago, except 12 pm fileso
-    remove_date = datetime.now() - timedelta(days=2)
+    # delete older files from yesterday ago, except 12 pm files
+    remove_date = datetime.now() - timedelta(days=1)
     remove_date_str = f"{remove_date.year:04d}{remove_date.month:02d}{remove_date.day:02d}"
     print('file removal date:', remove_date_str)
     delete_list = []
@@ -194,7 +217,7 @@ try:
     remove_date = datetime.now() - timedelta(days=7)
     remove_date_str = f"{remove_date.year:04d}{remove_date.month:02d}{remove_date.day:02d}"
     print('file removal date:', remove_date_str)
-    response = supabase.storage.from_('geojson').remove([remove_date_str])
+    response = delete_folder_contents('geojson', remove_date_str)
 
     with open('daily_log.txt', 'a') as log:
         log.write(f'Passed on {current_date}\n')

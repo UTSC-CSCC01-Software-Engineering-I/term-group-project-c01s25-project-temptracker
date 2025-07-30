@@ -14,7 +14,7 @@ current_year = datetime.now().year
 current_year_str = f"{current_year:04d}"
 current_month = datetime.now().month
 current_month_str = f"{current_month:02d}"
-current_day = datetime.now().day - 2
+current_day = datetime.now().day - 1
 current_day_str = f"{current_day:02d}"
 current_date = f"{current_year:04d}{current_month:02d}{current_day:02d}"
 
