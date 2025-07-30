@@ -20,7 +20,8 @@ async function submitTemperatures(req, res) {
   }
 }
 
+
 module.exports = {
   submitTemperature,
-  submitTemperatures,
+  submitTemperatures
 };

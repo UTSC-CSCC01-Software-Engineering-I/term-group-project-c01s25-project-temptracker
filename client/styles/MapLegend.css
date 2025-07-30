@@ -39,7 +39,10 @@
   width: 22px;
   border: 2px solid #ccc;
   border-radius: 12px;
-  background: linear-gradient(to top, #350273, blue, lime, #FCED21, #FF8001, #E4080A, #A40203);
+  /* background: linear-gradient(to top, #853cde, rgb(28, 123, 231), rgb(109, 241, 69), #FCED21, #FF8001, #E4080A, #A40203); */
+  background: linear-gradient(to top, #8B00FF,#4B0082,#0000FF,#1E90FF,#00CED1,#00FA9A,
+                    #00FF00,#7CFC00,#ADFF2F,#FFD700,#FFA500,#FF8C00,
+                    #FF4500,#B22222,#8B0000);
 }
 
 .legend-color-box {

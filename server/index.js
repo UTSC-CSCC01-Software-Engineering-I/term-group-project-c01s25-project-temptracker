@@ -5,6 +5,7 @@ const userRoutes = require("./app/routes/userRoutes");
 const temperatureRoutes = require("./app/routes/temperatureRoutes");
 const generalDataRoutes = require("./app/routes/generalDataRoutes");
 const emailRoutes = require("./app/routes/emailRoutes");
+const mapRoutes = require("./app/routes/mapRoutes")
 
 const PORT = process.env.PORT || 8080;
 
@@ -15,6 +16,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/temperatures", temperatureRoutes);
 app.use("/api/general-data", generalDataRoutes);
 app.use("/api/notify-all", emailRoutes);
+app.use("/api/map", mapRoutes)
 
 app.listen(PORT, () => {
   console.log(`Server started on ${PORT}`);

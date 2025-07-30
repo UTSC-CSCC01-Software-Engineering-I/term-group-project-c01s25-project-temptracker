@@ -1,10 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use, useOptimistic } from "react";
 import { createClient } from "../../lib/supabase/client";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { Marker, Popup, GeoJSON } from "react-leaflet";
-import L, { Icon } from "leaflet";
+import L, { Icon, point, divIcon } from "leaflet";
+import { subDays } from 'date-fns';
+import MarkerClusterGroup from "react-leaflet-markercluster";
+import { getTemperatureReading } from "@/lib/services/getTemperatureReadingService"
+// import CanvasMarkersLayer from '../src/CanvasMarkersLayer';
+import "leaflet-canvas-marker"
+import clusterIcon from '../../public/circle.png'
 import { getUserLocation } from "./GeoLocation";
 import MapLegend from "../ui/MapLegend";
 import "leaflet.heat";
@@ -14,22 +20,17 @@ import "react-leaflet-markercluster/styles";
 import Slider from "@mui/material/Slider";
 import "../../styles/MapSlider.css";
 
+// use 12 pm forcasted data for weekly, and regular 4 hrs apart forcasted data for today slider?
+
 import {
-  getNext7Days,
-  getNext30Days,
-  bucketWeek,
-  bucketMonth,
   createWeekMarks,
-  createMonthMarks,
+  createTodayMarks,
 } from "./dateUtils";
 
 import {
-  tempConverter,
   toFarenheit,
   pointInPolygon,
-  generateGridInPolygon,
   distance,
-  interpolation,
 } from "./graphUtils";
 
 import type {
@@ -38,11 +39,19 @@ import type {
   TimeTemperaturePoint,
 } from "./mapTypes";
 
-import { GeoJsonObject } from "geojson";
 import { file, string } from "zod/v4";
 import { cookies } from "next/headers";
-import { get } from "axios";
+// import { get } from "axios";
 import { set } from "date-fns";
+import ClickAwayListener from "@mui/material/ClickAwayListener";
+import { init } from "next/dist/compiled/webpack/webpack";
+import { Over_the_Rainbow } from "next/font/google";
+import { useParams } from "next/navigation";
+
+interface MyDataType {
+  latitude: string;
+  features: any[];
+}
 
 const supabase = createClient(); // need to move this elsewhere
 
@@ -56,16 +65,54 @@ const Map = (props: MapProps) => {
 
 
   const [tempVisible, setTempVisible] = useState(true);
-  const [geoData, setGeoData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [polygons, setPolygons] = useState<any[]>([]);
-  const [gridsGenerated, setGridsGenerated] = useState(false);
+  const [identifier, setIdentifier] = useState("")
+
+  const toggleUpdateComplete = () => {
+    if (props.timeRange == 'week') {
+      const id = `${tempDate.getFullYear()}-${(tempDate.getMonth()+1).toString().padStart(2, '0')}-${tempDate.getDate().toString().padStart(2, '0')}-12`
+      setIdentifier(id)
+    } else {
+      const id = `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}-${tempHour}`
+      setIdentifier(id)
+    }
+  }
 
   //Slider
-  const [weekDataBucket, setWeekDataBucket] = useState<any[]>([]);
-  const [monthDataBucket, setMonthDataBucket] = useState<any[]>([]);
   const [currentWeekday, setCurrentWeekday] = useState(7);
-  const [currentMonthDate, setCurrentMonthDate] = useState(30);
+  const [currentHour, setCurrentHour] = useState(() => {
+    let hour = new Date().getHours()
+    if (hour < 4) {
+      return 0
+    } else if (hour < 8) {
+      return 4
+    } else if (hour < 12) {
+      return 8
+    } else if (hour < 16) {
+      return 12
+    } else if (hour < 20) {
+      return 16
+    } else {
+      return 20
+    }
+  });
+
+  const [tempHour, setTempHour] = useState(() => {
+    let hour = new Date().getHours()
+    if (hour < 4) {
+      return 0
+    } else if (hour < 8) {
+      return 4
+    } else if (hour < 12) {
+      return 8
+    } else if (hour < 16) {
+      return 12
+    } else if (hour < 20) {
+      return 16
+    } else {
+      return 20
+    }
+  });
 
   //Contour buckets
   const [loofsContours, setLoofsContours] = useState(null);
@@ -74,54 +121,36 @@ const Map = (props: MapProps) => {
   const [lmhofsContours, setLmhofsContours] = useState(null);
 
   //Points buckets
-  const [loofsPoints, setLoofsPoints] = useState(null);
-  const [leofsPoints, setLeofsPoints] = useState(null);
-  const [lsofsPoints, setLsofsPoints] = useState(null);
-  const [lmhofsPoints, setLmhofsPoints] = useState(null);
+  const [userPoints, setUserPoints] = useState([])
+
 
   const [date, setDate] = useState(() => {
     const year = new Date().getFullYear();
-    const month = new Date().getMonth(); // Months are 0-indexed
-    const day = new Date().getDate();
+    const month = new Date().getMonth(); // 
+    const day = new Date().getDate(); 
+    const today = new Date(year, month, day);
+    return today
+  })
+
+  const [today, setToday] = useState(() => {
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth(); //
+    const day = new Date().getDate(); 
+    const today = new Date(year, month, day);
+    return today
+  })
+
+  const [tempDate, setTempDate] = useState(() => {
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth(); // 
+    const day = new Date().getDate(); //make 
     const today = new Date(year, month, day);
     return today
   })
 
 
+
   const [unit, setUnit] = useState("Celsius");
-
-  // const generateGrids = () => {
-  //   let grids = [];
-  //   for (let i = 0; i < polygons.length; i++) {
-  //     if (polygons[i].containsPoint) {
-  //       const grid = generateGridInPolygon(polygons[i].coordinates, 0.5);
-  //       grids.push({ grid: grid, polygon: polygons[i] });
-  //     }
-  //   }
-  //   return grids;
-  // };
-
-  // const [tempData, setTempData] = useState<TemperaturePoint[]>(() => {
-  //   const localData = localStorage.getItem("TEMP_DATA");
-  //   return localData ? JSON.parse(localData) : [];
-  // });
-
-  // const [interpolatedTempData, setInterpolatedTempData] = useState<
-  //   TemperaturePoint[]
-  // >(() => {
-  //   const localInterData = localStorage.getItem("INTERPOLATED_TEMP_DATA");
-  //   return localInterData ? JSON.parse(localInterData) : [];
-  // });
-
-  // const [rawTempData, setRawTempData] = useState(() => {
-  //   const localRawData = localStorage.getItem("RAW_TEMP_DATA");
-  //   return localRawData ? JSON.parse(localRawData) : [];
-  // });
-
-  // const [geoGrids, setGeoGrids] = useState(() => {
-  //   const localGeoGrids = localStorage.getItem("GRID_DATA");
-  //   return localGeoGrids ? JSON.parse(localGeoGrids) : [];
-  // });
 
   const [clickedPoint, setClickedPoint] = useState({
     latitude: null as number | null,
@@ -130,8 +159,6 @@ const Map = (props: MapProps) => {
       latitude: number;
       longitude: number;
       temperature: number;
-      distance: number;
-      intensity: number;
     } | null,
   });
 
@@ -149,176 +176,151 @@ const Map = (props: MapProps) => {
     }
   });
 
+  const fetchAllData = async () => {
+    //fetches geo json data from the supabase storage
+    let fetchFunctions;
+    if (props.timeRange == "week") {
+      const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+      console.log("Current fetch date string:", dateStr);
+
+      fetchFunctions = [
+        // Database uploads
+        async () => {
+          const { data, error } = await supabase.from('temperatures').select('latitude,longitude,temperature')
+          .gte('measured_on', `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}T00:00:00.000Z`)
+          .lt('measured_on', `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${(date.getDate()+1).toString().padStart(2, '0')}T00:00:00.000Z`);
+
+          if (error) throw new Error(`Error reading user uploads: ${error.message}`);
+          console.log('user uploads:', data)
+          return { type: 'userPoints', data: data };
+        },
+        // Contour data fetchers
+        async () => {
+          const filePath = `${dateStr}/loofs_${dateStr}_12.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading loofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'loofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${dateStr}/leofs_${dateStr}_12.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading leofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'leofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${dateStr}/lsofs_${dateStr}_12.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading lsofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'lsofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${dateStr}/lmhofs_${dateStr}_12.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading lmhofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'lmhofsContours', data: JSON.parse(text) };
+        }
+      ];
+    } else {
+      const todayStr = `${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
+        console.log("Current fetch date string:", todayStr);
+
+      fetchFunctions = [
+        // Database uploads
+        async () => {
+          const { data, error } = await supabase.from('temperatures').select('latitude,longitude,temperature')
+          .gte('measured_on', `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}T${currentHour.toString().padStart(2, '0')}:00:00.000Z`)
+          .lt('measured_on', `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}T${(currentHour+4).toString().padStart(2, '0')}:00:00.000Z`);
+
+          if (error) throw new Error(`Error reading user uploads: ${error.message}`);
+          console.log('user uploads:', data)
+          return { type: 'userPoints', data: data };
+        },
+        // Contour data fetchers
+        async () => {
+          const filePath = `${todayStr}/loofs_${todayStr}_${currentHour.toString().padStart(2, '0')}.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading loofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'loofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${todayStr}/leofs_${todayStr}_${currentHour.toString().padStart(2, '0')}.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading leofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'leofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${todayStr}/lsofs_${todayStr}_${currentHour.toString().padStart(2, '0')}.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading lsofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'lsofsContours', data: JSON.parse(text) };
+        },
+        async () => {
+          const filePath = `${todayStr}/lmhofs_${todayStr}_${currentHour.toString().padStart(2, '0')}.geo.json`;
+          const { data, error } = await supabase.storage.from('geojson').download(filePath);
+          if (error) throw new Error(`Error downloading lmhofs contours: ${error.message}`);
+          const text = await data.text();
+          return { type: 'lmhofsContours', data: JSON.parse(text) };
+        }
+      ];
+
+    }
+
+    try {
+      const results = await Promise.all(fetchFunctions.map(fn => fn()));
+      
+      // Update all states at once
+      results.forEach(result => {
+        switch(result.type) {
+          case 'userPoints':
+            setUserPoints(result.data);
+            break;
+          case 'loofsContours':
+            setLoofsContours(result.data);
+            break;
+          case 'leofsContours':
+            setLeofsContours(result.data);
+            break;
+          case 'lsofsContours':
+            setLsofsContours(result.data);
+            break;
+          case 'lmhofsContours':
+            setLmhofsContours(result.data);
+            break;
+        }
+      });
+      if (props.timeRange == "week") {
+        setTempDate(date)
+      } else {
+        setTempHour(currentHour)
+      }
+
+      toggleUpdateComplete() // makr this a marker of the current date and hour
+
+      
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } 
+  };
+
   useEffect(() => {
-    const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-    console.log("Current date string:", dateStr);
-    
-    const getLoofsBucketData = async () => {
-      try {
-        const filePath = `${dateStr}/loofs_${dateStr}.geo.json`
-        console.log('fetching:', filePath)
-        const { data, error } = await supabase.storage
-        .from('geojson')
-        .download(filePath);
-        if (error) {
-          console.error('Error downloading loofs geojson:', error);
-          return;
-        } else if (data != null) {
-          const text = await data.text()
-          const jsonData = JSON.parse(text)
-          setLoofsContours(jsonData);
-        }
-      } catch (error) {
-        console.error('Error fetching bucket data:', error);
-      }
-    }
-    const getLmhofsBucketData = async () => {
-      try {
-        const filePath = `${dateStr}/lmhofs_${dateStr}.geo.json`
-        console.log('fetching:', filePath)
-        const { data, error } = await supabase.storage
-        .from('geojson')
-        .download(filePath);
-        if (error) {
-          console.error('Error downloading lmhofs geojson:', error);
-          return;
-        } else if (data != null) {
-          const text = await data.text()
-          const jsonData = JSON.parse(text)
-          setLmhofsContours(jsonData);
-        }
-      } catch (error) {
-        console.error('Error fetching bucket data:', error);
-      }
-    }
+    console.log("date state changed");
+    fetchAllData();
+  }, [date, currentHour, props.timeRange]);
 
-    const getLeofsBucketData = async () => {
-      try {
-        const filePath = `${dateStr}/leofs_${dateStr}.geo.json`
-        console.log('fetching:', filePath)
-        const { data, error } = await supabase.storage
-        .from('geojson')
-        .download(filePath);
-        if (error) {
-          console.error('Error downloading leofs geojson:', error);
-          return;
-        } else if (data != null) {
-          const text = await data.text()
-          const jsonData = JSON.parse(text)
-          setLeofsContours(jsonData);
-        }
-      } catch (error) {
-        console.error('Error fetching bucket data:', error);
-      }
-    }
-
-    const getLsofsBucketData = async () => {
-      try {
-        const filePath = `${dateStr}/lsofs_${dateStr}.geo.json`
-        console.log('fetching:', filePath)
-        const { data, error } = await supabase.storage
-        .from('geojson')
-        .download(filePath);
-        if (error) {
-          console.error('Error downloading lsofs geojson:', error);
-          return;
-        } else if (data != null) {
-          const text = await data.text()
-          const jsonData = JSON.parse(text)
-          setLsofsContours(jsonData);
-        }
-      } catch (error) {
-        console.error('Error fetching bucket data:', error);
-      }
-    }
-
-    getLoofsBucketData();
-    getLmhofsBucketData();
-    getLeofsBucketData();
-    getLsofsBucketData();
-  },[date])
-
-  // console.log('geo data',geoJson)
-  // console.log(tempData, "temp data points loaded");
-  
-  // IMPORTANT
-  // Uncomment below when you run: Can be unstable
-  
-  // useEffect(() => {
-  //   const loadGeoJSON = async () => {
-  //     try {
-  //       setGeoData(gTest);
-  //       //geoJson is ordered [long, lat]
-  //       const coordList = geoJsonTest.geometries[0].coordinates;
-  //       const x = coordList
-  //         .slice(0, 1000)
-  //         .map((coord: any, index: number) => {
-  //           if (!coord || !Array.isArray(coord[0])) return null;
-
-  //           let containspoint = false;
-  //           for (let i = 0; i < Math.min(tempData.length, 500); i++) {
-  //             const point = tempData[i];
-  //             if (
-  //               Array.isArray(point) &&
-  //               point.length >= 2 &&
-  //               typeof point[0] === "number" &&
-  //               typeof point[1] === "number" &&
-  //               pointInPolygon([point[1], point[0]], coord[0])
-  //             ) {
-  //               containspoint = true;
-  //               break;
-  //             }
-  //           }
-
-  //           return {
-  //             coordinates: coord[0],
-  //             containsPoint: containspoint,
-  //           };
-  //         })
-  //         .filter(Boolean);
-
-  //       setPolygons(x);
-
-  //       // const grids = generateGrids(); // This will now work with populated polygons
-  //       // setGeoGrids(grids);
-  //     } catch (error) {
-  //       console.error("Error loading geo data:", error);
-  //     }
-  //   };
-
-  //   loadGeoJSON();
-  // }, []);
-
-  // useEffect(() => {
-  //   if (polygons.length > 0) {
-  //     console.log("Generating grids from polygons...");
-  //     const grids = generateGrids();
-  //     setGeoGrids(grids);
-  //   }
-  // }, [polygons]);
+  useEffect(() => {
+    fetchAllData();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("USER_LOCATION", JSON.stringify(userLocation));
   }, [userLocation]);
-
-  // useEffect(() => {
-  //   localStorage.setItem("TEMP_DATA", JSON.stringify(tempData));
-  // }, [tempData]);
-
-  // useEffect(() => {
-  //   localStorage.setItem(
-  //     "INTERPOLATED_TEMP_DATA",
-  //     JSON.stringify(interpolatedTempData)
-  //   );
-  // }, [interpolatedTempData]);
-
-  // useEffect(() => {
-  //   localStorage.setItem("RAW_TEMP_DATA", JSON.stringify(rawTempData));
-  // }, [rawTempData]);
-
-  // useEffect(() => {
-  //   localStorage.setItem("GRID_DATA", JSON.stringify(geoGrids));
-  // }, [geoGrids]);
 
   useEffect(() => {
     const fetchUserLocation = async () => {
@@ -335,84 +337,43 @@ const Map = (props: MapProps) => {
     popupAnchor: [0, -41],
   });
 
-  // utility functions
-
-  /////////////////////
-  const getData = async (timeRange: "all" | "week" | "month") => {
-    let fromDate: string | null = null;
-
-    if (props.timeRange === "week") {
-      fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    } else if (props.timeRange === "month") {
-      fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    }
-
-    // need to change this
-    const query = supabase
-      .from("temperatures")
-      .select("latitude, longitude, temperature, measured_on");
-
-    if (fromDate) {
-      query.gte("measured_on", fromDate);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error("Error fetching data:", error);
-      return;
-    }
-
-    console.log("Filtered data:", data);
-
-    const heatData = data.map((point) => [
-      point.latitude,
-      point.longitude,
-      point.temperature,
-      // point.measured_on
-    ]);
-
-    const rawData = data.map((point) => [
-      point.latitude,
-      point.longitude,
-      point.temperature,
-      point.measured_on,
-    ]);
-
-    
-  };
-
-  useEffect(() => {
-    if (props.timeRange) {
-      getData(props.timeRange);
-    }
-  }, [props.timeRange]);
+  // useEffect(() => {
+  //   if (props.timeRange) {
+  //     getData(props.timeRange);
+  //   }
+  // }, [props.timeRange]);
 
   const weekSliderChange = (_event: Event, value: number) => {
-    // const newValue = Array.isArray(value) ? value[0] : value;
-    console.log("changed slider to", value);
-    setCurrentWeekday(value);
-    const newDate = new Date()
-    const currentDate = new Date()
-    newDate.setDate(currentDate.getDate() - (7-value))
+    // changes the position of the thumb on the weekday slider
+    
+    const today = new Date();
+    const daysBack = 7 - value;
+    const newDate = subDays(today, daysBack);
     console.log('old date', date)
     console.log('new date', newDate)
     setDate(newDate)
+
+    setTimeout(() => {
+      console.log("slider currently at:", currentWeekday);
+      console.log("changing slider to:", value)
+      setCurrentWeekday(value);
+    },500)
   };
 
-  const monthSliderChange = (_event: Event, value: number) => {
-    // const newValue = Array.isArray(value) ? value[0] : value;
-    console.log("changed slider to", value);
-    setCurrentMonthDate(value);
+  const hourSliderChange = (_event: Event, value: number) => {
+    // Changes the position of the thumb on the month day slider
+
+    setTimeout(() => {
+      console.log("slider currently at:", (currentHour/4)+1);
+      console.log("changing slider to:", value)
+      setCurrentHour((value-1)*4);
+    },500)
   };
 
   // Updated SliderLayer component:
   const SliderLayer = () => {
     const sliderRef = useRef<HTMLDivElement>(null);
 
-    const monthTime = new Date(
-      Date.now() - (30 - currentMonthDate) * 24 * 60 * 60 * 1000
-    );
     const weekTime = new Date(
       Date.now() - (7 - currentWeekday) * 24 * 60 * 60 * 1000
     );
@@ -473,8 +434,8 @@ const Map = (props: MapProps) => {
           />
         </div>
       );
-    } else if (props.timeRange === "month") {
-      const marks = createMonthMarks();
+    } else if (props.timeRange === "today") {
+      const marks = createTodayMarks();
       return (
         <div
           ref={sliderRef}
@@ -492,18 +453,18 @@ const Map = (props: MapProps) => {
               marginBottom: "15px",
             }}
           >
-            {`${monthTime.toLocaleString("en-US", {
+            {`${today.toLocaleString("en-US", {
               month: "long",
-            })} ${monthTime.getDate()} ${monthTime.getFullYear()}`}
+            })} ${today.getDate()} ${today.getFullYear()}`}
           </h2>
           <Slider
-            onChange={monthSliderChange}
-            value={currentMonthDate}
+            onChange={hourSliderChange}
+            value={(currentHour / 4) + 1}
             aria-label="Temperature"
             step={null}
             marks={marks}
             min={1}
-            max={marks.length}
+            max={6}
             sx={{
               "& .MuiSlider-markLabel": {
                 fontSize: "16px",
@@ -532,371 +493,92 @@ const Map = (props: MapProps) => {
     return null;
   };
 
-  const HeatmapLayer = ({
-    data,
-  }: {
-    data: Array<[number, number, number]>;
-  }) => {
-    const map = useMap();
 
-    useEffect(() => {
-      if (!map || !data || data.length === 0) return;
+  const findNearestTemperaturePoint = async (
+    // calls a backend service to find the nearest temperature point to a given lat and long on a specific date
+    clickLat: number,
+    clickLng: number,
+    date: string,
+    hour: string  ) => {
+    
+    const data = {
+      coord: [clickLat, clickLng],
+      date: date,
+      hour: hour
+    }
+    let nearest = null;
+    const result = await getTemperatureReading(data)
+    if (result.data) {
+        const temp: number = result.data.temp
+        const lat: number = result.data.lat
+        const lng: number = result.data.lng
+        nearest = {
+          latitude: lat,
+          longitude: lng,
+          temperature: temp,
+        };
+    }
+    
+    
+    // console.log("Nearest point:", nearest);
+    
+    return nearest;
+  };
 
-      const validData = data.filter((point) => {
-        const [lat, lng, intensity] = point;
-
-        // Check if coordinates are valid numbers
+  const MapClickHandler = () => {
+    useMapEvents({
+      click: async (e) => {
+        const { lat, lng } = e.latlng;
         if (
           typeof lat !== "number" ||
           typeof lng !== "number" ||
-          typeof intensity !== "number" ||
           isNaN(lat) ||
-          isNaN(lng) ||
-          isNaN(intensity)
+          isNaN(lng)
         ) {
-          console.warn("Invalid coordinates or intensity:", {
+          console.warn("Invalid coordinates:", { lat, lng });
+          return;
+        }
+        // console.log("Map clicked at:", lat, lng);
+        let nearestPoint;
+        if (props.timeRange == 'week') {
+          nearestPoint = await findNearestTemperaturePoint(
             lat,
             lng,
-            intensity,
-          });
-          return false;
-        }
-        return true;
-      });
-      if (validData.length > 0) {
-        const addHeatmap = () => {
-          // console.log('valid data', validData)
-
-          const heatLayer = (L as any).heatLayer(validData, {
-            radius: 20,
-            blur: 12,
-            maxZoom: 6,
-            max: 1.0,
-            minOpacity: 0.5,
-            gradient: {
-              0.0: "#350273",
-              0.2: "blue",
-              0.4: "lime",
-              0.6: "#FCED21",
-              0.8: "#FF8001",
-              0.9: "#E4080A",
-              1.0: "#A40203",
-            },
-          });
-
-          heatLayer.addTo(map);
-          return heatLayer;
-        };
-
-        let heatLayer: any;
-
-        if (map.getContainer()) {
-          heatLayer = addHeatmap();
+            `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`,
+            '12'
+          );
         } else {
-          map.whenReady(() => {
-            heatLayer = addHeatmap();
+          nearestPoint = await findNearestTemperaturePoint(
+            lat,
+            lng,
+            `${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`,
+            currentHour.toString().padStart(2, '0')
+          );
+        }
+        
+
+        if (nearestPoint) {
+          // console.log('set clicked point')
+          setClickedPoint({
+            latitude: lat,
+            longitude: lng,
+            nearestPoint: nearestPoint,
+          });
+        } else {
+          setClickedPoint({
+            latitude: null,
+            longitude: null,
+            nearestPoint: null,
           });
         }
-
-        return () => {
-          if (heatLayer && map.hasLayer(heatLayer)) {
-            map.removeLayer(heatLayer);
-          }
-        };
-      }
-    }, [map, data]);
-
+      },
+    });
     return null;
   };
 
-  // const findNearestTemperaturePoint = (
-  //   clickLat: number,
-  //   clickLng: number,
-  //   timeRange: string,
-  //   maxDistance: number = 0.5
-  // ) => {
-  //   let nearest = null;
-  //   let minDistance = Infinity;
-
-  //   if (timeRange == "week") {
-  //     weekBucketRaw[currentWeekday - 1].forEach(
-  //       (point: [number, number, number]) => {
-  //         const distance = Math.sqrt(
-  //           Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-  //         );
-  //         if (distance < minDistance && distance <= 2 * maxDistance) {
-  //           minDistance = distance;
-  //           nearest = {
-  //             temperature: point[2],
-  //             latitude: point[0],
-  //             longitude: point[1],
-  //             distance: distance,
-  //           };
-  //         }
-  //       }
-  //     );
-  //     console.log("Nearest point:", nearest);
-  //   } else if (timeRange == "month") {
-  //     montthBucketRaw[currentMonthDate - 1].forEach(
-  //       (point: [number, number, number]) => {
-  //         const distance = Math.sqrt(
-  //           Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-  //         );
-  //         if (distance < minDistance && distance <= 2 * maxDistance) {
-  //           minDistance = distance;
-  //           nearest = {
-  //             temperature: point[2],
-  //             latitude: point[0],
-  //             longitude: point[1],
-  //             distance: distance,
-  //           };
-  //         }
-  //       }
-  //     );
-  //     console.log("Nearest point:", nearest);
-  //   } else {
-  //     allBucketRaw.forEach((point: [number, number, number]) => {
-  //       const distance = Math.sqrt(
-  //         Math.pow(point[0] - clickLat, 2) + Math.pow(point[1] - clickLng, 2)
-  //       );
-  //       if (distance < minDistance && distance <= maxDistance) {
-  //         minDistance = distance;
-  //         nearest = {
-  //           temperature: point[2],
-  //           latitude: point[0],
-  //           longitude: point[1],
-  //           distance: distance,
-  //         };
-  //       }
-  //     });
-  //     console.log("Nearest point:", nearest);
-  //   }
-
-
-  //   return nearest;
-  // };
-
-  // const MapClickHandler = () => {
-  //   useMapEvents({
-  //     click: (e) => {
-  //       const { lat, lng } = e.latlng;
-  //       if (
-  //         typeof lat !== "number" ||
-  //         typeof lng !== "number" ||
-  //         isNaN(lat) ||
-  //         isNaN(lng)
-  //       ) {
-  //         console.warn("Invalid coordinates:", { lat, lng });
-  //         return;
-  //       }
-  //       console.log("Map clicked at:", lat, lng);
-
-  //       const nearestPoint = findNearestTemperaturePoint(
-  //         lat,
-  //         lng,
-  //         props.timeRange
-  //       );
-
-  //       if (nearestPoint) {
-  //         setClickedPoint({
-  //           latitude: lat,
-  //           longitude: lng,
-  //           nearestPoint: nearestPoint,
-  //         });
-  //       } else {
-  //         setClickedPoint({
-  //           latitude: null,
-  //           longitude: null,
-  //           nearestPoint: null,
-  //         });
-  //       }
-  //     },
-  //   });
-  //   return null;
-  // };
-
-  //set the grids
-  // useEffect(() => {
-  //   if (polygons.length > 0 && tempData.length > 0) {
-  //     console.log("Generating grids...");
-
-  //     if (props.timeRange == "week") {
-  //       let weeklyPoints = [];
-  //       let weeklyPointsRaw = [];
-  //       const weekData = bucketWeek(rawTempData);
-  //       console.log("week data", weekData);
-
-  //       if (!weekData || !Array.isArray(weekData) || weekData.length < 7) {
-  //         console.warn("weekData is invalid or insufficient:", weekData);
-  //         setWeekDataBucket(Array(7).fill([]));
-  //         return;
-  //       }
-
-  //       for (let k = 0; k < weekData.length; k++) {
-  //         let allNewPoints: TemperaturePoint[] = [];
-  //         //remove time from the data
-  //         if (weekData[k].length == 0 || !Array.isArray(weekData[k])) {
-  //           weeklyPoints.push([]); // Push empty array for this day
-  //           continue;
-  //         }
-
-  //         const weekDataWithoutTime = weekData[k].map((d: any) => {
-  //           return [d[0], d[1], d[2]];
-  //         });
-
-  //         for (let i = 0; i < geoGrids.length; i++) {
-  //           for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
-  //             const point = geoGrids[i]["grid"][j];
-  //             const tempPoint = interpolation(
-  //               geoGrids[i]["polygon"].coordinates,
-  //               [...weekDataWithoutTime, ...allNewPoints],
-  //               point
-  //             );
-  //             allNewPoints.push(tempPoint);
-  //           }
-  //         }
-  //         //TODO - account for including the existing specific week data
-  //         const combine = [...weekDataWithoutTime, ...allNewPoints].map(
-  //           (point) => {
-  //             return [point[0], point[1], tempConverter(point[2])];
-  //           }
-  //         );
-  //         const combineRaw = [...weekDataWithoutTime, ...allNewPoints];
-  //         weeklyPoints.push(combine);
-  //         weeklyPointsRaw.push(combineRaw);
-  //       }
-  //       //set state
-  //       setWeekDataBucket(weeklyPoints);
-  //       setWeekBucketRaw(weeklyPointsRaw);
-  //     } else if (props.timeRange == "month") {
-  //       let monthlyPoints = [];
-  //       let monthlyPointsRaw = [];
-  //       const monthData = bucketMonth(rawTempData);
-
-  //       if (!monthData || !Array.isArray(monthData) || monthData.length < 30) {
-  //         console.warn("weekData is invalid or insufficient:", monthData);
-  //         setWeekDataBucket(Array(30).fill([]));
-  //         return;
-  //       }
-
-  //       for (let k = 0; k < monthData.length; k++) {
-  //         let allNewPoints: TemperaturePoint[] = [];
-
-  //         if (monthData[k].length == 0 || !Array.isArray(monthData[k])) {
-  //           monthlyPoints.push([]); // Push empty array for this day
-  //           continue;
-  //         }
-  //         //remove time from the data
-  //         const monthDataWithoutTime = monthData[k].map((d: any) => {
-  //           return [d[0], d[1], d[2]];
-  //         });
-  //         for (let i = 0; i < geoGrids.length; i++) {
-  //           for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
-  //             const point = geoGrids[i]["grid"][j];
-  //             const tempPoint = interpolation(
-  //               geoGrids[i]["polygon"].coordinates,
-  //               [...monthDataWithoutTime, ...allNewPoints],
-  //               point
-  //             );
-  //             allNewPoints.push(tempPoint);
-  //           }
-  //         }
-  //         //TODO - account for including the existing specific month data
-  //         const combine = [...monthDataWithoutTime, ...allNewPoints].map(
-  //           (point) => {
-  //             return [point[0], point[1], tempConverter(point[2])];
-  //           }
-  //         );
-  //         const combineRaw = [...monthDataWithoutTime, ...allNewPoints];
-  //         monthlyPoints.push(combine);
-  //         monthlyPointsRaw.push(combineRaw);
-  //       }
-  //       //set State
-  //       setMonthDataBucket(monthlyPoints);
-  //       setMonthBucketRaw(monthlyPointsRaw);
-  //       // console.log('MONTH BUCKET AFTER INTERPOLATION', monthlyPoints)
-  //     } else {
-  //       let allNewPoints: TemperaturePoint[] = [];
-
-  //       for (let i = 0; i < geoGrids.length; i++) {
-  //         for (let j = 0; j < geoGrids[i]["grid"].length; j++) {
-  //           const point = geoGrids[i]["grid"][j];
-  //           const tempPoint = interpolation(
-  //             geoGrids[i]["polygon"].coordinates,
-  //             [...tempData, ...allNewPoints],
-  //             point
-  //           );
-  //           allNewPoints.push(tempPoint);
-  //         }
-  //       }
-
-  //       if (allNewPoints.length > 0) {
-  //         // console.log('new interpolated', allNewPoints)
-  //         const join: TemperaturePoint[] = [...tempData, ...allNewPoints].map(
-  //           (point) => {
-  //             // console.log('Temperature before conversion:', point[2]); // Add this line
-  //             return [point[0], point[1], tempConverter(point[2])];
-  //           }
-  //         );
-  //         const joinRaw: TemperaturePoint[] = [...tempData, ...allNewPoints];
-
-  //         setInterpolatedTempData(join);
-  //         setAllBucketRaw(joinRaw);
-  //       }
-  //     }
-  //   }
-  // }, [polygons, tempData, gridsGenerated, props.timeRange]);
-
-  const tempFunc = (temp: number) => {
-    if (temp <= 2) {
-      return "#8B00FF";
-    } else if (temp <= 4) {
-      return "#4B0082"; 
-    } else if (temp <= 6) {
-      return "#0000FF"; 
-    } else if (temp <= 8) {
-      return "#1E90FF"; 
-    } else if (temp <= 10) {
-      return "#00CED1"; 
-    } else if (temp <= 12) {
-      return "#00FA9A"; 
-    } else if (temp <= 14) {
-      return "#00FF00"; 
-    } else if (temp <= 16) {
-      return "#7CFC00"; 
-    } else if (temp <= 18) {
-      return "#ADFF2F"; 
-    } else if (temp <= 20) {
-      return "#FFD700"; 
-    } else if (temp <= 22) {
-      return "#FFA500"; 
-    } else if (temp <= 24) {
-      return "#FF8C00"; 
-    } else if (temp <= 26) {
-      return "#FF4500"; 
-    } else if (temp <= 28) {
-      return "#B22222";
-    } else {
-      return "#8B0000";
-    }
-  }
-
-  const getFeatureStyle = (feature: any) => {
-    const temperature = feature.properties.temperature;
-    const fillColor = tempFunc(temperature)
-    
-    return {
-      fillColor: fillColor,
-      weight: 1,
-      opacity: 0.8,
-      color: fillColor,
-      fillOpacity: 1
-    };
-  };
-
   const getFeatureStyle2 = (feature: any) => {
+    // colors the geo json contours on the map
     const temperature = feature.properties.fill;
-    // const fillColor = tempFunc(temperature)
     
     return {
       fillColor: temperature,
@@ -907,20 +589,29 @@ const Map = (props: MapProps) => {
     };
   };
 
-  useEffect(() => {
-    console.log('contours changed')
-  },[loofsContours, leofsContours, lsofsContours, lmhofsContours])
+  const customUserIcon = new Icon({
+    iconUrl: "/circle.png",
+    iconSize: [20, 20],
+    iconAnchor: [0, 0],
+    popupAnchor: [10, 0],
+  })
 
+  const createCustomClusterIcon = (cluster: any) => {
+    return L.divIcon({
+      html: `<div class="cluster-icon">${cluster.getChildCount()}</div>`,
+      iconSize: point(26,26,true)    })
+  }
+
+  
   //RENDER
-  // console.log('loofs', loofsContours)
-  // console.log('leofs', leofsContours)
-  // console.log('lmhofs', lmhofsContours)
-  // console.log('lsofs', lsofsContours)
   if (
-    mapCoords.latitude &&
-    mapCoords.longitude &&
-    !loading
+    mapCoords.latitude != null &&
+    mapCoords.longitude != null &&
+    !loading &&
+    loofsContours && leofsContours && lmhofsContours && lsofsContours && userPoints
   ) {
+    console.log('identifier:', identifier)
+    console.log('map key:', `${mapCoords.latitude},${mapCoords.longitude}`)
     return (
       <MapContainer
         key={`${mapCoords.latitude},${mapCoords.longitude}`}
@@ -932,61 +623,58 @@ const Map = (props: MapProps) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
-        {/* <MapClickHandler /> */}
-        {/* {tempVisible &&
-          props.timeRange == "all" &&
-          interpolatedTempData.length > 0 && (
-            <HeatmapLayer data={interpolatedTempData} />
-          )} */}
-        {/* {tempVisible &&
-          props.timeRange == "week" &&
-          weekDataBucket.length > 0 &&
-          weekDataBucket[currentWeekday - 1].length > 0 && (
-            <HeatmapLayer data={weekDataBucket[currentWeekday - 1]} />
-          )}
-        {tempVisible &&
-          props.timeRange == "month" &&
-          monthDataBucket.length > 0 &&
-          monthDataBucket[currentMonthDate - 1].length > 0 && (
-            <HeatmapLayer data={monthDataBucket[currentMonthDate - 1]} />
-          )} */}
+        <MapClickHandler />
+        <MarkerClusterGroup
+          chunkedLoading
+          iconCreateFunction={createCustomClusterIcon}
+          key={`markers-${date.toDateString()}`}
+        >
+          {userPoints.length > 0 && userPoints.map((item,index) => {
+            // console.log('Adding user point')
+            return (
+              <Marker
+              key={`marker-${index}-${date.toDateString()}`}
+                position={[item['latitude'], item['longitude']]}
+                icon={customUserIcon}
+                >
+                <Popup>
+                  {unit == 'Celsius' ? `${item['temperature']} °C` : `${toFarenheit(item['temperature'])} °F`}
+                </Popup>
+              </Marker>
+            )
+          })
+          }
+        </MarkerClusterGroup>
 
-          {/* {tempVisible && (
+        {tempVisible && (
           <GeoJSON
-            data={g0}
-            style={getFeatureStyle2}
-          />
-        )} */}
-
-        {tempVisible && loofsContours && (
-          <GeoJSON
-            key={`loofs-${date.toISOString()}`}
+            key={`loofs-${identifier}`}
             data={loofsContours}
             style={getFeatureStyle2}
           />
         )}
-        {tempVisible && leofsContours && (
+        {tempVisible && (
           <GeoJSON
-            key={`leofs-${date.toISOString()}`}
+            key={`leofs-${identifier}`}
             data={leofsContours}
             style={getFeatureStyle2}
           />
         )}
-        {tempVisible && lmhofsContours && (
+        {tempVisible && (
           <GeoJSON
-            key={`lmhofs-${date.toISOString()}`}
+            key={`lmhofs-${identifier}`}
             data={lmhofsContours}
             style={getFeatureStyle2}
           />
         )}
-         {tempVisible && lsofsContours && (
+         {tempVisible && (
           <GeoJSON
-            key={`lsofs-${date.toISOString()}`}
+            key={`lsofs-${identifier}`}
             data={lsofsContours}
             style={getFeatureStyle2}
           />
         )}
-        {/* <Marker position={[40.115211, 47.739075]} icon={customIcon}/> */}
+
         {clickedPoint.latitude && clickedPoint.longitude && (
           <Marker
             position={[clickedPoint.latitude, clickedPoint.longitude]}

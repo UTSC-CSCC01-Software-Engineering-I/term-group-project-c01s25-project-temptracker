@@ -16,7 +16,7 @@ export default function Home() {
   const [centerLatitude, setCenterLatitude] = useState<number | null>(null);
   const [centerLongitude, setCenterLongitude] = useState<number | null>(null);
 
-  const [timeRange, setTimeRange] = useState<"week" | "month">("week");
+  const [timeRange, setTimeRange] = useState<"week" | "today">("today");
 
   const handleLatitude = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
@@ -114,12 +114,16 @@ export default function Home() {
             className="border rounded px-3 py-1"
           >
             <option value="week">Last Week</option>
-            <option value="month">Last Month</option>
+            <option value="today">Today</option>
           </select>
         </div>
       </div>
       <div className="map-placeholder">
         <LazyMap
+          key={centerLatitude != null && centerLongitude != null 
+            ? `${centerLatitude}-${centerLongitude}` 
+            : 'null'
+          }
           centerLatitude={centerLatitude}
           centerLongitude={centerLongitude}
           timeRange={timeRange}

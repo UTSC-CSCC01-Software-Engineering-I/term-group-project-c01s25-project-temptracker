@@ -24,10 +24,47 @@ async function submitTemperature(formData) {
       .select()
       .single();
 
-    return {
-      message: "Temperature submitted successfully",
-      data: data,
-    };
+    //update the storage geo json files
+    const formattedDate = `${timestamp.getFullYear()}${(timestamp.getMonth()+1).toString().padStart(2, '0')}${timestamp.getDate().toString().padStart(2, '0')}`
+    const getUserPoints = await supabase.storage.from('geojson').download(`${formattedDate}/user_points.geo.json`)
+    if (getUserPoints.data && !getUserPoints.error) {
+      const text = await getUserPoints.data.text();
+      let geojson = JSON.parse(text)
+     
+      //add the new point
+      geojson.features.push({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [Number(((formData.longitude + 180) % 360) - 180), Number(formData.latitude)]
+                        },
+                "properties": {
+                    "temperature": formData.temperatureUnit === "F" ? ((formData.temperature - 32) * 5) / 9 : formData.temperature,
+                }
+            })
+      //update the geo json in the bucket
+      const jsonString = JSON.stringify(geojson, null, 2);
+      const jsonBlob = new Blob([jsonString], { type: 'application/json' });
+
+      const writeUserPoints = await supabase.storage.from('geojson').upload(
+        `${formattedDate}/user_points.geo.json`,
+        jsonBlob,
+        {
+          upsert: true
+        }
+      )
+      if (!writeUserPoints.error) {
+        return {
+          message: "Temperature submitted successfully",
+          data: data,
+        };
+      }
+    }
+
+    // return {
+    //   message: "Error reading user points froms storage",
+    //   data: data,
+    // };
   } catch (e) {
     console.error("submitTemperatures error:", e);
     throw e;
@@ -58,7 +95,8 @@ async function submitTemperatures(csvData) {
   }
 }
 
+
 module.exports = {
   submitTemperature,
-  submitTemperatures,
+  submitTemperatures
 };
