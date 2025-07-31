@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const { profile } = useUser();
+  const { profile, refreshProfile } = useUser();
   const supabase = createClient();
 
   const [username, setUsername] = useState("");
@@ -57,6 +57,8 @@ export default function SettingsPage() {
     );
 
     if (res.status === 200) {
+      // Refresh the profile from the database to get updated values
+      await refreshProfile();
       toast.success("Settings updated successfully!");
     } else {
       toast.error("Failed to update settings.");

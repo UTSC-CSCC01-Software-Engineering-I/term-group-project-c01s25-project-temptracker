@@ -54,6 +54,8 @@
   .diamond-badge .badge-accent {
     @apply bg-[#27b2ef];
   }
+
+
 }
 
 @theme {
