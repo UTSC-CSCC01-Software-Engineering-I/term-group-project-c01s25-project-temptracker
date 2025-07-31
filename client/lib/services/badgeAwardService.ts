@@ -31,6 +31,7 @@ export async function awardBadges(userId: string) {
     // Show toast notifications for newly earned badges
     const newBadges = response.data || [];
     if (newBadges && newBadges.length > 0) {
+      // TODO: Check if user has enabled badge notifications
       showBadgeToasts(newBadges);
     }
 

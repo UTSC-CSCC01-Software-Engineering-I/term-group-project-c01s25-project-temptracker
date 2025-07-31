@@ -13,9 +13,10 @@ import { useUser } from "../context";
 import axios from "axios";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { sendResetEmail } from "@/lib/supabase/api/forgotPassword";
 
 export default function SettingsPage() {
-  const { profile, refreshProfile } = useUser();
+  const { user, profile, refreshProfile } = useUser();
   const supabase = createClient();
 
   const [username, setUsername] = useState("");
@@ -73,6 +74,22 @@ export default function SettingsPage() {
     setCommunityUpdates(profile?.community_updates || false);
   };
 
+  const handleSendPasswordReset = async () => {
+    if (!user?.email) {
+      toast.error("No email found for current user");
+      return;
+    }
+
+    try {
+      await sendResetEmail(user.email);
+      toast.success("Password reset email sent! Check your inbox.");
+    } catch (err) {
+      toast.error(
+        (err as Error)?.message || "Failed to send password reset email"
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -103,7 +120,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="biography">biography</Label>
+              <Label htmlFor="biography">Biography</Label>
               <Textarea
                 id="biography"
                 placeholder="Tell others about yourself and your research interests..."
@@ -159,9 +176,9 @@ export default function SettingsPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <SecurityButton
                 icon="🔑"
-                title="Change Password"
-                description="Update your account password"
-                onClick={() => console.log("Change password clicked")}
+                title="Send Password Reset"
+                description="Send a password reset email to your inbox"
+                onClick={handleSendPasswordReset}
               />
               <SecurityButton
                 icon="🛡️"
