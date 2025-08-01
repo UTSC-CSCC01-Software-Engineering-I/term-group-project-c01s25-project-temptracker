@@ -76,7 +76,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/release/}
           else
-            VERSION="release/v3.0"
+            VERSION="release-v3.0"
           fi
           echo "Tagging server image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION .
@@ -95,7 +95,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/release/}
           else
-            VERSION="release/v3.0"
+            VERSION="release-v3.0"
           fi
           echo "Tagging client image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION .
