@@ -73,10 +73,14 @@ jobs:
 
       ### Build & push server image (versioned)
       - name: Tag and push server (versioned)
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/release/')
         working-directory: server
         run: |
-          VERSION=${GITHUB_REF##*/}
+          VERSION=${{ github.ref_name }}       # release/v3.0
+          VERSION=${VERSION#release/}          # v3.0
+
+          echo "Tagging server image with version: $VERSION"
+
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION .
           docker push ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION
 
@@ -90,9 +94,14 @@ jobs:
 
       ### Build & push client image (versioned)
       - name: Tag and push client (versioned)
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/release/')
         working-directory: client
         run: |
-          VERSION=${GITHUB_REF##*/}
+          VERSION=${{ github.ref_name }}       # release/v3.0
+          VERSION=${VERSION#release/}          # v3.0
+
+          echo "Tagging client image with version: $VERSION"
+
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION .
           docker push ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION
+
