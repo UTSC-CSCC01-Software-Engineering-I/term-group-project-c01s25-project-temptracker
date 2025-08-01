@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/shadcn/button";
 import { Input } from "@/components/shadcn/input";
 import { Label } from "@/components/shadcn/label";
@@ -10,92 +9,36 @@ import ToggleSwitch from "./ToggleSwitch";
 import NotificationItem from "./NotificationItem";
 import SecurityButton from "./SecurityButton";
 import DeleteAccountModal from "./DeleteAccountModal";
-import { useUser } from "../context";
-import axios from "axios";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { sendResetEmail } from "@/lib/supabase/api/forgotPassword";
+import { useSettingsForm } from "@/hooks/useSettingsForm";
 import { Trophy, Users, Key, Trash2 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { user, profile, refreshProfile } = useUser();
-  const supabase = createClient();
+  const {
+    formData,
+    errors,
+    showDeleteModal,
+    setShowDeleteModal,
+    handleUsernameChange,
+    handleBiographyChange,
+    handleSave,
+    handleReset,
+    handleSendPasswordReset,
+    handleDeleteAccount,
+    setPublicProfile,
+    setBadgeNotifications,
+    setCommunityUpdates,
+    user,
+  } = useSettingsForm();
 
-  const [username, setUsername] = useState("");
-  const [biography, setbiographygraphy] = useState("");
+  const {
+    username,
+    biography,
+    publicProfile,
+    badgeNotifications,
+    communityUpdates,
+  } = formData;
 
-  const [publicProfile, setPublicProfile] = useState(true);
-  const [badgeNotifications, setBadgeNotifications] = useState(true);
-  const [communityUpdates, setCommunityUpdates] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  useEffect(() => {
-    if (profile) {
-      setUsername(profile.username);
-      setbiographygraphy(profile.biography);
-      setPublicProfile(profile.is_public);
-      setBadgeNotifications(profile.badge_notifications);
-      setCommunityUpdates(profile.community_updates);
-    }
-  }, [profile]);
-
-  const handleSave = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const res = await axios.put(
-      `${process.env.NEXT_PUBLIC_API_URL}/users/${profile?.id}/settings`,
-      {
-        username,
-        biography,
-        is_public: publicProfile,
-        badge_notifications: badgeNotifications,
-        community_updates: communityUpdates,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      }
-    );
-
-    if (res.status === 200) {
-      // Refresh the profile from the database to get updated values
-      await refreshProfile();
-      toast.success("Settings updated successfully!");
-    } else {
-      toast.error("Failed to update settings.");
-    }
-  };
-
-  const handleReset = () => {
-    setUsername(profile?.username || "");
-    setbiographygraphy(profile?.biography || "");
-    setPublicProfile(profile?.is_public || false);
-    setBadgeNotifications(profile?.badge_notifications || false);
-    setCommunityUpdates(profile?.community_updates || false);
-  };
-
-  const handleSendPasswordReset = async () => {
-    if (!user?.email) {
-      toast.error("No email found for current user");
-      return;
-    }
-
-    try {
-      await sendResetEmail(user.email);
-      toast.success("Password reset email sent! Check your inbox.");
-    } catch (err) {
-      toast.error(
-        (err as Error)?.message || "Failed to send password reset email"
-      );
-    }
-  };
-
-  const handleDeleteAccount = () => {
-    setShowDeleteModal(true);
-  };
+  const { usernameError, biographyError } = errors;
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,8 +65,12 @@ export default function SettingsPage() {
                 type="text"
                 placeholder="Enter your display name"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={handleUsernameChange}
+                className={usernameError ? "border-red-500" : ""}
               />
+              {usernameError && (
+                <p className="text-sm text-red-500">{usernameError}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -134,9 +81,19 @@ export default function SettingsPage() {
                 rows={4}
                 value={biography}
                 maxLength={200}
-                onChange={(e) => setbiographygraphy(e.target.value)}
-                className="resize-none"
+                onChange={handleBiographyChange}
+                className={`resize-none ${
+                  biographyError ? "border-red-500" : ""
+                }`}
               />
+              <div className="flex justify-between items-center">
+                <div>
+                  {biographyError && (
+                    <p className="text-sm text-red-500">{biographyError}</p>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500">{biography.length}/200</p>
+              </div>
             </div>
 
             <ToggleSwitch
