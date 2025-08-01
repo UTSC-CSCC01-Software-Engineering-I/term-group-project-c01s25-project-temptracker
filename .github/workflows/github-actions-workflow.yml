@@ -8,7 +8,7 @@ on:
       - develop
       - feat/ci-setup
     tags:
-      - 'release/v*'  # Must match your tags like release/v3.0
+      - 'release/v*'  # Triggers on tags like release/v3.0
   pull_request:
     branches:
       - main
@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: 18
 
-      ### Inject backend env
+      # Backend env setup
       - name: Create server/.env
         working-directory: server
         run: |
@@ -42,9 +42,9 @@ jobs:
         working-directory: server
         run: |
           npm ci
-#          npm test
+#         npm test
 
-      ### Inject frontend env
+      # Frontend env setup
       - name: Create client/.env.local and .env.test
         working-directory: client
         run: |
@@ -59,11 +59,11 @@ jobs:
           npm ci
           npm test
 
-      ### Docker login
+      # Docker login
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      ### Build & push server image (latest)
+      # Build & push server image (latest)
       - name: Build and push server (latest)
         if: github.ref_type == 'branch'
         working-directory: server
@@ -71,17 +71,17 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/myapp-server:latest
 
-      ### Build & push server image (versioned)
+      # Build & push server image (versioned)
       - name: Tag and push server (versioned)
-        if: startsWith(github.ref_name, 'release/')
+        if: startsWith(github.ref, 'refs/tags/release/')
         working-directory: server
         run: |
-          VERSION=${GITHUB_REF_NAME#release/}
+          VERSION=${GITHUB_REF#refs/tags/release/}
           echo "Tagging server image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION .
           docker push ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION
 
-      ### Build & push client image (latest)
+      # Build & push client image (latest)
       - name: Build and push client (latest)
         if: github.ref_type == 'branch'
         working-directory: client
@@ -89,12 +89,12 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/myapp-client:latest
 
-      ### Build & push client image (versioned)
+      # Build & push client image (versioned)
       - name: Tag and push client (versioned)
-        if: startsWith(github.ref_name, 'release/')
+        if: startsWith(github.ref, 'refs/tags/release/')
         working-directory: client
         run: |
-          VERSION=${GITHUB_REF_NAME#release/}
+          VERSION=${GITHUB_REF#refs/tags/release/}
           echo "Tagging client image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION .
           docker push ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION
