@@ -122,11 +122,14 @@ async function updateUserSubmission(userId) {
 
 async function updateUserSettings(userId, settings) {
   try {
-    await supabase
+    const { data } = await supabase
       .from("user_profiles")
       .update(settings)
       .eq("id", userId)
+      .select(`username`)
       .single();
+
+    return data;
   } catch (e) {
     console.error("Error updating user settings:", e);
     throw new Error("Database error");

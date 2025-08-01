@@ -114,6 +114,12 @@ export function useSettingsForm() {
       }
     );
 
+    if (res.data === null) {
+      toast.error("Username taken!");
+      await refreshProfile();
+      return;
+    }
+
     if (res.status === 200) {
       await refreshProfile();
       toast.success("Settings updated successfully!");
