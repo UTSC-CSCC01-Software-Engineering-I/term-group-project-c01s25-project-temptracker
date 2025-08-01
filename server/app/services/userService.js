@@ -7,6 +7,15 @@ async function getAllUsers() {
   return data;
 }
 
+async function getAllEmailUsers() {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("email")
+    .eq("community_updates", true);
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 async function getUserSubmissions(userId) {
   try {
     const { data } = await supabase
@@ -193,6 +202,7 @@ async function awardUserBadges(userId) {
 
 module.exports = {
   getAllUsers,
+  getAllEmailUsers,
   getUserSubmissions,
   getUserStats,
   updateUserStreak,

@@ -1,23 +1,40 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import axios from "axios";
 
 export default function EmailForm() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
+    "idle"
+  );
 
   const sendEmail = async () => {
     setStatus("sending");
 
     try {
-      const res = await fetch("http://localhost:8080/api/notify-all", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, message }),
-      });
+      const supabase = await createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (!res.ok) throw new Error("Failed to send");
+      const API_BASE_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+
+      const res = await axios.post(
+        `${API_BASE_URL}/notify-all`,
+        { subject, message },
+        {
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (res.status !== 200) throw new Error("Failed to send");
 
       setStatus("sent");
       setSubject("");
@@ -51,8 +68,12 @@ export default function EmailForm() {
       >
         {status === "sending" ? "Sending..." : "Send Email"}
       </button>
-      {status === "sent" && <p className="text-green-600">Emails sent successfully!</p>}
-      {status === "error" && <p className="text-red-600">Failed to send emails.</p>}
+      {status === "sent" && (
+        <p className="text-green-600">Emails sent successfully!</p>
+      )}
+      {status === "error" && (
+        <p className="text-red-600">Failed to send emails.</p>
+      )}
     </div>
   );
 }
