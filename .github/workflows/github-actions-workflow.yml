@@ -67,8 +67,8 @@ jobs:
       - name: Build and push server (latest)
         working-directory: server
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-server:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:master .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-server:master
 
       - name: Tag and push server (versioned)
         working-directory: server
@@ -76,7 +76,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/release/}
           else
-            VERSION=$(date +%Y%m%d%H%M%S)
+            VERSION="release/v3.0"
           fi
           echo "Tagging server image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION .
@@ -86,8 +86,8 @@ jobs:
       - name: Build and push client (latest)
         working-directory: client
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-client:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:master .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-client:master
 
       - name: Tag and push client (versioned)
         working-directory: client
@@ -95,7 +95,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/release/}
           else
-            VERSION=$(date +%Y%m%d%H%M%S)
+            VERSION="release/v3.0"
           fi
           echo "Tagging client image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION .
