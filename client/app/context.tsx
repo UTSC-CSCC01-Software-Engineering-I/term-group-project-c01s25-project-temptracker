@@ -16,7 +16,7 @@ type Profile = {
   id: string;
   username: string;
   role: string | null; // for now
-  bio: string;
+  biography: string;
   is_public: boolean;
   badge_notifications: boolean;
   community_updates: boolean;
