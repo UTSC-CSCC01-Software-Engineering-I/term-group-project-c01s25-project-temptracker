@@ -93,6 +93,16 @@ async function awardUserBadges(req, res) {
   }
 }
 
+async function getPublicUsers(req, res) {
+  try {
+    const users = await userService.getPublicUsers();
+
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   getUsers,
   deleteUser,
@@ -103,4 +113,5 @@ module.exports = {
   updateUserSettings,
   getUserBadges,
   awardUserBadges,
+  getPublicUsers,
 };

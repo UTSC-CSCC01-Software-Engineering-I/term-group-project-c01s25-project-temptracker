@@ -6,6 +6,9 @@ const { verifySelfAccess } = require("../middleware/verifySelf");
 
 const userRouter = Router();
 
+// Public routes (no authentication required)
+userRouter.get("/public", userController.getPublicUsers);
+
 userRouter.use(authenticateUser);
 userRouter.get("/", requireAdmin, userController.getUsers);
 userRouter.delete("/:id", verifySelfAccess, userController.deleteUser);
@@ -38,6 +41,5 @@ userRouter.post(
   verifySelfAccess,
   userController.awardUserBadges
 );
-
 
 module.exports = userRouter;

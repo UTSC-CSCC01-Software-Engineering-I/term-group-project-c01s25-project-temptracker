@@ -8,9 +8,7 @@ async function getAllUsers() {
 }
 
 async function deleteUser(userId) {
-  const { error: deleteError } = await supabase.auth.admin.deleteUser(
-    userId
-  );
+  const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
 
   if (deleteError) throw new Error(deleteError.message);
 }
@@ -208,6 +206,45 @@ async function awardUserBadges(userId) {
   }
 }
 
+async function getPublicUsers() {
+  try {
+    // get all public user profiles
+    const { data: profiles, error: profileError } = await supabase
+      .from("user_profiles")
+      .select(
+        `
+        id,
+        username,
+        biography,
+        is_public
+      `
+      )
+      .eq("is_public", true);
+
+    if (profileError) throw new Error(profileError.message);
+
+    // Get auth users data to include email_confirmed_at
+    const { data: authUsers, error: authError } =
+      await supabase.auth.admin.listUsers();
+    if (authError) throw new Error(authError.message);
+
+    // Merge the data
+    const publicUsersWithAuthData = profiles.map((profile) => {
+      const authUser = authUsers.users.find((user) => user.id === profile.id);
+      return {
+        ...profile,
+        email_confirmed_at: authUser?.email_confirmed_at || null,
+        created_at: authUser?.created_at || profile.created_at,
+      };
+    });
+
+    return publicUsersWithAuthData || [];
+  } catch (e) {
+    console.error("Error fetching public users:", e);
+    throw new Error("Database error");
+  }
+}
+
 module.exports = {
   getAllUsers,
   deleteUser,
@@ -219,4 +256,5 @@ module.exports = {
   updateUserSettings,
   getUserBadges,
   awardUserBadges,
+  getPublicUsers,
 };
