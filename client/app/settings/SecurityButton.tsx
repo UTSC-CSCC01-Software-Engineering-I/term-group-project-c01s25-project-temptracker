@@ -5,7 +5,7 @@ interface SecurityButtonProps {
   title: string;
   description: string;
   onClick?: () => void;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "destructive";
 }
 
 export default function SecurityButton({
@@ -19,12 +19,14 @@ export default function SecurityButton({
   const colorClass =
     variant === "primary"
       ? "hover:border-primary/30 bg-primary/10 text-primary"
+      : variant === "destructive"
+      ? "hover:border-destructive/30 bg-destructive/10 text-destructive"
       : "hover:border-secondary/30 bg-secondary/10 text-secondary";
 
   return (
     <Button
       variant="outline"
-      onClick={onClick}      
+      onClick={onClick}
       className="p-4 h-auto rounded-xl hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 justify-start"
       {...props}
     >

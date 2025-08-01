@@ -9,6 +9,7 @@ import SettingsSection from "./SettingsSection";
 import ToggleSwitch from "./ToggleSwitch";
 import NotificationItem from "./NotificationItem";
 import SecurityButton from "./SecurityButton";
+import DeleteAccountModal from "./DeleteAccountModal";
 import { useUser } from "../context";
 import axios from "axios";
 import { createClient } from "@/lib/supabase/client";
@@ -22,9 +23,10 @@ export default function SettingsPage() {
   const [username, setUsername] = useState("");
   const [biography, setbiographygraphy] = useState("");
 
-  const [publicProfile, setPublicProfile] = useState(false);
-  const [badgeNotifications, setBadgeNotifications] = useState(false);
-  const [communityUpdates, setCommunityUpdates] = useState(false);
+  const [publicProfile, setPublicProfile] = useState(true);
+  const [badgeNotifications, setBadgeNotifications] = useState(true);
+  const [communityUpdates, setCommunityUpdates] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -88,6 +90,10 @@ export default function SettingsPage() {
         (err as Error)?.message || "Failed to send password reset email"
       );
     }
+  };
+
+  const handleDeleteAccount = () => {
+    setShowDeleteModal(true);
   };
 
   return (
@@ -181,10 +187,11 @@ export default function SettingsPage() {
                 onClick={handleSendPasswordReset}
               />
               <SecurityButton
-                icon="🛡️"
-                title="Two-Factor Authentication"
-                description="Add an extra layer of security"
-                onClick={() => console.log("Two-Factor Authentication clicked")}
+                icon="🗑️"
+                title="Delete Account"
+                description="Permanently delete your account and all data"
+                onClick={handleDeleteAccount}
+                variant="destructive"
               />
             </div>
           </SettingsSection>
@@ -200,6 +207,13 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        userEmail={user?.email}
+      />
     </div>
   );
 }

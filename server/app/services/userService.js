@@ -7,6 +7,14 @@ async function getAllUsers() {
   return data;
 }
 
+async function deleteUser(userId) {
+  const { error: deleteError } = await supabase.auth.admin.deleteUser(
+    userId
+  );
+
+  if (deleteError) throw new Error(deleteError.message);
+}
+
 async function getAllEmailUsers() {
   const { data, error } = await supabase
     .from("user_profiles")
@@ -202,6 +210,7 @@ async function awardUserBadges(userId) {
 
 module.exports = {
   getAllUsers,
+  deleteUser,
   getAllEmailUsers,
   getUserSubmissions,
   getUserStats,
