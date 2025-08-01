@@ -1,7 +1,8 @@
 import { Switch } from "@/components/shadcn/switch";
+import { ReactNode } from "react";
 
 interface NotificationItemProps {
-  icon: string;
+  icon: ReactNode;
   iconBgColor: string;
   iconTextColor: string;
   title: string;

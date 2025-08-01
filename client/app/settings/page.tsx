@@ -15,6 +15,7 @@ import axios from "axios";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { sendResetEmail } from "@/lib/supabase/api/forgotPassword";
+import { Trophy, Users, Key, Trash2 } from "lucide-react";
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useUser();
@@ -153,7 +154,7 @@ export default function SettingsPage() {
           >
             <div className="space-y-4">
               <NotificationItem
-                icon="🏆"
+                icon={<Trophy className="w-5 h-5" />}
                 iconBgColor="bg-yellow-100"
                 iconTextColor="text-yellow-600"
                 title="Badge Notifications"
@@ -163,7 +164,7 @@ export default function SettingsPage() {
               />
 
               <NotificationItem
-                icon="👥"
+                icon={<Users className="w-5 h-5" />}
                 iconBgColor="bg-green-100"
                 iconTextColor="text-green-600"
                 title="Community Updates"
@@ -181,13 +182,13 @@ export default function SettingsPage() {
           >
             <div className="grid gap-4 md:grid-cols-2">
               <SecurityButton
-                icon="🔑"
+                icon={<Key className="w-4 h-4" />}
                 title="Send Password Reset"
                 description="Send a password reset email to your inbox"
                 onClick={handleSendPasswordReset}
               />
               <SecurityButton
-                icon="🗑️"
+                icon={<Trash2 className="w-4 h-4" />}
                 title="Delete Account"
                 description="Permanently delete your account and all data"
                 onClick={handleDeleteAccount}

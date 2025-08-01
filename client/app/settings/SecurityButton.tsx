@@ -1,7 +1,8 @@
 import { Button } from "@/components/shadcn/button";
+import { ReactNode } from "react";
 
 interface SecurityButtonProps {
-  icon: string;
+  icon: string | ReactNode;
   title: string;
   description: string;
   onClick?: () => void;
@@ -34,7 +35,11 @@ export default function SecurityButton({
         <div
           className={`w-8 h-8 ${colorClass} rounded-lg flex items-center justify-center`}
         >
-          <span className="text-sm">{icon}</span>
+          {typeof icon === "string" ? (
+            <span className="text-sm">{icon}</span>
+          ) : (
+            icon
+          )}
         </div>
         <div className="text-left">
           <p className="font-medium">{title}</p>
