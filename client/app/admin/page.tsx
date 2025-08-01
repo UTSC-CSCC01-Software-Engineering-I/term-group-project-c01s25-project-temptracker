@@ -5,6 +5,7 @@ import { useUser } from "@/app/context";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import AdminEmailForm from "@/components/ui/emailForm";
+import Image from "next/image";
 
 const supabase = createClient();
 const ITEMS_PER_PAGE = 20;
@@ -113,7 +114,7 @@ export default function Profile() {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold mb-4">
-        Welcome, {user?.user_metadata?.username || "Admin"}
+        Welcome, {profile?.username || "Admin"}
       </h1>
 
       {/* User Info */}
@@ -124,14 +125,16 @@ export default function Profile() {
           </span>
         </div>
         <div className="flex items-center bg-white p-6 space-x-6">
-          <img
-            src={"profile.png"}
+          <Image
+            src={"/profile.png"}
             alt="Profile"
-            className="w-20 h-20 rounded-full object-cover"
+            height={80}
+            width={80}
+            className="rounded-full"
           />
           <div>
-            <h2 className="text-xl font-semibold text-dark-blue">
-              {user?.user_metadata?.username || "Username"}
+            <h2 className="text-xl font-semibold text-dark-blue text-left">
+              {profile?.username || "Username"}
             </h2>
             <p className="text-gray-600">
               {user?.email || "email@example.com"}
