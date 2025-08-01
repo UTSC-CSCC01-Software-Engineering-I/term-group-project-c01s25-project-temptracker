@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import ProfileDropdown from "./ProfileDropdown";
+import Image from "next/image";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -50,10 +51,12 @@ export default function Header() {
 
         <div className="pr-2">
           <Link href="/">
-            <img
+            <Image
               src="/glow.png"
               alt="GLOW Logo"
               className="h-10 md:h-12 w-auto"
+              width={1000}
+              height={1000}
             />
           </Link>
         </div>

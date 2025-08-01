@@ -5,6 +5,7 @@ import { useUser } from "@/app/context";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import AdminEmailForm from "@/components/ui/emailForm";
+import Image from "next/image";
 
 const supabase = createClient();
 const ITEMS_PER_PAGE = 20;
@@ -24,7 +25,9 @@ export default function Profile() {
   const uniqueDates = [
     "All",
     ...Array.from(
-      new Set(submissions.map((s) => format(new Date(s.measured_on), "yyyy-MM-dd")))
+      new Set(
+        submissions.map((s) => format(new Date(s.measured_on), "yyyy-MM-dd"))
+      )
     ),
   ];
 
@@ -34,12 +37,15 @@ export default function Profile() {
 
       const query =
         profile.role === "admin"
-          ? supabase.from("temperatures").select("*").order("measured_on", { ascending: false })
+          ? supabase
+              .from("temperatures")
+              .select("*")
+              .order("measured_on", { ascending: false })
           : supabase
-            .from("temperatures")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("measured_on", { ascending: false });
+              .from("temperatures")
+              .select("*")
+              .eq("user_id", user.id)
+              .order("measured_on", { ascending: false });
 
       const { data, error } = await query;
 
@@ -87,9 +93,7 @@ export default function Profile() {
       console.error("Error toggling verified:", error);
     } else {
       setSubmissions((prev) =>
-        prev.map((s) =>
-          s.id === id ? { ...s, is_verified: !current } : s
-        )
+        prev.map((s) => (s.id === id ? { ...s, is_verified: !current } : s))
       );
     }
   };
@@ -98,8 +102,8 @@ export default function Profile() {
     filteredDate === "All"
       ? submissions
       : submissions.filter(
-        (s) => format(new Date(s.measured_on), "yyyy-MM-dd") === filteredDate
-      );
+          (s) => format(new Date(s.measured_on), "yyyy-MM-dd") === filteredDate
+        );
 
   const totalPages = Math.ceil(filteredSubmissions.length / ITEMS_PER_PAGE);
   const paginatedSubmissions = filteredSubmissions.slice(
@@ -110,7 +114,7 @@ export default function Profile() {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold mb-4">
-        Welcome, {user?.user_metadata?.username || "Admin"}
+        Welcome, {profile?.username || "Admin"}
       </h1>
 
       {/* User Info */}
@@ -121,17 +125,23 @@ export default function Profile() {
           </span>
         </div>
         <div className="flex items-center bg-white p-6 space-x-6">
-          <img
-            src={"profile.png"}
+          <Image
+            src={"/profile.png"}
             alt="Profile"
-            className="w-20 h-20 rounded-full object-cover"
+            height={80}
+            width={80}
+            className="rounded-full"
           />
           <div>
-            <h2 className="text-xl font-semibold text-dark-blue">
-              {user?.user_metadata?.username || "Username"}
+            <h2 className="text-xl font-semibold text-dark-blue text-left">
+              {profile?.username || "Username"}
             </h2>
-            <p className="text-gray-600">{user?.email || "email@example.com"}</p>
-            <p className="text-sm text-gray-500 mt-1">Signed in with {provider}</p>
+            <p className="text-gray-600">
+              {user?.email || "email@example.com"}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Signed in with {provider}
+            </p>
             <p className="text-sm text-gray-500">User since {userSince}</p>
           </div>
         </div>
@@ -140,9 +150,11 @@ export default function Profile() {
       {/* Top Controls */}
       {profile?.role === "admin" && (
         <div className="mb-8">
-  <h2 className="text-2xl font-semibold mb-4 text-left">Send Email to Users</h2>
-  <AdminEmailForm />
-</div>
+          <h2 className="text-2xl font-semibold mb-4 text-left">
+            Send Community Update to Users
+          </h2>
+          <AdminEmailForm />
+        </div>
       )}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
         <h2 className="text-2xl font-semibold">My Submissions</h2>
@@ -189,31 +201,56 @@ export default function Profile() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-nav-blue text-white">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase">Temp ({useFahrenheit ? "°F" : "°C"})</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase">Location (lat, long)</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase">Notes</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase">
+                Date
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase">
+                Temp ({useFahrenheit ? "°F" : "°C"})
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase">
+                Location (lat, long)
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase">
+                Notes
+              </th>
               {profile?.role === "admin" && (
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Verified</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase">
+                  Verified
+                </th>
               )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 text-gray-700">
             {paginatedSubmissions.map(
-              ({ id, measured_on, temperature, latitude, longitude, notes, is_verified }) => (
+              ({
+                id,
+                measured_on,
+                temperature,
+                latitude,
+                longitude,
+                notes,
+                is_verified,
+              }) => (
                 <tr key={id} className="hover:bg-blue-100 transition-colors">
-                  <td className="px-6 py-4">{format(parseISO(measured_on), "yyyy-MM-dd")}</td>
                   <td className="px-6 py-4">
-                    {useFahrenheit ? ((temperature * 9) / 5 + 32).toFixed(1) : temperature.toFixed(1)}
+                    {format(parseISO(measured_on), "yyyy-MM-dd")}
                   </td>
-                  <td className="px-6 py-4">{latitude.toFixed(2)}, {longitude.toFixed(2)}</td>
+                  <td className="px-6 py-4">
+                    {useFahrenheit
+                      ? ((temperature * 9) / 5 + 32).toFixed(1)
+                      : temperature.toFixed(1)}
+                  </td>
+                  <td className="px-6 py-4">
+                    {latitude.toFixed(2)}, {longitude.toFixed(2)}
+                  </td>
                   <td className="px-6 py-4">{notes}</td>
                   {profile?.role === "admin" && (
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleToggleVerified(id, is_verified)}
-                        className={`px-3 py-1 text-sm rounded ${is_verified ? "bg-red-500" : "bg-green-500"
-                          } text-white hover:opacity-90`}
+                        className={`px-3 py-1 text-sm rounded ${
+                          is_verified ? "bg-red-500" : "bg-green-500"
+                        } text-white hover:opacity-90`}
                       >
                         {is_verified ? "Unverify" : "Verify"}
                       </button>

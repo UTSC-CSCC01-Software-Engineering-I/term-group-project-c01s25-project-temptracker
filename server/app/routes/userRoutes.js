@@ -6,8 +6,13 @@ const { verifySelfAccess } = require("../middleware/verifySelf");
 
 const userRouter = Router();
 
+// Public routes (no authentication required)
+userRouter.get("/public", userController.getPublicUsers);
+userRouter.get("/profile/:username", userController.getUserPublicProfile);
+
 userRouter.use(authenticateUser);
 userRouter.get("/", requireAdmin, userController.getUsers);
+userRouter.delete("/:id", verifySelfAccess, userController.deleteUser);
 
 userRouter.get(
   "/:id/submissions",
@@ -15,8 +20,21 @@ userRouter.get(
   userController.getUserSubmissions
 );
 userRouter.get("/:id/stats", verifySelfAccess, userController.getUserStats);
-userRouter.post("/:id/streak", verifySelfAccess, userController.updateUserStreak);
-userRouter.post("/:id/submissions", verifySelfAccess, userController.updateUserSubmission);
+userRouter.post(
+  "/:id/streak",
+  verifySelfAccess,
+  userController.updateUserStreak
+);
+userRouter.post(
+  "/:id/submissions",
+  verifySelfAccess,
+  userController.updateUserSubmission
+);
+userRouter.put(
+  "/:id/settings",
+  verifySelfAccess,
+  userController.updateUserSettings
+);
 
 userRouter.get("/:id/badges", verifySelfAccess, userController.getUserBadges);
 userRouter.post(
