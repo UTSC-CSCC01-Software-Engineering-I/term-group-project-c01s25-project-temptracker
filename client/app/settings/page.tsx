@@ -32,7 +32,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (profile) {
       setUsername(profile.username);
-      setbiographygraphy(profile.bio);
+      setbiographygraphy(profile.biography);
       setPublicProfile(profile.is_public);
       setBadgeNotifications(profile.badge_notifications);
       setCommunityUpdates(profile.community_updates);
@@ -71,7 +71,7 @@ export default function SettingsPage() {
 
   const handleReset = () => {
     setUsername(profile?.username || "");
-    setbiographygraphy(profile?.bio || "");
+    setbiographygraphy(profile?.biography || "");
     setPublicProfile(profile?.is_public || false);
     setBadgeNotifications(profile?.badge_notifications || false);
     setCommunityUpdates(profile?.community_updates || false);
