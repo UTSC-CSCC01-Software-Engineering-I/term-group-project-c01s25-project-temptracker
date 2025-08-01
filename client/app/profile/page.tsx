@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useUserSubmissions } from "@/hooks/useUserSubmissions";
 import Image from "next/image";
 import ProfileStats from "./ProfileStats";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 export default function Profile() {
   const { user, profile } = useUser();

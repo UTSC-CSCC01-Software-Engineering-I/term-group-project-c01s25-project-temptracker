@@ -14,9 +14,9 @@ import {
 } from "@/components/shadcn/dialog";
 import { toast } from "sonner";
 import axios from "axios";
-import { createClient } from "@/lib/supabase/client";
 import { useUser } from "../context";
 import { useRouter } from "next/navigation";
+import { getAccessToken, signOut } from "@/lib/authSession";
 
 interface DeleteAccountModalProps {
   isOpen: boolean;
@@ -40,22 +40,18 @@ export default function DeleteAccountModal({
 
   const confirmDeleteAccount = async () => {
     // Check if email matches user's email
+    const access_token = await getAccessToken();
     if (confirmationEmail !== userEmail) {
       toast.error("Email address does not match your account email");
       return;
     }
 
     try {
-      const supabase = await createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
       const response = await axios.delete(
         `${process.env.NEXT_PUBLIC_API_URL}/users/${user?.id}`,
         {
           headers: {
-            Authorization: `Bearer ${session?.access_token}`,
+            Authorization: `Bearer ${access_token}`,
           },
         }
       );
@@ -63,7 +59,7 @@ export default function DeleteAccountModal({
         toast.success("Account deleted successfully");
 
         // Log out the user and redirect to login page
-        await supabase.auth.signOut();
+        await signOut();
         router.push("/login");
       } else {
         toast.error("Failed to delete account");
