@@ -11,6 +11,7 @@ export default function Header() {
     { href: "/", label: "Home" },
     { href: "/upload", label: "Upload" },
     { href: "/community", label: "Community" },
+    { href: "/users", label: "Users" },
     { href: "/about", label: "About" },
   ];
 
