@@ -1,4 +1,4 @@
-import { createClient } from "../supabase/client";
+import { createClient } from "../../supabase/client";
 import { toast } from "sonner";
 
 const supabase = createClient();
@@ -34,7 +34,9 @@ export async function onUpload({
     }
 
     if ((count ?? 0) > 0) {
-      toast.error("Sorry, personal accounts can only upload one photo per week.");
+      toast.error(
+        "Sorry, personal accounts can only upload one photo per week."
+      );
       return;
     }
   }
