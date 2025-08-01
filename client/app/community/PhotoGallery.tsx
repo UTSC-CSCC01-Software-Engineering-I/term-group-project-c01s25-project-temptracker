@@ -91,7 +91,7 @@ export default function PhotoGallery() {
   return (
     <>
       <div className="flex justify-center px-4">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end max-w-xl w-full">
+        <div className="flex flex-wrap gap-4 items-end justify-center max-w-xl w-full">
           <div className="flex flex-col">
             <label className="text-sm text-gray-600 mb-1">Time Range</label>
             <select
@@ -122,8 +122,9 @@ export default function PhotoGallery() {
             </select>
           </div>
 
+          {/* Only show upload modal if user is signed in, otherwise render a placeholder to keep grid layout */}
           {/* @ts-ignore */}
-          <UploadPhotoModal onUpload={handleUpload} />
+          {user ? <UploadPhotoModal onUpload={handleUpload} /> : <div />}
 
           {selectedPhoto && (
             <PhotoModal
