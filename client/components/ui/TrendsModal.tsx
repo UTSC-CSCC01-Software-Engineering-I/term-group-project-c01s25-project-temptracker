@@ -1,5 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { getClosestVerifiedTemps, getAverageClosestTemperature, TemperaturePoint } from "@/lib/services/tempByCoordinatesService";
+import {
+  getClosestVerifiedTemps,
+  getAverageClosestTemperature,
+  TemperaturePoint,
+} from "@/lib/services/tempByCoordinatesService";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 type TrendsModalProps = {
   latitude: number | null;
@@ -7,8 +19,14 @@ type TrendsModalProps = {
   onClose: () => void;
 };
 
-const TrendsModal: React.FC<TrendsModalProps> = ({ latitude, longitude, onClose }) => {
-  const [closestTemps, setClosestTemps] = useState<TemperaturePoint[] | null>(null);
+const TrendsModal: React.FC<TrendsModalProps> = ({
+  latitude,
+  longitude,
+  onClose,
+}) => {
+  const [closestTemps, setClosestTemps] = useState<TemperaturePoint[] | null>(
+    null
+  );
   const [avgTemp, setAvgTemp] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,24 +36,45 @@ const TrendsModal: React.FC<TrendsModalProps> = ({ latitude, longitude, onClose 
       setLoading(true);
       setError(null);
 
-      // fetch both asynchronously
       Promise.all([
-        getClosestVerifiedTemps(latitude, longitude, 5, "30 days"),
+        getClosestVerifiedTemps(latitude, longitude, 10, "30 days"),
         getAverageClosestTemperature(latitude, longitude),
       ])
         .then(([temps, avg]) => {
           setClosestTemps(temps);
           setAvgTemp(avg);
         })
-        .catch((err) => {
+        .catch(() => {
           setError("Failed to load trend data");
-          console.error(err);
         })
-        .finally(() => {
-          setLoading(false);
-        });
+        .finally(() => setLoading(false));
     }
   }, [latitude, longitude]);
+
+  const chartData = closestTemps
+    ? [...closestTemps]
+        .sort(
+          (a, b) =>
+            new Date(a.measured_on).getTime() -
+            new Date(b.measured_on).getTime()
+        )
+        .map((temp) => ({
+          date: new Date(temp.measured_on).toLocaleDateString(),
+          temperature: temp.temperature,
+        }))
+    : [];
+
+  const latestTemp =
+    closestTemps && closestTemps.length > 0
+      ? closestTemps.reduce((a, b) =>
+          new Date(a.measured_on) > new Date(b.measured_on) ? a : b
+        ).temperature
+      : null;
+
+  const tempDiff =
+    avgTemp !== null && latestTemp !== null
+      ? (latestTemp - avgTemp).toFixed(2)
+      : null;
 
   return (
     <div
@@ -43,52 +82,90 @@ const TrendsModal: React.FC<TrendsModalProps> = ({ latitude, longitude, onClose 
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-md p-6 max-w-lg w-full relative"
+        className="bg-white rounded-md p-4 md:p-8 max-w-md md:max-w-2xl w-full relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 font-bold text-xl"
+          className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 font-bold text-xl"
           onClick={onClose}
           aria-label="Close modal"
         >
           &times;
         </button>
 
-        <h2 className="text-xl font-semibold mb-4">Trend Analysis</h2>
+        <h2 className="text-lg font-semibold mb-1">Selected Location Trends</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Coordinates: {latitude?.toFixed(4)}, {longitude?.toFixed(4)}
+        </p>
 
-        {loading && <p>Loading trend data...</p>}
-
-        {error && <p className="text-red-600">{error}</p>}
+        {loading && (
+          <p className="text-center text-gray-500 mb-4">
+            Loading trend data...
+          </p>
+        )}
+        {error && <p className="text-center text-red-600 mb-4">{error}</p>}
 
         {!loading && !error && (
           <>
-            {latitude !== null && longitude !== null ? (
-              <div>
-                <p>
-                  Showing trends for coordinates:
-                  <br />
-                  <strong>Latitude:</strong> {latitude.toFixed(4)}
-                  <strong>Longitude:</strong> {longitude.toFixed(4)}
-                </p>
+            <div className="flex flex-wrap md:flex-nowrap gap-2 mb-4 justify-center">
+              <div className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium select-none whitespace-nowrap">
+                Avg Temp (30d):{" "}
+                {avgTemp !== null ? `${avgTemp.toFixed(2)} °C` : "No data"}
+              </div>
+              {tempDiff !== null && (
+                <div
+                  className={`px-3 py-1 rounded-full text-sm font-medium select-none whitespace-nowrap ${
+                    parseFloat(tempDiff) > 0
+                      ? "bg-red-100 text-red-700"
+                      : "bg-blue-100 text-blue-700"
+                  }`}
+                >
+                  {parseFloat(tempDiff) > 0
+                    ? `${tempDiff}°C warmer than avg`
+                    : `${Math.abs(parseFloat(tempDiff))}°C colder than avg`}
+                </div>
+              )}
+            </div>
 
-                <p className="mt-4 font-semibold">Average Temperature (last 30 days):</p>
-                <p>{avgTemp !== null ? `${avgTemp.toFixed(2)} °C` : "No data"}</p>
-
-                <p className="mt-4 font-semibold">Closest Verified Temperatures:</p>
-                {closestTemps && closestTemps.length > 0 ? (
-                  <ul className="list-disc list-inside max-h-40 overflow-auto">
-                    {closestTemps.map((temp) => (
-                      <li key={temp.temp_id}>
-                        {temp.temperature} °C — measured on {new Date(temp.measured_on).toLocaleDateString()} — {temp.distance_km.toFixed(2)} km away
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No nearby temperature points found.</p>
-                )}
+            {chartData.length > 0 ? (
+              <div className="w-full h-40 md:h-60">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={chartData}
+                    margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                  >
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={{ stroke: "#ccc" }}
+                    />
+                    <YAxis
+                      domain={["auto", "auto"]}
+                      unit="°C"
+                      tick={{ fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={{ stroke: "#ccc" }}
+                    />
+                    <Tooltip
+                      contentStyle={{ fontSize: 12 }}
+                      formatter={(value: any) => [`${value} °C`, "Temp"]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="temperature"
+                      stroke="#4f46e5"
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             ) : (
-              <p>No coordinates selected.</p>
+              <p className="text-center text-gray-500">
+                No temperature data available.
+              </p>
             )}
           </>
         )}
