@@ -42,6 +42,7 @@ import { Over_the_Rainbow } from "next/font/google";
 import { useParams } from "next/navigation";
 import PointTrendPrompt from "../ui/PointTrendPrompt";
 import MapControls from "../ui/MapControls";
+import TrendsModal from "../ui/TrendsModal";
 
 interface MyDataType {
   latitude: string;
@@ -61,6 +62,7 @@ const Map = (props: MapProps) => {
   const [tempVisible, setTempVisible] = useState(true);
   const [loading, setLoading] = useState(false);
   const [identifier, setIdentifier] = useState("");
+  const [showTrendsModal, setShowTrendsModal] = useState(false);
 
   const toggleUpdateComplete = () => {
     if (props.timeRange == "week") {
@@ -800,9 +802,16 @@ const Map = (props: MapProps) => {
           clickedPoint={clickedPoint}
           onTrendPromptClick={() => {
             console.log("Clicked point:", clickedPoint);
-            // setShowTrendsModal(true);
+            setShowTrendsModal(true);
           }}
         />
+        {showTrendsModal && (
+          <TrendsModal
+            latitude={clickedPoint?.latitude ?? null}
+            longitude={clickedPoint?.longitude ?? null}
+            onClose={() => setShowTrendsModal(false)}
+          />
+        )}
 
         <div
           style={{
