@@ -1,7 +1,5 @@
-import { createClient } from "../supabase/client";
 import axios from "axios";
-
-const supabase = createClient();
+import { getAccessToken } from "../authSession";
 
 // fixes tied ranking issue, O(50) complexity is negligible
 function assignRanksWithTies(
@@ -91,11 +89,9 @@ export async function fetchCurrentUserStatsWithRank(
   userId: string,
   orderBy: "upload_count" | "likes_count" | "max_streak"
 ) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const accessToken = await getAccessToken();
 
-  if (!session?.access_token) {
+  if (!accessToken) {
     throw new Error("No access token found");
   }
 
@@ -103,7 +99,7 @@ export async function fetchCurrentUserStatsWithRank(
     `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}/stats`,
     {
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );

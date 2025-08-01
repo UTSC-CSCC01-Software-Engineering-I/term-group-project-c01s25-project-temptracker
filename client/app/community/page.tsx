@@ -31,11 +31,10 @@ export default function CommunityPage() {
         GLOW Photo Gallery
       </h2>
       <p className="px-8">
-        {" "}
         The photo gallery is a developmental feature allowing users to submit
         shots of their greatest lake adventures. Note that due to file sizes, we
         only permit users uploading a photo every week. Have fun exploring
-        other's adventures, and like the photos you enjoy!
+        other's adventures, and sign-up to upload your own!
       </p>
       <PhotoGallery />
     </div>

@@ -1,11 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import type { Photo } from "@/lib/services/photoRetrievalService";
+import type { Photo } from "@/lib/services/photo_gallery/photoRetrievalService";
 import { Button } from "@/components/shadcn/button";
 import { useState } from "react";
 import { useUser } from "@/app/context";
-import { likePhoto, unlikePhoto } from "@/lib/services/photoLikeService";
+import {
+  likePhoto,
+  unlikePhoto,
+} from "@/lib/services/photo_gallery/photoLikeService";
 
 interface PhotoModalProps {
   photo: Photo;

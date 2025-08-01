@@ -2,13 +2,26 @@
 
 import { format } from "date-fns";
 import { useUser } from "@/app/context";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useUserSubmissions } from "@/hooks/useUserSubmissions";
 import Image from "next/image";
 import ProfileStats from "./ProfileStats";
+import { useRouter } from "next/router";
 
 export default function Profile() {
   const { user, profile } = useUser();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user === null) {
+      router.replace("/login");
+    }
+  }, [user, router]);
+
+  if (user === undefined) return null; // still loading
+  if (user === null) return null; // already redirecting
+
   const { submissions, loading } = useUserSubmissions(user?.id);
   const [useFahrenheit, setUseFahrenheit] = useState(false);
   const provider = user?.app_metadata?.provider || "email";

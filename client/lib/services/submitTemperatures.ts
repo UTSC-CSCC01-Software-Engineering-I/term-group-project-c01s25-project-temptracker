@@ -1,8 +1,6 @@
-import { createClient } from "../supabase/client";
 import axios from "axios";
+import { getCurrentUser, getAccessToken } from "../authSession";
 import { awardBadges } from "./badgeAwardService";
-
-const supabase = createClient();
 
 export interface TemperatureSubmission {
   temperature: number;
@@ -15,16 +13,15 @@ export interface TemperatureSubmission {
 }
 
 export async function submitTemperature(data: TemperatureSubmission) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const user = await getCurrentUser();
+  const accessToken = await getAccessToken();
 
   if (!user) {
     throw new Error("Login to submit a temperature reading.");
+  }
+
+  if (!accessToken) {
+    throw new Error("No access token found.");
   }
 
   const res = await axios.post(
@@ -32,7 +29,7 @@ export async function submitTemperature(data: TemperatureSubmission) {
     { ...data, user_id: user.id },
     {
       headers: {
-        Authorization: `Bearer ${session?.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );
@@ -45,7 +42,7 @@ export async function submitTemperature(data: TemperatureSubmission) {
     {},
     {
       headers: {
-        Authorization: `Bearer ${session?.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );
@@ -55,7 +52,7 @@ export async function submitTemperature(data: TemperatureSubmission) {
     {},
     {
       headers: {
-        Authorization: `Bearer ${session?.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );
@@ -64,16 +61,15 @@ export async function submitTemperature(data: TemperatureSubmission) {
 }
 
 export async function submitTemperatures(data: TemperatureSubmission[]) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const user = await getCurrentUser();
+  const accessToken = await getAccessToken();
 
   if (!user) {
     throw new Error("Login to submit temperature readings.");
+  }
+
+  if (!accessToken) {
+    throw new Error("No access token found.");
   }
 
   const res = await axios.post(
@@ -81,7 +77,7 @@ export async function submitTemperatures(data: TemperatureSubmission[]) {
     { formData: data, userId: user.id },
     {
       headers: {
-        Authorization: `Bearer ${session?.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );
@@ -94,7 +90,7 @@ export async function submitTemperatures(data: TemperatureSubmission[]) {
     {},
     {
       headers: {
-        Authorization: `Bearer ${session?.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );
@@ -104,7 +100,7 @@ export async function submitTemperatures(data: TemperatureSubmission[]) {
     {},
     {
       headers: {
-        Authorization: `Bearer ${session?.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );
