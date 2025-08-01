@@ -103,6 +103,22 @@ async function getPublicUsers(req, res) {
   }
 }
 
+async function getUserPublicProfile(req, res) {
+  const { username } = req.params;
+  try {
+    const profile = await userService.getUserPublicProfile(username);
+    res.json(profile);
+  } catch (err) {
+    if (err.message === "User not found") {
+      res.status(404).json({ error: err.message });
+    } else if (err.message === "Profile is private") {
+      res.status(403).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: err.message });
+    }
+  }
+}
+
 module.exports = {
   getUsers,
   deleteUser,
@@ -114,4 +130,5 @@ module.exports = {
   getUserBadges,
   awardUserBadges,
   getPublicUsers,
+  getUserPublicProfile,
 };

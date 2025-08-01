@@ -8,6 +8,7 @@ const userRouter = Router();
 
 // Public routes (no authentication required)
 userRouter.get("/public", userController.getPublicUsers);
+userRouter.get("/profile/:username", userController.getUserPublicProfile);
 
 userRouter.use(authenticateUser);
 userRouter.get("/", requireAdmin, userController.getUsers);

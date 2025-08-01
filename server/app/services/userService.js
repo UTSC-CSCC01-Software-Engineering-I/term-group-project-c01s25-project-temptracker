@@ -245,6 +245,140 @@ async function getPublicUsers() {
   }
 }
 
+async function getUserPublicProfile(username) {
+  try {
+    // First, get the user profile
+    const { data: profile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select(
+        `
+        id,
+        username,
+        biography,
+        is_public
+      `
+      )
+      .eq("username", username)
+      .single();
+
+    if (profileError) {
+      if (profileError.code === "PGRST116") {
+        throw new Error("User not found");
+      }
+      throw new Error(profileError.message);
+    }
+
+    // Check if profile is public
+    if (!profile.is_public) {
+      throw new Error("Profile is private");
+    }
+
+    // Get user stats
+    const { data: stats } = await supabase
+      .from("stats")
+      .select(
+        `
+        upload_count,
+        curr_streak,
+        max_streak
+      `
+      )
+      .eq("user_id", profile.id)
+      .single();
+
+    // Get recent uploads (last 5)
+    const { data: recentUploads } = await supabase
+      .from("temperatures")
+      .select(
+        `
+        id,
+        user_id,
+        temperature,
+        latitude,
+        longitude,
+        measured_on
+      `
+      )
+      .eq("user_id", profile.id)
+      .order("measured_on", { ascending: false })
+      .limit(5);
+
+    // Get user badges
+    const { data: userBadges } = await supabase
+      .from("user_badges")
+      .select(
+        `
+        user_id,
+        earned_on,
+        badges (
+          id,
+          name,
+          description
+        )
+      `
+      )
+      .eq("user_id", profile.id);
+
+    // Format badges
+    const badges =
+      userBadges?.map((ub) => ({
+        id: ub.badges.id,
+        name: ub.badges.name,
+        description: ub.badges.description,
+        icon: ub.badges.icon,
+        earned_on: ub.earned_on,
+      })) || [];
+
+    // Calculate total readings and average temperature
+    let totalReadings = 0;
+    let avgTemp = null;
+
+    if (recentUploads && recentUploads.length > 0) {
+      const { count } = await supabase
+        .from("temperatures")
+        .select("temperature", { count: "exact" })
+        .eq("user_id", profile.id);
+
+      totalReadings = count || 0;
+
+      // Calculate average temperature
+      const { data: tempData } = await supabase
+        .from("temperatures")
+        .select("temperature")
+        .eq("user_id", profile.id);
+
+      if (tempData && tempData.length > 0) {
+        const totalTemp = tempData.reduce(
+          (sum, reading) => sum + reading.temperature,
+          0
+        );
+        avgTemp = totalTemp / tempData.length;
+      }
+    }
+
+    // Get auth user data for email_confirmed_at
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const authUser = authUsers.users.find((user) => user.id === profile.id);
+
+    return {
+      ...profile,
+      email_confirmed_at: authUser?.email_confirmed_at || null,
+      stats: stats
+        ? {
+            ...stats,
+            total_readings: totalReadings,
+            avg_temp: avgTemp,
+          }
+        : null,
+      badges,
+      recent_uploads: recentUploads || [],
+    };
+  } catch (error) {
+    console.error("Error fetching user public profile:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   getAllUsers,
   deleteUser,
@@ -257,4 +391,5 @@ module.exports = {
   getUserBadges,
   awardUserBadges,
   getPublicUsers,
+  getUserPublicProfile,
 };
