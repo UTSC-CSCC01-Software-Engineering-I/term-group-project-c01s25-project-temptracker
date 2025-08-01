@@ -10,6 +10,7 @@ import ProfileHeader from "./ProfileHeader";
 import ProfileStats from "./ProfileStats";
 import ProfileBadges from "./ProfileBadges";
 import ProfileActivity from "./ProfileActivity";
+import { useUser } from "@/app/context";
 
 interface UserProfile {
   id: string;
@@ -47,6 +48,7 @@ export default function UserProfilePage() {
   const username = params.username as string;
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { profile: userProfile } = useUser();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,6 +87,11 @@ export default function UserProfilePage() {
       fetchProfile();
     }
   }, [username]);
+
+  if (username === userProfile?.username) {
+    router.push("/profile");
+    return null;
+  }
 
   if (loading) {
     return (
