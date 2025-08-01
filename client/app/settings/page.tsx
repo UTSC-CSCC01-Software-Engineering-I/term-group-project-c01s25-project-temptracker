@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/shadcn/button";
 import { Input } from "@/components/shadcn/input";
 import { Label } from "@/components/shadcn/label";
@@ -9,6 +10,7 @@ import ToggleSwitch from "./ToggleSwitch";
 import NotificationItem from "./NotificationItem";
 import SecurityButton from "./SecurityButton";
 import DeleteAccountModal from "./DeleteAccountModal";
+import ProfilePictureUpload from "./ProfilePictureUpload";
 import { useSettingsForm } from "@/hooks/useSettingsForm";
 import { Trophy, Users, Key, Trash2 } from "lucide-react";
 
@@ -40,6 +42,10 @@ export default function SettingsPage() {
 
   const { usernameError, biographyError } = errors;
 
+  // Local state for profile picture
+  const [selectedProfilePicture, setSelectedProfilePicture] =
+    useState<File | null>(null);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -58,6 +64,16 @@ export default function SettingsPage() {
             heading="Profile Settings"
             subheading="Update your personal information"
           >
+            {/* Profile Picture Upload */}
+            <div className="space-y-2">
+              <Label>Profile Picture</Label>
+              <ProfilePictureUpload
+                currentImageUrl={undefined} // TODO: Add current profile picture URL
+                onFileChange={setSelectedProfilePicture}
+                selectedFile={selectedProfilePicture}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="username">Display Name</Label>
               <Input
