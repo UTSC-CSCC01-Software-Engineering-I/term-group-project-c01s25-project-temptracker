@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getClosestPOIs } from "@/lib/services/POIsService";
-import { getAverageClosestTemperature } from "@/lib/services/tempByCoordinatesService"; // adjust path
+import { getAverageClosestTemperature } from "@/lib/services/tempByCoordinatesService"
 
 type POI = {
   id: number;
