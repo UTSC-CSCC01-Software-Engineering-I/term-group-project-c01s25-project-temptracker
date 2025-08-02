@@ -9,6 +9,7 @@ import ToggleSwitch from "./ToggleSwitch";
 import NotificationItem from "./NotificationItem";
 import SecurityButton from "./SecurityButton";
 import DeleteAccountModal from "./DeleteAccountModal";
+import ProfilePictureUpload from "./ProfilePictureUpload";
 import { useSettingsForm } from "@/hooks/useSettingsForm";
 import { Trophy, Users, Key, Trash2 } from "lucide-react";
 
@@ -20,6 +21,7 @@ export default function SettingsPage() {
     setShowDeleteModal,
     handleUsernameChange,
     handleBiographyChange,
+    handleProfilePictureChange,
     handleSave,
     handleReset,
     handleSendPasswordReset,
@@ -36,6 +38,8 @@ export default function SettingsPage() {
     publicProfile,
     badgeNotifications,
     communityUpdates,
+    profilePicture,
+    currentProfilePictureUrl,
   } = formData;
 
   const { usernameError, biographyError } = errors;
@@ -58,6 +62,16 @@ export default function SettingsPage() {
             heading="Profile Settings"
             subheading="Update your personal information"
           >
+            {/* Profile Picture Upload */}
+            <div className="space-y-2">
+              <Label>Profile Picture</Label>
+              <ProfilePictureUpload
+                currentImageUrl={currentProfilePictureUrl}
+                onFileChange={handleProfilePictureChange}
+                selectedFile={profilePicture}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="username">Display Name</Label>
               <Input

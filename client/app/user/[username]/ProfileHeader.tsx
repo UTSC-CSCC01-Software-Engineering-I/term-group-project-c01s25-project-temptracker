@@ -1,4 +1,5 @@
-import { MapPin } from "lucide-react";
+import { MapPin, UserRound } from "lucide-react";
+import Image from "next/image";
 
 interface ProfileHeaderProps {
   profile: {
@@ -6,6 +7,7 @@ interface ProfileHeaderProps {
     biography: string | null;
     location: string | null;
     is_public: boolean;
+    profile_picture_url: string | null;
   };
   joinedDate: string;
 }
@@ -25,8 +27,18 @@ export default function ProfileHeader({
       <div className="flex flex-col bg-white p-6 gap-4">
         <div className="flex flex-col sm:flex-row items-center gap-4">
           {/* Avatar - matching profile page style */}
-          <div className="w-20 h-20 bg-gradient-to-br from-nav-blue to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
-            {profile.username.charAt(0).toUpperCase()}
+          <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+            {profile.profile_picture_url ? (
+              <Image
+                src={profile.profile_picture_url}
+                alt="pfp"
+                width={100}
+                height={100}
+                className="w-20 h-20 rounded-full object-cover"
+              />
+            ) : (
+              <UserRound className="w-10 h-10 text-muted-foreground" />
+            )}
           </div>
 
           <div>

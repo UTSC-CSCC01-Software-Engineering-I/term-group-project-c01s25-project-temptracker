@@ -3,6 +3,7 @@ const { Router } = require("express");
 const { authenticateUser } = require("../middleware/authUser");
 const { requireAdmin } = require("../middleware/reqAdmin");
 const { verifySelfAccess } = require("../middleware/verifySelf");
+const upload = require("../middleware/multer");
 
 const userRouter = Router();
 
@@ -41,6 +42,13 @@ userRouter.post(
   "/:id/badges/award",
   verifySelfAccess,
   userController.awardUserBadges
+);
+
+userRouter.post(
+  "/:id/profile-picture",
+  verifySelfAccess,
+  upload.single("file"),
+  userController.uploadProfilePicture
 );
 
 module.exports = userRouter;

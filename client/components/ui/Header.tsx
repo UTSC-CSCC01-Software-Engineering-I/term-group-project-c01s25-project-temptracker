@@ -63,7 +63,7 @@ export default function Header() {
 
         {/* Desktop nav */}
         <nav
-          className="hidden md:flex flex-grow justify-end md:mr-8 lg:mr-18"
+          className="hidden md:flex flex-grow justify-end"
           aria-label="Primary Navigation"
         >
           {navLinks.map(({ href, label }) => (
@@ -75,6 +75,9 @@ export default function Header() {
               {label}
             </Link>
           ))}
+          {/* Divider */}
+          <div className="border border-dark-blue/20 mx-4 h-8" />
+          {/* Profile Dropdown */}
         </nav>
 
         <ProfileDropdown />

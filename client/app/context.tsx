@@ -20,6 +20,7 @@ type Profile = {
   is_public: boolean;
   badge_notifications: boolean;
   community_updates: boolean;
+  profile_picture_url: string | null;
 };
 
 const UserContext = createContext<{
