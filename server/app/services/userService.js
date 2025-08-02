@@ -219,6 +219,7 @@ async function getPublicUsers() {
         id,
         username,
         biography,
+        profile_picture_url,
         is_public
       `
       )
@@ -258,6 +259,7 @@ async function getUserPublicProfile(username) {
         id,
         username,
         biography,
+        profile_picture_url,
         is_public
       `
       )

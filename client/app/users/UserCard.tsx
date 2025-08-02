@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { Calendar, UserRound } from "lucide-react";
 import { format } from "date-fns";
+import Image from "next/image";
 
 export interface PublicUser {
   id: string;
   username: string;
   biography: string | null;
   email_confirmed_at: string | null;
+  profile_picture_url: string | null;
 }
 
 interface UserCardProps {
@@ -24,7 +26,17 @@ export default function UserCard({ user }: UserCardProps) {
         <div className="flex-1">
           <div className="flex items-start gap-4 mb-4">
             <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-              <UserRound className="text-muted-foreground" />
+              {user.profile_picture_url ? (
+                <Image
+                  src={user.profile_picture_url}
+                  alt="pfp"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              ) : (
+                <UserRound className="w-8 h-8 text-muted-foreground" />
+              )}
             </div>
 
             <div className="flex-1 min-w-0">

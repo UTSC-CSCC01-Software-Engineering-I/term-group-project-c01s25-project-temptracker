@@ -1,6 +1,7 @@
 "use client";
 
-import { format } from "date-fns";4
+import { format } from "date-fns";
+import { UserRound } from "lucide-react";
 import { useUser } from "@/app/context";
 import { useState } from "react";
 import { useUserSubmissions } from "@/hooks/useUserSubmissions";
@@ -56,16 +57,24 @@ export default function Profile() {
 
         <div className="flex flex-col bg-white p-6 gap-4">
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <Image
-              src={"/profile.png"}
-              alt="Profile"
-              height={80}
-              width={80}
-              className="rounded-full"
-            />
+            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+              {profile?.profile_picture_url ? (
+                <Image
+                  src={profile.profile_picture_url}
+                  alt="pfp"
+                  width={100}
+                  height={100}
+                  className="w-20 h-20 rounded-full object-cover"
+                />
+              ) : (
+                <UserRound className="w-10 h-10 text-muted-foreground" />
+              )}
+            </div>
             <div>
               <h2 className="text-xl font-semibold text-dark-blue text-left">
-                {profile?.username || user?.user_metadata?.username || "Username"}
+                {profile?.username ||
+                  user?.user_metadata?.username ||
+                  "Username"}
               </h2>
               <p className="text-gray-600">
                 {user?.email || "email@example.com"}
@@ -81,9 +90,7 @@ export default function Profile() {
 
           {profile?.biography && (
             <div>
-              <h3 className="font-bold mb-2">
-                About Me
-              </h3>
+              <h3 className="font-bold mb-2">About Me</h3>
               <p className="text-gray-700 break-all md:text-base text-sm">
                 {profile.biography}
               </p>
