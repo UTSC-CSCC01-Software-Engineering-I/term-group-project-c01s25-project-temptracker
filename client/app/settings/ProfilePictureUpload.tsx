@@ -94,7 +94,7 @@ export default function ProfilePictureUpload({
 
         {/* Upload Instructions */}
         <div className="text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Click the camera icon to select a new profile picture
           </p>
           <p className="text-xs text-gray-500 mt-1">

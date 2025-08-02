@@ -21,6 +21,7 @@ interface UserProfile {
   is_public: boolean;
   created_at: string;
   email_confirmed_at: string | null;
+  profile_picture_url: string | null;
   stats?: {
     upload_count: number;
     curr_streak: number;
