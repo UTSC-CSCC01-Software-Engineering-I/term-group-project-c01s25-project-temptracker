@@ -19,6 +19,14 @@ export function useSettingsForm() {
   const [communityUpdates, setCommunityUpdates] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // Profile picture state - undefined = no change, null = remove, File = new upload
+  const [profilePicture, setProfilePicture] = useState<File | null | undefined>(
+    undefined
+  );
+  const [currentProfilePictureUrl, setCurrentProfilePictureUrl] = useState<
+    string | null
+  >(null);
+
   // Initialize form with profile data
   useEffect(() => {
     if (profile) {
@@ -27,6 +35,8 @@ export function useSettingsForm() {
       setPublicProfile(profile.is_public);
       setBadgeNotifications(profile.badge_notifications);
       setCommunityUpdates(profile.community_updates);
+      setCurrentProfilePictureUrl(profile.profile_picture_url);
+      setProfilePicture(undefined); // Reset to no change
     }
   }, [profile]);
 
@@ -88,6 +98,10 @@ export function useSettingsForm() {
     }
   };
 
+  const handleProfilePictureChange = (file: File | null) => {
+    setProfilePicture(file);
+  };
+
   const handleSave = async () => {
     if (!validateForm()) {
       toast.error("Please fix the validation errors before saving");
@@ -97,6 +111,24 @@ export function useSettingsForm() {
     const {
       data: { session },
     } = await supabase.auth.getSession();
+
+    // Upload profile picture if changed (undefined = no change, null = remove, File = new upload)
+    if (profilePicture !== undefined) {
+      const formData = new FormData();
+      if (profilePicture) {
+        formData.append("file", profilePicture);
+      }
+
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/${profile?.id}/profile-picture`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+    }
 
     const res = await axios.put(
       `${process.env.NEXT_PUBLIC_API_URL}/users/${profile?.id}/settings`,
@@ -134,6 +166,8 @@ export function useSettingsForm() {
     setPublicProfile(profile?.is_public || false);
     setBadgeNotifications(profile?.badge_notifications || false);
     setCommunityUpdates(profile?.community_updates || false);
+    setProfilePicture(undefined); // Reset to no change
+    setCurrentProfilePictureUrl(profile?.profile_picture_url || null);
     setUsernameError("");
     setBiographyError("");
   };
@@ -166,6 +200,8 @@ export function useSettingsForm() {
       publicProfile,
       badgeNotifications,
       communityUpdates,
+      profilePicture,
+      currentProfilePictureUrl,
     },
     // Error state
     errors: {
@@ -178,6 +214,7 @@ export function useSettingsForm() {
     // Event handlers
     handleUsernameChange,
     handleBiographyChange,
+    handleProfilePictureChange,
     handleSave,
     handleReset,
     handleSendPasswordReset,

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/shadcn/button";
 import { Input } from "@/components/shadcn/input";
 import { Label } from "@/components/shadcn/label";
@@ -22,6 +21,7 @@ export default function SettingsPage() {
     setShowDeleteModal,
     handleUsernameChange,
     handleBiographyChange,
+    handleProfilePictureChange,
     handleSave,
     handleReset,
     handleSendPasswordReset,
@@ -38,13 +38,11 @@ export default function SettingsPage() {
     publicProfile,
     badgeNotifications,
     communityUpdates,
+    profilePicture,
+    currentProfilePictureUrl,
   } = formData;
 
   const { usernameError, biographyError } = errors;
-
-  // Local state for profile picture
-  const [selectedProfilePicture, setSelectedProfilePicture] =
-    useState<File | null>(null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,9 +66,9 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>Profile Picture</Label>
               <ProfilePictureUpload
-                currentImageUrl={undefined} // TODO: Add current profile picture URL
-                onFileChange={setSelectedProfilePicture}
-                selectedFile={selectedProfilePicture}
+                currentImageUrl={currentProfilePictureUrl}
+                onFileChange={handleProfilePictureChange}
+                selectedFile={profilePicture}
               />
             </div>
 

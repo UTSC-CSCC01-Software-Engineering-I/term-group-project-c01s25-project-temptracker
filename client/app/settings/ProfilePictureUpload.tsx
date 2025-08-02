@@ -1,12 +1,12 @@
 import { useState, useRef } from "react";
-import { Camera, X, UserRound } from "lucide-react";
+import { Camera, UserRound } from "lucide-react";
 import { Button } from "@/components/shadcn/button";
 import Image from "next/image";
 
 interface ProfilePictureUploadProps {
-  currentImageUrl?: string;
+  currentImageUrl?: string | null;
   onFileChange?: (file: File | null) => void;
-  selectedFile?: File | null;
+  selectedFile?: File | null | undefined;
 }
 
 export default function ProfilePictureUpload({
@@ -56,7 +56,9 @@ export default function ProfilePictureUpload({
     }
   };
 
-  const displayImage = previewUrl || currentImageUrl;
+  // Show preview if new file selected, otherwise show current image unless removal is pending
+  const displayImage =
+    previewUrl || (selectedFile === null ? null : currentImageUrl);
 
   return (
     <div className="space-y-4">
@@ -93,29 +95,21 @@ export default function ProfilePictureUpload({
         {/* Upload Instructions */}
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            {selectedFile || previewUrl
-              ? "New profile picture selected"
-              : "Click the camera icon to select a new profile picture"}
+            Click the camera icon to select a new profile picture
           </p>
           <p className="text-xs text-gray-500 mt-1">
             Max file size: 2MB • Supported: JPG
           </p>
-        </div>
-
-        {/* Remove Action */}
-        {(selectedFile || previewUrl) && (
-          <div className="flex justify-center">
+          {displayImage && (
             <Button
+              variant="link"
               onClick={handleRemove}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
+              className="text-xs text-red-600 hover:text-red-800 underline"
             >
-              <X className="w-4 h-4" />
-              Remove Picture
+              Remove profile picture
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

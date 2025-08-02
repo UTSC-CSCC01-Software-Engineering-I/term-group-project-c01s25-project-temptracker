@@ -382,6 +382,45 @@ async function getUserPublicProfile(username) {
   }
 }
 
+async function uploadProfilePicture(userId, file) {
+  try {
+    if (!file) {
+      await supabase
+        .from("user_profiles")
+        .update({ profile_picture_url: null })
+        .eq("id", userId);
+      return null;
+    }
+
+    const fileName = `${userId}/${file.originalname}`;
+
+    const { data, error } = await supabase.storage
+      .from("profile-pictures")
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true,
+      });
+
+    if (error) {
+      throw new Error("Failed to upload profile picture");
+    }
+
+    const {
+      data: { publicUrl },
+    } = await supabase.storage.from("profile-pictures").getPublicUrl(data.path);
+
+    await supabase
+      .from("user_profiles")
+      .update({ profile_picture_url: publicUrl })
+      .eq("id", userId);
+
+    return publicUrl;
+  } catch (error) {
+    console.error("Error uploading profile picture:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   getAllUsers,
   deleteUser,
@@ -395,4 +434,5 @@ module.exports = {
   awardUserBadges,
   getPublicUsers,
   getUserPublicProfile,
+  uploadProfilePicture,
 };

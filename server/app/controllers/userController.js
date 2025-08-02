@@ -1,3 +1,4 @@
+const { request } = require("node:https");
 const userService = require("../services/userService");
 
 async function getUsers(req, res) {
@@ -119,6 +120,21 @@ async function getUserPublicProfile(req, res) {
   }
 }
 
+async function uploadProfilePicture(req, res) {
+  const userId = req.params.id;
+  const file = req.file;
+  
+  try {
+    const profilePictureUrl = await userService.uploadProfilePicture(
+      userId,
+      file
+    );
+    res.json({ profilePictureUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   getUsers,
   deleteUser,
@@ -131,4 +147,5 @@ module.exports = {
   awardUserBadges,
   getPublicUsers,
   getUserPublicProfile,
+  uploadProfilePicture,
 };
