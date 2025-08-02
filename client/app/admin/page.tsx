@@ -1,6 +1,7 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
+import { UserRound } from "lucide-react";
 import { useUser } from "@/app/context";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -125,13 +126,19 @@ export default function Profile() {
           </span>
         </div>
         <div className="flex items-center bg-white p-6 space-x-6">
-          <Image
-            src={"/profile.png"}
-            alt="Profile"
-            height={80}
-            width={80}
-            className="rounded-full"
-          />
+          <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+            {profile?.profile_picture_url ? (
+              <Image
+                src={profile.profile_picture_url}
+                alt="pfp"
+                width={100}
+                height={100}
+                className="w-20 h-20 rounded-full object-cover"
+              />
+            ) : (
+              <UserRound className="w-10 h-10 text-muted-foreground" />
+            )}
+          </div>
           <div>
             <h2 className="text-xl font-semibold text-dark-blue text-left">
               {profile?.username || "Username"}
