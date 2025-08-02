@@ -863,7 +863,8 @@ const Map = (props: MapProps) => {
             latitude: lat,
             longitude: lng,
             nearestPoint: nearestPoint,
-          });
+          })
+          console.log("Nearest point found:", nearestPoint);
         } else {
           setClickedPoint({
             latitude: null,

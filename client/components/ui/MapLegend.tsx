@@ -16,8 +16,8 @@ const MapLegend = () => {
 
   return (
     <div className='legend'>
-      <div className='legend-title'>
-        Water Temp
+      <div className='legend-title md:text-base text-xs'>
+        Legend
       </div>
       <div className='flex flex-row items-center gap-4 h-full justify-center'>
         <div className='temp-gradient'>
