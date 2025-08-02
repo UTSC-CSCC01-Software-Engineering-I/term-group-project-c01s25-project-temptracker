@@ -16,6 +16,11 @@ type Profile = {
   id: string;
   username: string;
   role: string | null; // for now
+  biography: string;
+  is_public: boolean;
+  badge_notifications: boolean;
+  community_updates: boolean;
+  profile_picture_url: string | null;
 };
 
 const UserContext = createContext<{
@@ -23,6 +28,7 @@ const UserContext = createContext<{
   profile: Profile | null;
   loading: boolean;
   logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 } | null>(null);
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -75,7 +81,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, profile, loading, logout }}>
+    <UserContext.Provider
+      value={{
+        user,
+        profile,
+        loading,
+        logout,
+        refreshProfile: fetchUserAndProfile,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

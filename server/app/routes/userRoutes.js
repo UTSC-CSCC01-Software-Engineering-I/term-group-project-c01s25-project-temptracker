@@ -3,11 +3,17 @@ const { Router } = require("express");
 const { authenticateUser } = require("../middleware/authUser");
 const { requireAdmin } = require("../middleware/reqAdmin");
 const { verifySelfAccess } = require("../middleware/verifySelf");
+const upload = require("../middleware/multer");
 
 const userRouter = Router();
 
+// Public routes (no authentication required)
+userRouter.get("/public", userController.getPublicUsers);
+userRouter.get("/profile/:username", userController.getUserPublicProfile);
+
 userRouter.use(authenticateUser);
 userRouter.get("/", requireAdmin, userController.getUsers);
+userRouter.delete("/:id", verifySelfAccess, userController.deleteUser);
 
 userRouter.get(
   "/:id/submissions",
@@ -15,14 +21,34 @@ userRouter.get(
   userController.getUserSubmissions
 );
 userRouter.get("/:id/stats", verifySelfAccess, userController.getUserStats);
-userRouter.post("/:id/streak", verifySelfAccess, userController.updateUserStreak);
-userRouter.post("/:id/submissions", verifySelfAccess, userController.updateUserSubmission);
+userRouter.post(
+  "/:id/streak",
+  verifySelfAccess,
+  userController.updateUserStreak
+);
+userRouter.post(
+  "/:id/submissions",
+  verifySelfAccess,
+  userController.updateUserSubmission
+);
+userRouter.put(
+  "/:id/settings",
+  verifySelfAccess,
+  userController.updateUserSettings
+);
 
 userRouter.get("/:id/badges", verifySelfAccess, userController.getUserBadges);
 userRouter.post(
   "/:id/badges/award",
   verifySelfAccess,
   userController.awardUserBadges
+);
+
+userRouter.post(
+  "/:id/profile-picture",
+  verifySelfAccess,
+  upload.single("file"),
+  userController.uploadProfilePicture
 );
 
 module.exports = userRouter;

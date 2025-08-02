@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import Header from "@/components/ui/Header";
+import Footer from "@/components/ui/Footer";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { UserProvider } from "./context";
-import Footer from "@/components/ui/Footer";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -35,7 +35,7 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
-          enableSystem
+          enableSystem={false}
           disableTransitionOnChange
         >
           <UserProvider>
@@ -45,6 +45,7 @@ export default function RootLayout({
                 <div className="mt-6 md:mt-8 w-full">{children}</div>
               </main>
               {/* <Footer /> */}
+              <Footer />
             </div>
           </UserProvider>
           <Toaster position="top-center" richColors />

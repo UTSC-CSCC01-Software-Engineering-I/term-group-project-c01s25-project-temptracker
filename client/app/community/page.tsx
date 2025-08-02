@@ -27,6 +27,18 @@ export default function CommunityPage() {
         </p>
       </Link>
 
+      <Link
+        href="/users"
+        className="block bg-white/70 backdrop-blur-md rounded-2xl shadow-md border border-gray-200 p-5 hover:bg-white/90 transition"
+      >
+        <div className="text-dark-blue font-semibold text-lg mb-1 flex items-center gap-2">
+          👥 Browse Community Members
+        </div>
+        <p className="text-sm text-gray-600">
+          Discover other GLOW contributors and view their profiles
+        </p>
+      </Link>
+
       <h2 className="text-3xl font-bold mt-16 text-dark-blue">
         GLOW Photo Gallery
       </h2>
@@ -34,7 +46,7 @@ export default function CommunityPage() {
         The photo gallery is a developmental feature allowing users to submit
         shots of their greatest lake adventures. Note that due to file sizes, we
         only permit users uploading a photo every week. Have fun exploring
-        other's adventures, and sign-up to upload your own!
+        others&apos; adventures, and sign-up to upload your own!
       </p>
       <PhotoGallery />
     </div>

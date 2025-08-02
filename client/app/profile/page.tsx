@@ -1,29 +1,18 @@
 "use client";
 
 import { format } from "date-fns";
+import { UserRound } from "lucide-react";
 import { useUser } from "@/app/context";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useUserSubmissions } from "@/hooks/useUserSubmissions";
 import Image from "next/image";
 import ProfileStats from "./ProfileStats";
-import { useRouter } from "next/router";
 
 export default function Profile() {
   const { user, profile } = useUser();
-
-  const router = useRouter();
-
-  useEffect(() => {
-    if (user === null) {
-      router.replace("/login");
-    }
-  }, [user, router]);
-
-  if (user === undefined) return null; // still loading
-  if (user === null) return null; // already redirecting
-
-  const { submissions, loading } = useUserSubmissions(user?.id);
   const [useFahrenheit, setUseFahrenheit] = useState(false);
+  const { submissions, loading } = useUserSubmissions(user?.id);
+
   const provider = user?.app_metadata?.provider || "email";
   const userSince = user?.email_confirmed_at
     ? format(new Date(user.email_confirmed_at), "MMMM d, yyyy")
@@ -56,7 +45,7 @@ export default function Profile() {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold mb-4">
-        Welcome, {user?.user_metadata?.username || "User"}
+        Welcome, {profile?.username || "User"}
       </h1>
 
       <div className="rounded-lg shadow-md overflow-hidden">
@@ -66,28 +55,47 @@ export default function Profile() {
           </span>
         </div>
 
-        <div className="flex items-center bg-white p-6 space-x-6">
-          <Image
-            src={"/profile.png"}
-            alt="Profile"
-            height={80}
-            width={80}
-            className="rounded-full"
-          />
-          <div>
-            <h2 className="text-xl font-semibold text-dark-blue text-left">
-              {user?.user_metadata?.username || "Username"}
-            </h2>
-            <p className="text-gray-600">
-              {user?.email || "email@example.com"}
-            </p>
-            <div className="mt-2">
-              <p className="text-sm text-gray-500">
-                Signed in with <span className="capitalize">{provider}</span>
+        <div className="flex flex-col bg-white p-6 gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+              {profile?.profile_picture_url ? (
+                <Image
+                  src={profile.profile_picture_url}
+                  alt="pfp"
+                  width={100}
+                  height={100}
+                  className="w-20 h-20 rounded-full object-cover"
+                />
+              ) : (
+                <UserRound className="w-10 h-10 text-muted-foreground" />
+              )}
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-dark-blue text-left">
+                {profile?.username ||
+                  user?.user_metadata?.username ||
+                  "Username"}
+              </h2>
+              <p className="text-gray-600">
+                {user?.email || "email@example.com"}
               </p>
-              <p className="text-sm text-gray-500">User since {userSince}</p>
+              <div className="mt-2">
+                <p className="text-sm text-gray-500">
+                  Signed in with <span className="capitalize">{provider}</span>
+                </p>
+                <p className="text-sm text-gray-500">User since {userSince}</p>
+              </div>
             </div>
           </div>
+
+          {profile?.biography && (
+            <div>
+              <h3 className="font-bold mb-2">About Me</h3>
+              <p className="text-gray-700 break-all md:text-base text-sm">
+                {profile.biography}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

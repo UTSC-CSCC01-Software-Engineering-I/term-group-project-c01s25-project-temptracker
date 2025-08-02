@@ -1,7 +1,7 @@
 import axios from "axios";
 import { toast } from "sonner";
 import { Badge } from "@/types/badges";
-import { getAccessToken } from "../authSession";
+import { getAccessToken, getCurrentUserWithProfile } from "../authSession";
 
 export async function awardBadges(userId: string) {
   const accessToken = await getAccessToken();
@@ -28,7 +28,11 @@ export async function awardBadges(userId: string) {
 
     const newBadges: Badge[] = response.data || [];
     if (newBadges.length > 0) {
-      showBadgeToasts(newBadges);
+      // Check if user has enabled badge notifications
+      const { profile } = await getCurrentUserWithProfile();
+      if (profile?.badge_notifications) {
+        showBadgeToasts(newBadges);
+      }
     }
 
     return newBadges;
