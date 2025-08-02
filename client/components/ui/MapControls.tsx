@@ -7,7 +7,10 @@ type Props = {
   setUnit: (u: "Celsius" | "Farenheit") => void;
   tempVisible: boolean;
   setTempVisible: (v: boolean) => void;
+  heatVisible: boolean;
+  setHeatVisible: (v: boolean) => void;
   clickedPoint: { latitude: number; longitude: number } | null;
+  lakeClicked: string | null;
   onTrendPromptClick: () => void;
 };
 
@@ -16,7 +19,10 @@ const MapControls = ({
   setUnit,
   tempVisible,
   setTempVisible,
+  heatVisible,
+  setHeatVisible,
   clickedPoint,
+  lakeClicked,
   onTrendPromptClick,
 }: Props) => {
   return (
@@ -27,17 +33,37 @@ const MapControls = ({
       >
         {unit === "Celsius" ? "Units: °C" : "Units: °F"}
       </div>
+      <button
+        className="w-full text-center bg-[#FFFFFFE6] hover:bg-[#FFFFFFCC] shadow text-[#333] md:text-base text-xs font-semibold px-4 py-2 rounded-md transition-colors cursor-pointer"
+        onClick={() => {
+          if (heatVisible) {
+            setHeatVisible(false)
+          } else if (!heatVisible) {
+            setTempVisible(false)
+            setHeatVisible(true)
+          }
+        }}
+      >
+        {`Activity: ${heatVisible ? 'On' : 'Off'}`}
+      </button>
 
       <button
         className="w-full text-center bg-[#FFFFFFE6] hover:bg-[#FFFFFFCC] shadow text-[#333] md:text-base text-xs font-semibold px-4 py-2 rounded-md transition-colors cursor-pointer"
-        onClick={() => setTempVisible(!tempVisible)}
+        onClick={() => {
+          if (tempVisible) {
+            setTempVisible(false)
+          } else if (!tempVisible) {
+            setHeatVisible(false)
+            setTempVisible(true)
+          }
+        }}
       >
-        Toggle Map
+        {`Heat: ${tempVisible ? 'On' : 'Off'}`}
       </button>
 
       {tempVisible && <MapLegend />}
 
-      {clickedPoint?.latitude && clickedPoint?.longitude && (
+      {clickedPoint?.latitude && clickedPoint?.longitude && lakeClicked && (
         <PointTrendPrompt onClick={onTrendPromptClick} />
       )}
     </div>
