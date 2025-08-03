@@ -6,14 +6,14 @@ import { toast } from "sonner";
 
 import UploadPhotoModal from "./UploadPhotoModal";
 import PhotoModal from "./PhotoModal";
-import { onUpload } from "@/lib/services/photo_gallery/photoUploadService";
+import { onUpload } from "@/lib/supabase/api/photo_gallery/photoUploadService";
 import { useUser } from "@/app/context";
 import {
   getPhotos,
   TimeRange,
   Location,
-} from "@/lib/services/photo_gallery/photoRetrievalService";
-import type { Photo } from "@/lib/services/photo_gallery/photoRetrievalService";
+} from "@/lib/supabase/api/photo_gallery/photoRetrievalService";
+import type { Photo } from "@/lib/supabase/api/photo_gallery/photoRetrievalService";
 
 const LOCATIONS: Location[] = [
   "All",

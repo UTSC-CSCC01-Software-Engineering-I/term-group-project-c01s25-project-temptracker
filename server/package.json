@@ -15,7 +15,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --coverage",
-    "start": "node index",
+    "start": "node index.js",
     "dev": "nodemon index"
   },
   "dependencies": {

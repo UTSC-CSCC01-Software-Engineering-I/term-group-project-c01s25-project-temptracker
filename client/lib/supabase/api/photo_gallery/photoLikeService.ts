@@ -1,4 +1,4 @@
-import { createClient } from "../../supabase/client";
+import { createClient } from "../../client";
 
 const supabase = createClient();
 
@@ -20,18 +20,26 @@ async function rpcIncrement(userId: string, delta: number) {
   }
 }
 
-export async function likePhoto(photoId: number, userId: string) {
+export async function likePhoto(
+  photoId: number,
+  userId: string,
+  uploaderID: string
+) {
   const { error } = await supabase
     .from("photo_likes")
     .insert({ photo_id: photoId, user_id: userId });
   if (error && error.code !== "23505") throw new Error(error.message); // allow duplicate likes error
 
   if (!error) {
-    await rpcIncrement(userId, 1);
+    await rpcIncrement(uploaderID, 1);
   }
 }
 
-export async function unlikePhoto(photoId: number, userId: string) {
+export async function unlikePhoto(
+  photoId: number,
+  userId: string,
+  uploaderID: string
+) {
   const { error } = await supabase
     .from("photo_likes")
     .delete()
@@ -39,5 +47,5 @@ export async function unlikePhoto(photoId: number, userId: string) {
     .eq("user_id", userId);
   if (error) throw new Error(error.message);
 
-  await rpcIncrement(userId, -1);
+  await rpcIncrement(uploaderID, -1);
 }

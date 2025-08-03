@@ -1,14 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import type { Photo } from "@/lib/services/photo_gallery/photoRetrievalService";
+import type { Photo } from "@/lib/supabase/api/photo_gallery/photoRetrievalService";
 import { Button } from "@/components/shadcn/button";
 import { useState } from "react";
 import { useUser } from "@/app/context";
 import {
   likePhoto,
   unlikePhoto,
-} from "@/lib/services/photo_gallery/photoLikeService";
+} from "@/lib/supabase/api/photo_gallery/photoLikeService";
 
 interface PhotoModalProps {
   photo: Photo;
@@ -34,9 +34,9 @@ export default function PhotoModal({
 
     try {
       if (!wasLiked) {
-        await likePhoto(photo.id, user.id);
+        await likePhoto(photo.id, user.id, photo.user_id);
       } else {
-        await unlikePhoto(photo.id, user.id);
+        await unlikePhoto(photo.id, user.id, photo.user_id);
       }
       // notify parent about the change:
       onLikeChange(photo.id, !wasLiked, likeCount + (!wasLiked ? 1 : -1));
