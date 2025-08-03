@@ -4,19 +4,16 @@ import React, { useState, useEffect, useRef, use, useOptimistic } from "react";
 import { createClient } from "../../lib/supabase/client";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { Marker, Popup, GeoJSON } from "react-leaflet";
-import L, { Icon, point, divIcon } from "leaflet";
+import L, { Icon, point } from "leaflet";
 import { subDays } from "date-fns";
 import MarkerClusterGroup from "react-leaflet-markercluster";
-import { getTemperatureReading } from "@/lib/services/getTemperatureReadingService";
+import { getTemperatureReading, lakeClicked } from "@/lib/services/getTemperatureReadingService"
 // import CanvasMarkersLayer from '../src/CanvasMarkersLayer';
 import "leaflet-canvas-marker";
-import clusterIcon from "../../public/circle.png";
 import { getUserLocation } from "./GeoLocation";
-import MapLegend from "../ui/MapLegend";
 import "leaflet.heat";
 import "leaflet/dist/leaflet.css";
 import "react-leaflet-markercluster/styles";
-
 import Slider from "@mui/material/Slider";
 import "../../styles/MapSlider.css";
 
@@ -24,7 +21,7 @@ import "../../styles/MapSlider.css";
 
 import { createWeekMarks, createTodayMarks } from "./dateUtils";
 
-import { toFarenheit, pointInPolygon, distance } from "./graphUtils";
+import { toFarenheit, simpleDate } from "./graphUtils";
 
 import type {
   MapProps,
@@ -60,9 +57,12 @@ const Map = (props: MapProps) => {
   });
 
   const [tempVisible, setTempVisible] = useState(true);
+  const [heatVisible, setHeatVisible] = useState(false)
+  const [graphVisible, setGraphVisible] = useState(false)
   const [loading, setLoading] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [showTrendsModal, setShowTrendsModal] = useState(false);
+  const [clickedLake, setClickedLake] = useState<null | string>(null)
 
   const toggleUpdateComplete = () => {
     if (props.timeRange == "week") {
@@ -127,7 +127,8 @@ const Map = (props: MapProps) => {
   const [lmhofsContours, setLmhofsContours] = useState(null);
 
   //Points buckets
-  const [userPoints, setUserPoints] = useState([]);
+  const [userPoints, setUserPoints] = useState([])
+  const [heatMapPoints, setHeatMapPoints] = useState([])
 
   const [date, setDate] = useState(() => {
     const year = new Date().getFullYear();
@@ -193,7 +194,7 @@ const Map = (props: MapProps) => {
         async () => {
           const { data, error } = await supabase
             .from("temperatures")
-            .select("latitude,longitude,temperature")
+            .select("latitude,longitude,temperature,measured_on")
             .gte(
               "measured_on",
               `${date.getFullYear()}-${(date.getMonth() + 1)
@@ -276,36 +277,19 @@ const Map = (props: MapProps) => {
       fetchFunctions = [
         // Database uploads
         async () => {
-          const { data, error } = await supabase
-            .from("temperatures")
-            .select("latitude,longitude,temperature")
-            .gte(
-              "measured_on",
-              `${today.getFullYear()}-${(today.getMonth() + 1)
-                .toString()
-                .padStart(2, "0")}-${today
-                .getDate()
-                .toString()
-                .padStart(2, "0")}T${currentHour
-                .toString()
-                .padStart(2, "0")}:00:00.000Z`
-            )
-            .lt(
-              "measured_on",
-              `${today.getFullYear()}-${(today.getMonth() + 1)
-                .toString()
-                .padStart(2, "0")}-${today
-                .getDate()
-                .toString()
-                .padStart(2, "0")}T${(currentHour + 4)
-                .toString()
-                .padStart(2, "0")}:00:00.000Z`
-            );
+          const startTime = new Date(today);
+          startTime.setHours(currentHour, 0, 0, 0);
 
-          if (error)
-            throw new Error(`Error reading user uploads: ${error.message}`);
-          console.log("user uploads:", data);
-          return { type: "userPoints", data: data };
+          const endTime = new Date(today);
+          endTime.setHours(currentHour + 4, 0, 0, 0);
+          const { data, error } = await supabase.from('temperatures').select('latitude,longitude,temperature,measured_on')
+          .gte('measured_on', startTime.toISOString())
+          .lt('measured_on', endTime.toISOString());
+          console.log('between ', startTime.toISOString())
+          console.log('and ',endTime.toISOString())
+          if (error) throw new Error(`Error reading user uploads: ${error.message}`);
+          console.log('user uploads:', data)
+          return { type: 'userPoints', data: data };
         },
         // Contour data fetchers
         async () => {
@@ -375,6 +359,9 @@ const Map = (props: MapProps) => {
         switch (result.type) {
           case "userPoints":
             setUserPoints(result.data);
+            setHeatMapPoints(result.data.map((item: any) => {
+              return [item['latitude'], item['longitude']]
+            }))
             break;
           case "loofsContours":
             setLoofsContours(result.data);
@@ -586,6 +573,51 @@ const Map = (props: MapProps) => {
     return null;
   };
 
+  //Heat Map
+  const HeatmapLayer = ({
+    data,
+  }: {
+    data: any;
+  }) => {
+    const map = useMap();
+
+    useEffect(() => {
+      if (!map || !data || data.length === 0) return;
+
+      const addHeatmap = () => {
+        const heatLayer = (L as any).heatLayer(data, {
+          radius: 25,
+          blur: 15,
+          maxZoom: 18,
+          minOpacity: 0.5,
+
+        });
+
+        heatLayer.addTo(map);
+        return heatLayer;
+      };
+
+      let heatLayer: any;
+
+      if (map.getContainer()) {
+        heatLayer = addHeatmap();
+      } else {
+        map.whenReady(() => {
+          heatLayer = addHeatmap();
+        });
+      }
+
+      return () => {
+        if (heatLayer && map.hasLayer(heatLayer)) {
+          map.removeLayer(heatLayer);
+        }
+      };
+    }, [map, data]);
+
+    return null;
+  };
+
+
   const findNearestTemperaturePoint = async (
     // calls a backend service to find the nearest temperature point to a given lat and long on a specific date
     clickLat: number,
@@ -629,28 +661,43 @@ const Map = (props: MapProps) => {
           console.warn("Invalid coordinates:", { lat, lng });
           return;
         }
-        // console.log("Map clicked at:", lat, lng);
+        console.log("Map clicked at:", lat, lng);
         let nearestPoint;
-        if (props.timeRange == "week") {
-          nearestPoint = await findNearestTemperaturePoint(
-            lat,
-            lng,
-            `${date.getFullYear()}${(date.getMonth() + 1)
-              .toString()
-              .padStart(2, "0")}${date.getDate().toString().padStart(2, "0")}`,
-            "12"
-          );
-        } else {
-          nearestPoint = await findNearestTemperaturePoint(
-            lat,
-            lng,
-            `${today.getFullYear()}${(today.getMonth() + 1)
-              .toString()
-              .padStart(2, "0")}${today.getDate().toString().padStart(2, "0")}`,
-            currentHour.toString().padStart(2, "0")
-          );
-        }
-
+        let clickedOnLake;
+        const [nearestPointResult, lakeClickResult] = await Promise.all([
+          props.timeRange === 'week' 
+            ? findNearestTemperaturePoint(
+                lat,
+                lng,
+                `${date.getFullYear()}${(date.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0")}${date.getDate().toString().padStart(2, "0")}`,
+                "12"
+              )
+            : findNearestTemperaturePoint(
+                lat,
+                lng,
+                `${today.getFullYear()}${(today.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0")}${today.getDate().toString().padStart(2, "0")}`,
+                currentHour.toString().padStart(2, "0")
+              ),
+          
+          props.timeRange === 'week'
+            ? lakeClicked({
+                coord: [lat, lng],
+                date: `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`,
+                hour: '12'
+              })
+            : lakeClicked({
+                coord: [lat, lng],
+                date: `${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`,
+                hour: currentHour.toString().padStart(2, '0')
+              })
+        ]);
+        nearestPoint = nearestPointResult
+        clickedOnLake = lakeClickResult
+    
         if (nearestPoint) {
           console.log("set clicked point");
           console.log(nearestPoint);
@@ -665,6 +712,14 @@ const Map = (props: MapProps) => {
             longitude: null,
             nearestPoint: null,
           });
+        }
+
+        if (clickedOnLake.lake && clickedOnLake.lake) {
+          console.log('user clicked on:', clickedOnLake.lake)
+          setClickedLake(clickedOnLake.lake)
+        } else {
+          console.log('no lake clicked')
+          setClickedLake(null)
         }
       },
     });
@@ -709,8 +764,9 @@ const Map = (props: MapProps) => {
     lsofsContours &&
     userPoints
   ) {
-    console.log("identifier:", identifier);
-    console.log("map key:", `${mapCoords.latitude},${mapCoords.longitude}`);
+    console.log('identifier:', identifier)
+    console.log('map key:', `${mapCoords.latitude},${mapCoords.longitude}`)
+    console.log('heat map points:', heatMapPoints)
     return (
       <MapContainer
         key={`${mapCoords.latitude},${mapCoords.longitude}`}
@@ -723,7 +779,7 @@ const Map = (props: MapProps) => {
           maxZoom={19}
         />
         <MapClickHandler />
-        <MarkerClusterGroup
+        {tempVisible && <MarkerClusterGroup
           chunkedLoading
           iconCreateFunction={createCustomClusterIcon}
           key={`markers-${date.toDateString()}`}
@@ -738,14 +794,20 @@ const Map = (props: MapProps) => {
                   icon={customUserIcon}
                 >
                   <Popup>
-                    {unit == "Celsius"
+                    <div className="bg-white w-20 md:w-30 rounded-md gap-0">
+                    <p className="font-semibold text-center text-sm md:text-lg mb-0">
+                      {unit == "Celsius"
                       ? `${item["temperature"]} °C`
                       : `${toFarenheit(item["temperature"])} °F`}
+                      </p>
+                      <p className="text-center text-xs text-gray-500">{simpleDate((item["measured_on"] as string)?.split('T')[1].split('+')[0])}</p>
+                    </div>
                   </Popup>
                 </Marker>
               );
             })}
         </MarkerClusterGroup>
+        }
 
         {tempVisible && (
           <GeoJSON
@@ -782,24 +844,29 @@ const Map = (props: MapProps) => {
             icon={customIcon}
           >
             <Popup>
-              <div>
-                <strong>Temperature:</strong>{" "}
-                {unit == "Celsius"
-                  ? `${clickedPoint.nearestPoint?.temperature} °C`
-                  : `${toFarenheit(clickedPoint.nearestPoint?.temperature)} °F`}
+              <div className="bg-white w-20 md:w-25 rounded-md flex items-center justify-center py-0 px-0">
+                <p className="text-center text-sm md:text-base">{unit == "Celsius"
+                  ? `${clickedPoint.nearestPoint?.temperature.toFixed(2)} °C`
+                  : `${toFarenheit(clickedPoint.nearestPoint?.temperature.toFixed(2))} °F`}
+                  </p>
                 <br />
               </div>
             </Popup>
           </Marker>
         )}
 
+        {heatVisible && <HeatmapLayer data={heatMapPoints}/>}
+
         <MapControls
           unit={unit as "Celsius" | "Farenheit"}
           setUnit={setUnit}
           tempVisible={tempVisible}
           setTempVisible={setTempVisible}
+          heatVisible={heatVisible}
+          setHeatVisible={setHeatVisible}
           // @ts-ignore
           clickedPoint={clickedPoint}
+          lakeClicked={clickedLake}
           onTrendPromptClick={() => {
             console.log("Clicked point:", clickedPoint);
             setShowTrendsModal(true);
@@ -809,6 +876,7 @@ const Map = (props: MapProps) => {
           <TrendsModal
             latitude={clickedPoint?.latitude ?? null}
             longitude={clickedPoint?.longitude ?? null}
+            lake={clickedLake}
             onClose={() => setShowTrendsModal(false)}
           />
         )}
@@ -828,6 +896,15 @@ const Map = (props: MapProps) => {
         >
           <SliderLayer />
         </div>
+
+        {/* <div style={{
+          position: "absolute",
+          zIndex: 1000,
+          left: 5,
+          bottom: 20
+        }}>
+          <button onClick={() => checkWaterBodies()}>Script</button>
+        </div> */}
       </MapContainer>
     );
   } else {

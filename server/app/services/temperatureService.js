@@ -1,7 +1,53 @@
 const supabase = require("../models/supabaseClient");
+const turf = require('@turf/turf');
+
+async function isPointInContour(longitude, latitude, arr) {
+  try {
+    for (let i=0; i< arr.length;i++){
+      const { data } = await supabase.storage.from('geojson').download(arr[i])
+      if (data) {
+        const text = await data.text();
+        const geojson = JSON.parse(text)
+        // console.log('NUM FEATURES: ',geojson['features'].length)
+        for (let j=0; j < geojson.features.length; j++) {
+          // var coordInFeature = isPointInContour(formData.longitude, formData.latitude, geojson.features[j])
+          const point = turf.point([longitude, latitude]);
+          var coordInFeature = turf.booleanPointInPolygon(point, geojson.features[j]);
+          if (coordInFeature) {
+            const lake = arr[i].split('/')[1].split('_')[0]
+            switch (lake) {
+              case 'loofs':
+                return 'loofs'
+              case 'leofs':
+                return 'leofs'
+              case 'lsofs':
+                return 'lsofs'
+              case 'lmhofs':
+                return 'lmhofs'
+
+            }
+            
+          }
+        }
+      }
+    }
+    return null
+  } catch (err) {
+    console.log('Error in isPointInContour:', err)
+    return null
+  } 
+  
+}
 
 async function submitTemperature(formData) {
   try {
+    const d = new Date()
+    const dateStr = `${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, "0")}${d.getDate().toString().padStart(2, "0")}`
+    const lakes = ['loofs','leofs','lsofs','lmhofs']
+    const arr = lakes.map((item) => {
+      return `${dateStr}/${item}_${dateStr}_12.geo.json`
+    })
+    const waterBody = await isPointInContour(formData?.longitude, formData?.latitude, arr)
     const [hours, minutes] = formData?.time.split(":");
     const timestamp = new Date(formData?.date);
     timestamp.setHours(parseInt(hours), parseInt(minutes), 0, 0);
@@ -16,6 +62,7 @@ async function submitTemperature(formData) {
       measured_on: timestamp.toISOString(),
       notes: formData.notes,
       user_id: formData.user_id,
+      water_body: waterBody
     };
 
     const { data } = await supabase
@@ -73,8 +120,17 @@ async function submitTemperature(formData) {
 
 async function submitTemperatures(csvData) {
   try {
-    const { data } = await supabase.from("temperatures").insert(
-      csvData.formData.map((item) => ({
+    const d = new Date()
+    const dateStr = `${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, "0")}${d.getDate().toString().padStart(2, "0")}`
+    const lakes = ['loofs','leofs','lsofs','lmhofs']
+    const arr = lakes.map((item) => {
+      return `${dateStr}/${item}_${dateStr}_12.geo.json`
+    })
+    
+    const processedData = [];
+    for (const item of csvData.formData) {
+      const waterBody = await isPointInContour(item.longitude, item.latitude, arr);
+      processedData.push({
         temperature:
           item.temperatureUnit === "F"
             ? ((item.temperature - 32) * 5) / 9
@@ -85,8 +141,11 @@ async function submitTemperatures(csvData) {
         notes: item.notes,
         user_id: csvData.userId,
         is_verified: true, // Temperature submitted via CSV exclusively by admins are verified
-      }))
-    );
+        water_body: waterBody
+      });
+    }
+
+    const { data } = await supabase.from("temperatures").insert(processedData);
 
     return { message: "Temperature CSV submitted successfully", data: data };
   } catch (e) {

@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from dotenv import load_dotenv
 load_dotenv()
 import os
@@ -10,11 +10,12 @@ url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_KEY")
 supabase = create_client(url, key)
 
-current_year = datetime.now().year
+current = datetime.now() - timedelta(days=1)
+current_year = current.year
 current_year_str = f"{current_year:04d}"
-current_month = datetime.now().month
+current_month = current.month
 current_month_str = f"{current_month:02d}"
-current_day = datetime.now().day - 1
+current_day = current.day
 current_day_str = f"{current_day:02d}"
 current_date = f"{current_year:04d}{current_month:02d}{current_day:02d}"
 

@@ -34,5 +34,33 @@ export const distance = (
   return Math.sqrt(Math.pow(lat2 - lat1, 2) + Math.pow(lng2 - lng1, 2));
 };
 
+export const lakeCodeConvert = (code: string) => {
+  switch (code) {
+    case 'loofs':
+      return 'Lake Ontario'
+    case 'leofs':
+      return 'Lake Erie'
+    case 'lsofs':
+      return 'Lake Superior'
+    case 'lmhofs':
+      return 'Lake Huron & Michigan'
+  }
+}
+
+export const simpleDate = (date: string) => {
+  let hourInt;
+  let m;
+  let hourStr = date.slice(0,2)
+  if (parseInt(hourStr) > 13) {
+    hourInt = parseInt(hourStr) - 12
+    m = 'PM'
+  } else {
+    hourInt = parseInt(hourStr)
+    m = 'AM'
+  }
+
+  return `${hourInt.toString().padStart(2, '0')}${date.slice(2,)} ${m}`
+}
+
 
 
