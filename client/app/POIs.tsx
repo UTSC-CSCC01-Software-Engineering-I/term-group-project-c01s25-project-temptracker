@@ -67,14 +67,6 @@ export default function POIs() {
       <p>Popular nearby Great Lakes attractions with their water temperatures!</p>
       <p className="text-sm italic mb-8">Note that due to the proximity of data, places may have similar temperatures</p>
 
-      {error && (
-        <p className="text-red-500 mt-2">
-          Error: {error}
-          <br />
-          Please try enabling your location or refresh your browser to view POIs
-        </p>
-      )}
-
       <div className="locations-list mt-6">
         {closestPOIs.map(({ id, name, distance }) => (
           <div
