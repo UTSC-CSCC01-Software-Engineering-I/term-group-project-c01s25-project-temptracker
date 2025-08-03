@@ -8,6 +8,7 @@ const emailRoutes = require("./app/routes/emailRoutes");
 const mapRoutes = require("./app/routes/mapRoutes");
 const poiRoutes = require("./app/routes/poisRoutes");
 const tempByCoordinatesRoutes = require("./app/routes/tempByCoordinatesRoutes");
+const mapVisualsRoutes = require("./app/routes/mapVisualsRoutes")
 
 const PORT = process.env.PORT || 8080;
 
@@ -21,6 +22,7 @@ app.use("/api/notify-all", emailRoutes);
 app.use("/api/map", mapRoutes);
 app.use("/api/poi", poiRoutes);
 app.use("/api/tempByCoordinates", tempByCoordinatesRoutes);
+app.use("/api/map-visual", mapVisualsRoutes)
 
 app.listen(PORT, () => {
   console.log(`Server started on ${PORT}`);
