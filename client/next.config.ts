@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true, //  allows build even with ESLint issues
   },
   async rewrites() {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"; // Fallback to localhost if not set
     const cleanBase = apiBase.replace(/\/api\/?$/, ""); // remove trailing /api if needed
 
     return [
