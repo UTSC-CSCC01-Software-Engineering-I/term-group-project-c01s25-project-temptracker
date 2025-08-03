@@ -16,7 +16,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { lakeCodeConvert } from "../map/graphUtils";
+import { lakeCodeConvert } from "../map/mapUtils";
 
 type TrendsModalProps = {
   latitude: number | null;

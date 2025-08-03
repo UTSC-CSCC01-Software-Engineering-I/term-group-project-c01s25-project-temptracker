@@ -1,17 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getClosestPOIs } from "@/lib/services/POIsService";
+import { getClosestPOIs, POI } from "@/lib/services/POIsService";
 import { getAverageClosestTemperature } from "@/lib/services/tempByCoordinatesService"
 
-type POI = {
-  id: number;
-  name: string;
-  latitude: number;
-  longitude: number;
-  lake: string;
-  distance: number;
-};
 
 export default function POIs() {
   const [userLocation, setUserLocation] = useState<{
