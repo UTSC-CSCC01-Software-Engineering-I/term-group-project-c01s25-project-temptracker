@@ -23,36 +23,43 @@ export default function POIs() {
   const [avgTemps, setAvgTemps] = useState<Record<number, number | null>>({});
 
   useEffect(() => {
+    const fallbackLocation = { latitude: 43.70011, longitude: -79.4163 }; // Toronto
+
+    const loadPOIs = async (lat: number, lon: number) => {
+      setUserLocation({ latitude: lat, longitude: lon });
+
+      const results = await getClosestPOIs(lat, lon);
+      // @ts-ignore
+      setClosestPOIs(results);
+
+      const tempsMap: Record<number, number | null> = {};
+      for (const poi of results) {
+        const avgTemp = await getAverageClosestTemperature(
+          poi.latitude,
+          poi.longitude
+        );
+        tempsMap[poi.id] = avgTemp;
+      }
+      setAvgTemps(tempsMap);
+    };
+
     if (!navigator.geolocation) {
       setError("Geolocation not supported");
+      loadPOIs(fallbackLocation.latitude, fallbackLocation.longitude);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        setUserLocation({ latitude: lat, longitude: lon });
-
-        const results = await getClosestPOIs(lat, lon);
-        // @ts-ignore
-        setClosestPOIs(results);
-
-        const tempsMap: Record<number, number | null> = {};
-        for (const poi of results) {
-          const avgTemp = await getAverageClosestTemperature(
-            poi.latitude,
-            poi.longitude
-          );
-          tempsMap[poi.id] = avgTemp;
-        }
-        setAvgTemps(tempsMap);
+      (pos) => {
+        loadPOIs(pos.coords.latitude, pos.coords.longitude);
       },
       (err) => {
-        setError(err.message);
+        setError(err.message + " — using default location");
+        loadPOIs(fallbackLocation.latitude, fallbackLocation.longitude);
       }
     );
   }, []);
+
 
   return (
     <section className="locations-section">
