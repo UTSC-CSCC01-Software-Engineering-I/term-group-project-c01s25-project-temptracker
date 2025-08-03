@@ -8,9 +8,14 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg,
   },
+  globals: {
+    "ts-jest": {
+      tsconfig: "tsconfig.test.json", // Use a test-friendly tsconfig
+    },
+  },
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/$1", // <-- Support @/ alias (from tsconfig.json "paths")
+    "^@/(.*)$": "<rootDir>/$1", // Support @/ alias
   },
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
-  setupFiles: ["<rootDir>/.jest/env.ts"], // Ensure this points to your dotenv loader
+  setupFiles: ["<rootDir>/.jest/env.ts"],
 };
