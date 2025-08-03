@@ -125,3 +125,18 @@ jobs:
           echo "Tagging map image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-map:$VERSION .
           docker push ${{ secrets.DOCKER_USERNAME }}/myapp-map:$VERSION
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/temptracker
+            docker compose pull
+            docker compose down
+            docker compose up -d
