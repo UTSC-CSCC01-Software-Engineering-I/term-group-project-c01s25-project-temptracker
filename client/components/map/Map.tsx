@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import { Marker, Popup, GeoJSON } from "react-leaflet";
 import L, { Icon } from "leaflet";
@@ -56,6 +56,7 @@ const Map = (props: MapProps) => {
   const [heatVisible, setHeatVisible] = useState(false)
   const [graphVisible, setGraphVisible] = useState(false)
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false)
   const [identifier, setIdentifier] = useState("");
   const [showTrendsModal, setShowTrendsModal] = useState(false);
   const [clickedLake, setClickedLake] = useState<null | string>(null)
@@ -169,29 +170,28 @@ const Map = (props: MapProps) => {
   },[mapCoords])
 
   const fetchAllData = async () => {
-    if (loading) return;
-    setLoading(true)
+    if (fetchLoading) return;
+    setFetchLoading(true)
     try {
-      console.log('current hour sent:',currentHour)
-      const data = await getMapContours({
+      const response = await getMapContours({
         date: date,
         today: today,
         currentHour: currentHour,
         timeRange: props.timeRange
       });
-      if (data) {
-        console.log('fetchAll data:', data)
-        setUserPoints(data.userPoints)
-        setHeatMapPoints(data.heatMapPoints)
-        setLoofsContours(data.loofsContours)
-        setLeofsContours(data.leofsContours)
-        setLsofsContours(data.lsofsContours)
-        setLmhofsContours(data.lmhofsContours)
+      if (response && response.data) {
+        // console.log('fetchAll data:', response.data)
+        setUserPoints(response.data.userPoints)
+        setHeatMapPoints(response.data.heatMapPoints)
+        setLoofsContours(response.data.loofsContours)
+        setLeofsContours(response.data.leofsContours)
+        setLsofsContours(response.data.lsofsContours)
+        setLmhofsContours(response.data.lmhofsContours)
 
-        if(data.tempDate) {
-          setTempDate(new Date(data.tempDate))
-        } else if (data.currentHour) {
-          setTempHour(data.currentHour)
+        if(response.data.tempDate) {
+          setTempDate(new Date(response.data.tempDate))
+        } else if (response.data.currentHour) {
+          setTempHour(response.data.currentHour)
         }
 
         toggleUpdateComplete();
@@ -200,12 +200,12 @@ const Map = (props: MapProps) => {
     } catch (err) {
         console.error('Error fetching map data:', err);
     } finally {
-      setLoading(false)
+      setFetchLoading(false)
     }
   }
 
   useEffect(() => {
-    console.log("date state changed");
+    // console.log("date state changed");
     fetchAllData()
   }, [date, currentHour, props.timeRange, today]);
 
@@ -230,12 +230,12 @@ const Map = (props: MapProps) => {
     const today = new Date();
     const daysBack = 7 - value;
     const newDate = subDays(today, daysBack);
-    console.log("old date", date);
-    console.log("new date", newDate);
+    // console.log("old date", date);
+    // console.log("new date", newDate);
     setDate(newDate);
     setTimeout(() => {
-      console.log("slider currently at:", currentWeekday);
-      console.log("changing slider to:", value);
+      // console.log("slider currently at:", currentWeekday);
+      // console.log("changing slider to:", value);
       setCurrentWeekday(value);
     }, 500);
   };
@@ -243,8 +243,8 @@ const Map = (props: MapProps) => {
   const hourSliderChange = (_event: Event, value: number) => {
     // Changes the position of the thumb on the month day slider
     setTimeout(() => {
-      console.log("slider currently at:", currentHour / 4 + 1);
-      console.log("changing slider to:", value);
+      // console.log("slider currently at:", currentHour / 4 + 1);
+      // console.log("changing slider to:", value);
       setCurrentHour((value - 1) * 4);
     }, 500);
   };
