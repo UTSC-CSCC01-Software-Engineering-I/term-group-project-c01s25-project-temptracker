@@ -1,5 +1,5 @@
 import { use } from "react";
-import { createClient } from "../../supabase/client";
+import { createClient } from "../../client";
 
 const supabase = createClient();
 

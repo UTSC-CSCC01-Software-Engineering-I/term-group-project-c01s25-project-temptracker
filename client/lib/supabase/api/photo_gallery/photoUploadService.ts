@@ -1,4 +1,4 @@
-import { createClient } from "../../supabase/client";
+import { createClient } from "../../client";
 import { toast } from "sonner";
 
 const supabase = createClient();
