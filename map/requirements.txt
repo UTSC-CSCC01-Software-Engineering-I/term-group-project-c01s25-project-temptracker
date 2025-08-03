@@ -1,0 +1,13 @@
+requests
+xarray
+netCDF4
+h5netcdf
+boto3
+numpy
+pandas
+geopandas
+shapely
+matplotlib
+geojsoncontour
+python-dotenv
+supabase

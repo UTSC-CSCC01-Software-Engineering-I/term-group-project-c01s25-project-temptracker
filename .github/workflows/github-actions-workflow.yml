@@ -100,3 +100,28 @@ jobs:
           echo "Tagging client image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION .
           docker push ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION
+
+      # === MAP ===
+      - name: Create map/.env
+        working-directory: map
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
+
+      - name: Build and push map (latest)
+        working-directory: map
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-map:master .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-map:master
+
+      - name: Tag and push map (versioned)
+        working-directory: map
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/release/}
+          else
+            VERSION="release-v3.0"
+          fi
+          echo "Tagging map image with version: $VERSION"
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-map:$VERSION .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-map:$VERSION
