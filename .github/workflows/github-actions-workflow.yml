@@ -6,7 +6,7 @@ on:
     branches:
       - main
       - develop
-      - feat/ci-setup
+      - hotfix/ci-cd
     tags:
       - 'release/v*'
   pull_request:
