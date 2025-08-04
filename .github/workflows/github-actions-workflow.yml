@@ -6,7 +6,6 @@ on:
     branches:
       - main
       - develop
-      - hotfix/ci-cd
     tags:
       - 'release/v*'
   pull_request:
@@ -57,7 +56,7 @@ jobs:
         working-directory: client
         run: |
           npm ci
-#          npm test
+          npm test
 
       # === DOCKER LOGIN ===
       - name: Log in to Docker Hub
@@ -76,7 +75,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/release/}
           else
-            VERSION="release-v3.0"
+            VERSION="release-v4.0"
           fi
           echo "Tagging server image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION .
@@ -95,7 +94,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/release/}
           else
-            VERSION="release-v3.0"
+            VERSION="release-v4.0"
           fi
           echo "Tagging client image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION .
@@ -120,7 +119,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/release/}
           else
-            VERSION="release-v3.0"
+            VERSION="release-v4.0"
           fi
           echo "Tagging map image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-map:$VERSION .
