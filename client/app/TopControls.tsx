@@ -72,7 +72,7 @@ export default function Controls({
   };
 
   return (
-    <div className="bg-white shadow-md rounded-lg max-w-[1000px] p-4 flex flex-col sm:flex-row items-center gap-4 flex-nowrap">
+    <div className="bg-white shadow-md rounded-lg max-w-[1000px] m-2 p-4 flex flex-col sm:flex-row items-center gap-4 flex-nowrap">
       {/* Lat/Long label + inputs */}
       <div className="w-full sm:w-auto">
         <Label
