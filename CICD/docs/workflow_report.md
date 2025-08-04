@@ -51,6 +51,13 @@ Triggered by `.github/workflows/github-actions-workflow.yml`:
 
 ---
 
+#### Job 3: Test Containers (Only if Job 1 Succeeds)
+
+- do a npm run test-deployed script which uses the scripts located in server
+- runs integrated tests on performance metrics (ensure < 500ms on most api calls)
+- ensure all api endpoints are working through functional testing
+
+
 ## GitHub Actions Workflow
 
 Located at:  
@@ -73,6 +80,13 @@ Located in the VM directory `~/temptracker/`, but a reference copy is also place
 
 ---
 
+## Test Scripts (post deployment)
+
+Located in the `server/app/scripts` directory, but a reference copy is also placed in:  
+`CICD/scripts`
+
+---
+
 ## Key Steps (CI/CD Summary)
 
 1. **Trigger Workflow** on `push`, `pull_request`, or `release`
@@ -88,3 +102,6 @@ Located in the VM directory `~/temptracker/`, but a reference copy is also place
    docker compose down
    docker compose pull
    docker compose up -d --remove-orphans
+8. **Test with Jest**
+    ```bash
+    npm run test-deployed
