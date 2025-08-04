@@ -15,6 +15,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --coverage",
+    "test-deployed": "jest server/app/scripts/performance.test.js server/app/scripts/api.test.js",
     "start": "node index.js",
     "dev": "nodemon index"
   },

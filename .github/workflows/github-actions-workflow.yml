@@ -37,6 +37,10 @@ jobs:
           echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
           echo "SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}" >> .env
           echo "SENDGRID_SENDER=${{ secrets.SENDGRID_SENDER }}" >> .env
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> .env.test
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.test
+          echo "TEST_EMAIL=${{ secrets.TEST_EMAIL }}" >> .env.test
+          echo "TEST_PASSWORD=${{ secrets.TEST_PASSWORD }}" >> .env.test
 
       - name: Install and test backend
         working-directory: server
@@ -140,3 +144,9 @@ jobs:
             docker compose pull
             docker compose down
             docker compose up -d
+            
+            echo "Waiting 5 seconds for containers to stabilize..."
+            sleep 5
+
+            echo "Running deployed tests in server container..."
+            docker compose exec -T server npm run test-deployed

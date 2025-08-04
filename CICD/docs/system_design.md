@@ -8,24 +8,25 @@ This document outlines the architecture and components of the TempTracker applic
 
 ## Architecture Diagram
 
-![System Architecture](../images/system_architecture.png) *(add a diagram if available)*
+![System Architecture](../images/system_architecture.png)
 
 ---
 
 ## Components
 
 ### 1. Frontend (`client`)
-- Built with Next.js
-- Fetches data from the backend API
-- Allows photo uploads, temperature tracking, and user profile management
+- Built with Next.js, with React Framework
+- Fetches data from the backend API, through a route `https://www.{ip}/api`
+- Allows photo uploads, temperature tracking, map data, user profiles, gamification features
 
 ### 2. Backend (`server`)
 - Node.js Express API
 - Interfaces with Supabase for authentication and data storage
-- Exposes `/api` routes for temperature submission, profile handling, photo handling, 
+- Exposes `/api` routes for temperature submission, profile handling, photo handling, etc.
+- We have our server divided into routes, services, models, middlewares and controllers for easy access
 
 ### 3. Map Service (`map`)
-- Python script container that tracks temperature trends and uploads data
+- Python script container that tracks temperature trends and uploads data to AWS Bucket
 - Uses `.env` config with Supabase URL and Key
 
 ### 4. Database (Supabase)
