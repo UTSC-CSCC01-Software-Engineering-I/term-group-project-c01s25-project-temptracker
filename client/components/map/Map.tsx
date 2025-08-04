@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import { Marker, Popup, GeoJSON } from "react-leaflet";
-import L, { Icon } from "leaflet";
+import L from "leaflet";
 import { subDays } from "date-fns";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet-canvas-marker";
@@ -25,7 +25,6 @@ import MapControls from "../ui/MapControls";
 import TrendsModal from "../ui/TrendsModal";
 import IconLegend from "../ui/MapIconLegend";
 
-// Helper function to get current hour bucket
 const getCurrentHourBucket = () => {
   const hour = new Date().getHours();
   console.log('hour func:',hour)
@@ -37,12 +36,10 @@ const getCurrentHourBucket = () => {
   return 20;
 };
 
-// Helper function to get today's date
 const getTodayDate = () => {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 };
-
 
 const Map = (props: MapProps) => {
   const [userLocation, setUserLocation] = useState(() => {
@@ -54,7 +51,6 @@ const Map = (props: MapProps) => {
 
   const [tempVisible, setTempVisible] = useState(true);
   const [heatVisible, setHeatVisible] = useState(false)
-  const [graphVisible, setGraphVisible] = useState(false)
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false)
   const [identifier, setIdentifier] = useState("");

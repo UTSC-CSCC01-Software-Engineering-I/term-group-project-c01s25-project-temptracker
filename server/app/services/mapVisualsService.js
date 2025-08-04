@@ -27,7 +27,8 @@ const fetchContourData = async (date,today,currentHour,timeRange) => {
             .from("temperatures")
             .select("latitude,longitude,temperature,measured_on")
             .gte("measured_on",startDate.toISOString())
-            .lt("measured_on",endDate.toISOString());
+            .lt("measured_on",endDate.toISOString())
+            .eq("is_verified",true);
 
           if (error)
             throw new Error(`Error reading user uploads: ${error.message}`);
@@ -101,11 +102,11 @@ const fetchContourData = async (date,today,currentHour,timeRange) => {
           
           const { data, error } = await supabase.from('temperatures').select('latitude,longitude,temperature,measured_on')
           .gte('measured_on', startTime.toISOString())
-          .lt('measured_on', endTime.toISOString());
-          console.log('between ', startTime.toISOString())
-          console.log('and ',endTime.toISOString())
+          .lt('measured_on', endTime.toISOString())
+          .eq('is_verified', true);
+          // console.log('between ', startTime.toISOString())
+          // console.log('and ',endTime.toISOString())
           if (error) throw new Error(`Error reading user uploads: ${error.message}`);
-          console.log('user uploads:', data)
           return { type: 'userPoints', data: data };
         },
         // Contour data fetchers
