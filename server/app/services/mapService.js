@@ -116,7 +116,8 @@ async function getChartData(lake) {
     const { data } = await supabase.from('temperatures')
     .select('latitude,longitude,temperature,measured_on')
     .eq('water_body', lakeCode)
-    .gte('measured_on', dateStr);
+    .gte('measured_on', dateStr)
+    .eq('is_verified', true);
     console.log('request complete')
 
     if (data) {
@@ -169,12 +170,6 @@ async function checkWaterBodies() {
         throw error
       }
       if (data && data.length > 0) {
-        // for (let i=0; i < data.length; i++) {
-        //   console.log('record id: ', data[i]['id'])
-        //   const wb = await isPointInContour(data[i]["longitude"], data[i]["latitude"], arr)
-        //   const result = await supabase.from('temperatures')
-        //   .update({'water_body': wb}).eq('id', data[i]['id'])
-        // }
 
         // return { message: "Updated successfully"}
         console.log('creating promise')

@@ -33,7 +33,8 @@ def generate_misc_points(d):
     try:
         data = supabase.table("temperatures").select("temperature, longitude, latitude, measured_on, is_verified") \
         .gte('measured_on', start_datetime.isoformat()) \
-        .lte('measured_on', end_datetime.isoformat()).execute()
+        .lte('measured_on', end_datetime.isoformat()) \
+        .eq('is_verified', True).execute()
 
         features = []
 

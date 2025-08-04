@@ -23,7 +23,6 @@ interface MapClickHandlerProps {
 
 
 const findNearestTemperaturePoint = async (
-    // calls a backend service to find the nearest temperature point to a given lat and long on a specific date
     clickLat: number,
     clickLng: number,
     date: string,
