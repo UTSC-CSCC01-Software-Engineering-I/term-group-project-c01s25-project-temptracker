@@ -9,7 +9,8 @@ import {
   ChartPoint,
 } from "@/lib/services/getTemperatureReadingService";
 import TempChart from "./TempChart";
-import { lakeCodeConvert } from "../map/mapUtils";
+import { lakeCodeConvert, toFarenheit } from "../map/mapUtils";
+import { useUnits } from "@/components/map/unitsContext";
 
 type TrendsModalProps = {
   latitude: number | null;
@@ -24,6 +25,8 @@ const TrendsModal: React.FC<TrendsModalProps> = ({
   lake,
   onClose,
 }) => {
+  const { unit } = useUnits();
+
   const [closestTemps, setClosestTemps] = useState<TemperaturePoint[] | null>(
     null
   );
@@ -59,28 +62,48 @@ const TrendsModal: React.FC<TrendsModalProps> = ({
     }
   }, [latitude, longitude, lake]);
 
+  // Prepare local chart data, convert temp if needed
   const chartData = closestTemps
     ? [...closestTemps]
         .sort(
           (a, b) =>
-            new Date(a.measured_on).getTime() - new Date(b.measured_on).getTime()
+            new Date(a.measured_on).getTime() -
+            new Date(b.measured_on).getTime()
         )
         .map((temp) => ({
           date: new Date(temp.measured_on).toLocaleDateString(),
-          temperature: temp.temperature,
+          temperature:
+            unit === "Celsius"
+              ? temp.temperature
+              : toFarenheit(temp.temperature),
         }))
     : [];
 
-  const latestTemp =
+  // Latest temp with conversion
+  const latestTempRaw =
     closestTemps && closestTemps.length > 0
       ? closestTemps.reduce((a, b) =>
           new Date(a.measured_on) > new Date(b.measured_on) ? a : b
         ).temperature
       : null;
+  const latestTemp =
+    latestTempRaw !== null
+      ? unit === "Celsius"
+        ? latestTempRaw
+        : toFarenheit(latestTempRaw)
+      : null;
+
+  // Average temp with conversion
+  const avgTempConverted =
+    avgTemp !== null
+      ? unit === "Celsius"
+        ? avgTemp
+        : toFarenheit(avgTemp)
+      : null;
 
   const tempDiff =
-    avgTemp !== null && latestTemp !== null
-      ? (latestTemp - avgTemp).toFixed(2)
+    avgTempConverted !== null && latestTemp !== null
+      ? (latestTemp - avgTempConverted).toFixed(2)
       : null;
 
   return (
@@ -135,7 +158,11 @@ const TrendsModal: React.FC<TrendsModalProps> = ({
             <div className="flex flex-wrap md:flex-nowrap gap-2 mb-4 justify-center">
               <div className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium select-none whitespace-nowrap">
                 Avg Temp (30d):{" "}
-                {avgTemp !== null ? `${avgTemp.toFixed(2)} °C` : "No data"}
+                {avgTempConverted !== null
+                  ? `${avgTempConverted.toFixed(2)} ${
+                      unit === "Celsius" ? "°C" : "°F"
+                    }`
+                  : "No data"}
               </div>
               {tempDiff !== null && (
                 <div
@@ -146,8 +173,12 @@ const TrendsModal: React.FC<TrendsModalProps> = ({
                   }`}
                 >
                   {parseFloat(tempDiff) > 0
-                    ? `${tempDiff}°C warmer than avg`
-                    : `${Math.abs(parseFloat(tempDiff))}°C colder than avg`}
+                    ? `${tempDiff}${
+                        unit === "Celsius" ? "°C" : "°F"
+                      } warmer than avg`
+                    : `${Math.abs(parseFloat(tempDiff))}${
+                        unit === "Celsius" ? "°C" : "°F"
+                      } colder than avg`}
                 </div>
               )}
             </div>
@@ -164,10 +195,17 @@ const TrendsModal: React.FC<TrendsModalProps> = ({
         {view === "lake" && (
           <TempChart
             title={`${lakeCodeConvert(lakeName ?? "")} Trends`}
-            data={lakeTemps ?? []}
+            data={
+              unit === "Celsius"
+                ? lakeTemps ?? []
+                : (lakeTemps ?? []).map((point) => ({
+                    ...point,
+                    temperature: toFarenheit(point.temperature),
+                  }))
+            }
             loading={loading}
             error={error}
-            noDataMessage="Temperature data could nto be found. Please select a point within a Great Lake to see trends."
+            noDataMessage="Temperature data could not be found. Please select a point within a Great Lake to see trends."
           />
         )}
       </div>

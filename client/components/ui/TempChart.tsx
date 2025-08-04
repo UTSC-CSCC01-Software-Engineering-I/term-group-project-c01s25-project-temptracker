@@ -7,6 +7,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useUnits } from "@/components/map/unitsContext";
+import { toFarenheit } from "@/components/map/mapUtils";
 
 type TempChartProps = {
   title: string;
@@ -23,8 +25,12 @@ const TempChart: React.FC<TempChartProps> = ({
   error,
   noDataMessage,
 }) => {
+  const { unit } = useUnits();
+
   if (loading) {
-    return <p className="text-center text-gray-500 mb-4">Loading trend data...</p>;
+    return (
+      <p className="text-center text-gray-500 mb-4">Loading trend data...</p>
+    );
   }
 
   if (error) {
@@ -35,12 +41,24 @@ const TempChart: React.FC<TempChartProps> = ({
     return <p className="text-center text-gray-500">{noDataMessage}</p>;
   }
 
+  // Prepare data with converted temperatures if needed
+  const chartData =
+    unit === "Celsius"
+      ? data
+      : data.map((item) => ({
+          ...item,
+          temperature: toFarenheit(item.temperature),
+        }));
+
   return (
     <div className="flex flex-col items-center justify-center">
       <h2 className="text-lg font-semibold mb-1">{title}</h2>
       <div className="w-full h-40 md:h-60">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+          <LineChart
+            data={chartData}
+            margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+          >
             <XAxis
               dataKey="date"
               tick={{ fontSize: 10 }}
@@ -49,14 +67,17 @@ const TempChart: React.FC<TempChartProps> = ({
             />
             <YAxis
               domain={["auto", "auto"]}
-              unit="°C"
+              unit={unit === "Celsius" ? "°C" : "°F"}
               tick={{ fontSize: 10 }}
               tickLine={false}
               axisLine={{ stroke: "#ccc" }}
             />
             <Tooltip
               contentStyle={{ fontSize: 12 }}
-              formatter={(value: any) => [`${value} °C`, "Temp"]}
+              formatter={(value: any) => [
+                `${value.toFixed(2)} ${unit === "Celsius" ? "°C" : "°F"}`,
+                "Temp",
+              ]}
             />
             <Line
               type="monotone"

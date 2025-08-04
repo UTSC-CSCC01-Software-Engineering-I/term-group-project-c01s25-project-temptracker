@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import MapLegend from "./MapLegend";
 import PointTrendPrompt from "./PointTrendPrompt";
+import { useUnits } from "@/components/map/unitsContext";
 
 type Props = {
-  unit: "Celsius" | "Farenheit";
-  setUnit: (u: "Celsius" | "Farenheit") => void;
   tempVisible: boolean;
   setTempVisible: (v: boolean) => void;
   heatVisible: boolean;
@@ -15,8 +14,6 @@ type Props = {
 };
 
 const MapControls = ({
-  unit,
-  setUnit,
   tempVisible,
   setTempVisible,
   heatVisible,
@@ -25,6 +22,8 @@ const MapControls = ({
   lakeClicked,
   onTrendPromptClick,
 }: Props) => {
+  const { unit, setUnit } = useUnits();
+
   const [showControls, setShowControls] = useState(true);
 
   if (!showControls) {
@@ -63,7 +62,7 @@ const MapControls = ({
         onClick={() => {
           if (heatVisible) {
             setHeatVisible(false);
-          } else if (!heatVisible) {
+          } else {
             setTempVisible(false);
             setHeatVisible(true);
           }
@@ -77,7 +76,7 @@ const MapControls = ({
         onClick={() => {
           if (tempVisible) {
             setTempVisible(false);
-          } else if (!tempVisible) {
+          } else {
             setHeatVisible(false);
             setTempVisible(true);
           }

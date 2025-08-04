@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { getClosestPOIs, POI } from "@/lib/services/POIsService";
-import { getAverageClosestTemperature } from "@/lib/services/tempByCoordinatesService"
-
+import { getAverageClosestTemperature } from "@/lib/services/tempByCoordinatesService";
+import { useUnits } from "@/components/map/unitsContext";
+import { toFarenheit } from "@/components/map/mapUtils";
 
 export default function POIs() {
+  const { unit } = useUnits();
+
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -49,8 +52,13 @@ export default function POIs() {
   return (
     <section className="locations-section">
       <h2 className="mb-2">Points of Interest</h2>
-      <p>Popular nearby Great Lakes attractions with their water temperatures!</p>
-      <p className="text-sm italic mb-8">Note that due to the proximity of data, places may have similar temperatures</p>
+      <p>
+        Popular nearby Great Lakes attractions with their water temperatures!
+      </p>
+      <p className="text-sm italic mb-8">
+        Note that due to the proximity of data, places may have similar
+        temperatures
+      </p>
 
       {error && (
         <p className="text-red-500 mt-2">
@@ -74,8 +82,10 @@ export default function POIs() {
               </div>
             </div>
             <div className="text-lg font-semibold">
-              {avgTemps[id] !== undefined
-                ? `${avgTemps[id]?.toFixed(2)}°C`
+              {avgTemps[id] !== undefined && avgTemps[id] !== null
+                ? unit === "Celsius"
+                  ? `${avgTemps[id].toFixed(2)}°C`
+                  : `${toFarenheit(avgTemps[id]).toFixed(2)}°F`
                 : "..."}
             </div>
           </div>

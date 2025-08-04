@@ -31,6 +31,7 @@ import type { MapProps } from "./mapTypes";
 import MapControls from "../ui/MapControls";
 import TrendsModal from "../ui/TrendsModal";
 import IconLegend from "../ui/MapIconLegend";
+import { useUnits } from "@/components/map/unitsContext";
 
 // Helper function to get current hour bucket
 const getCurrentHourBucket = () => {
@@ -102,7 +103,7 @@ const Map = (props: MapProps) => {
   const [today, setToday] = useState(getTodayDate);
   const [tempDate, setTempDate] = useState(getTodayDate);
 
-  const [unit, setUnit] = useState("Celsius");
+  const { unit, setUnit } = useUnits();
 
   const [clickedPoint, setClickedPoint] = useState({
     latitude: null as number | null,
@@ -325,7 +326,7 @@ const Map = (props: MapProps) => {
                     <Popup>
                       <div className="bg-white w-20 md:w-30 rounded-md gap-0">
                         <p className="font-semibold text-center text-sm md:text-lg mb-0">
-                          {unit == "Celsius"
+                          {unit === "Celsius"
                             ? `${item["temperature"]} °C`
                             : `${toFarenheit(item["temperature"])} °F`}
                         </p>
@@ -429,8 +430,6 @@ const Map = (props: MapProps) => {
         {heatVisible && <HeatmapLayer data={heatMapPoints} />}
 
         <MapControls
-          unit={unit as "Celsius" | "Farenheit"}
-          setUnit={setUnit}
           tempVisible={tempVisible}
           setTempVisible={setTempVisible}
           heatVisible={heatVisible}

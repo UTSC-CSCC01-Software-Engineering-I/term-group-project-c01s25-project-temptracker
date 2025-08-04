@@ -8,6 +8,7 @@ const LazyMap = dynamic(() => import("@/components/map/Map"), {
 });
 import POIs from "./POIs";
 import Controls from "./TopControls";
+import { UnitsProvider } from "../components/map/unitsContext";
 
 export default function Home() {
   const [searchLatitude, setSearchLatitude] = useState<number | null>(null);
@@ -48,31 +49,33 @@ export default function Home() {
   };
 
   return (
-    <div className="main-container w-full max-w-[1800px] mx-auto md:mt-4">
-      <Controls
-        searchLatitude={searchLatitude}
-        searchLongitude={searchLongitude}
-        setSearchLatitude={setSearchLatitude}
-        setSearchLongitude={setSearchLongitude}
-        setCenterLatitude={setCenterLatitude}
-        setCenterLongitude={setCenterLongitude}
-        timeRange={timeRange}
-        setTimeRange={setTimeRange}
-      />
-
-      <div className="map-placeholder">
-        <LazyMap
-          key={
-            centerLatitude != null && centerLongitude != null
-              ? `${centerLatitude}-${centerLongitude}`
-              : "null"
-          }
-          centerLatitude={centerLatitude}
-          centerLongitude={centerLongitude}
+    <UnitsProvider>
+      <div className="main-container w-full max-w-[1800px] mx-auto md:mt-4">
+        <Controls
+          searchLatitude={searchLatitude}
+          searchLongitude={searchLongitude}
+          setSearchLatitude={setSearchLatitude}
+          setSearchLongitude={setSearchLongitude}
+          setCenterLatitude={setCenterLatitude}
+          setCenterLongitude={setCenterLongitude}
           timeRange={timeRange}
+          setTimeRange={setTimeRange}
         />
+
+        <div className="map-placeholder">
+          <LazyMap
+            key={
+              centerLatitude != null && centerLongitude != null
+                ? `${centerLatitude}-${centerLongitude}`
+                : "null"
+            }
+            centerLatitude={centerLatitude}
+            centerLongitude={centerLongitude}
+            timeRange={timeRange}
+          />
+        </div>
+        <POIs />
       </div>
-      <POIs />
-    </div>
+    </UnitsProvider>
   );
 }
