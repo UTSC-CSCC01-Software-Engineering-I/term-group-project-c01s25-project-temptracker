@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - develop
+      - feat/deploy-testing
     tags:
       - 'release/v*'
   pull_request:
