@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: 18
 
-      # === BACKEND STUFF ===
+      # === BACKEND ===
       - name: Create server/.env
         working-directory: server
         run: |
