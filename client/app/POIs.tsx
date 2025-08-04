@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getClosestPOIs, POI } from "@/lib/services/POIsService";
 import { getAverageClosestTemperature } from "@/lib/services/tempByCoordinatesService";
-import { useUnits } from "@/components/map/unitsContext";
+import { useUnits } from "@/app/unitsContext";
 import { toFarenheit } from "@/components/map/mapUtils";
 
 export default function POIs() {

@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { useUnits } from "@/components/map/unitsContext";
+import { useUnits } from "@/app/unitsContext";
 import { toFarenheit } from "@/components/map/mapUtils";
 
 type TempChartProps = {

@@ -8,7 +8,7 @@ const LazyMap = dynamic(() => import("@/components/map/Map"), {
 });
 import POIs from "./POIs";
 import Controls from "./TopControls";
-import { UnitsProvider } from "../components/map/unitsContext";
+import { UnitsProvider } from "./unitsContext";
 
 export default function Home() {
   const [searchLatitude, setSearchLatitude] = useState<number | null>(null);

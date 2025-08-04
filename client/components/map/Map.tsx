@@ -28,10 +28,10 @@ import { SliderLayer } from "./SliderLayer";
 import { HeatmapLayer } from "./HeatMapLayer";
 import { MapClickHandler } from "./MapClickHandler";
 import type { MapProps } from "./mapTypes";
-import MapControls from "../ui/MapControls";
+import MapControls from "./MapControls";
 import TrendsModal from "../ui/TrendsModal";
-import IconLegend from "../ui/MapIconLegend";
-import { useUnits } from "@/components/map/unitsContext";
+import IconLegend from "./MapIconLegend";
+import { useUnits } from "@/app/unitsContext";
 
 // Helper function to get current hour bucket
 const getCurrentHourBucket = () => {

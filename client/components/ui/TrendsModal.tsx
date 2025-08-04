@@ -10,7 +10,7 @@ import {
 } from "@/lib/services/getTemperatureReadingService";
 import TempChart from "./TempChart";
 import { lakeCodeConvert, toFarenheit } from "../map/mapUtils";
-import { useUnits } from "@/components/map/unitsContext";
+import { useUnits } from "@/app/unitsContext";
 
 type TrendsModalProps = {
   latitude: number | null;

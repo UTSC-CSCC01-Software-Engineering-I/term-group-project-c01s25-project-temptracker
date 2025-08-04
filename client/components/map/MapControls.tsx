@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import MapLegend from "./MapLegend";
-import PointTrendPrompt from "./PointTrendPrompt";
-import { useUnits } from "@/components/map/unitsContext";
+import PointTrendPrompt from "../ui/PointTrendPrompt";
+import { useUnits } from "@/app/unitsContext";
 
 type Props = {
   tempVisible: boolean;
