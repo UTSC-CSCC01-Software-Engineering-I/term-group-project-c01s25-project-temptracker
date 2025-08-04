@@ -1,141 +1,362 @@
-const { getUsers, getUserSubmissions, getUserBadges, awardUserBadges } = require("../controllers/userController");
-const userService = require("../services/userService");
+const userService = require('../services/userService');
+const {
+  getUsers,
+  deleteUser,
+  getUserSubmissions,
+  getUserStats,
+  updateUserStreak,
+  updateUserSubmission,
+  updateUserSettings,
+  getUserBadges,
+  awardUserBadges,
+  getPublicUsers,
+  getUserPublicProfile,
+  uploadProfilePicture,
+} = require('../controllers/userController');
 
-jest.mock("../services/userService", () => ({
+// Mock userService
+jest.mock('../services/userService', () => ({
   getAllUsers: jest.fn(),
+  deleteUser: jest.fn(),
+  getAllEmailUsers: jest.fn(),
   getUserSubmissions: jest.fn(),
+  getUserStats: jest.fn(),
+  updateUserStreak: jest.fn(),
+  updateUserSubmission: jest.fn(),
+  updateUserSettings: jest.fn(),
   getUserBadges: jest.fn(),
   awardUserBadges: jest.fn(),
+  getPublicUsers: jest.fn(),
+  getUserPublicProfile: jest.fn(),
+  uploadProfilePicture: jest.fn(),
 }));
 
-describe("userController", () => {
-  let mockReq, mockRes;
+describe('User Controller', () => {
+  let req, res;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockReq = {
-      params: {},
+    req = {
+      params: { id: 'user-123', username: 'testuser' },
+      body: {},
+      file: null,
     };
-    mockRes = {
-      status: jest.fn().mockReturnThis(),
+    res = {
       json: jest.fn().mockReturnThis(),
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn().mockReturnThis(),
     };
   });
 
-  describe("getUsers", () => {
-    it("returns users as JSON on successful fetch", async () => {
-      const mockUsers = [{ id: "user-1" }, { id: "user-2" }];
-      userService.getAllUsers.mockResolvedValue(mockUsers);
+  describe('getUsers', () => {
+    test('should return all users with 200 status', async () => {
+      const mockUsers = [{ id: 'user-1' }, { id: 'user-2' }];
+      userService.getAllUsers.mockResolvedValueOnce(mockUsers);
 
-      await getUsers(mockReq, mockRes);
+      await getUsers(req, res);
 
-      expect(mockRes.json).toHaveBeenCalledWith(mockUsers);
-      expect(mockRes.status).not.toHaveBeenCalled();
       expect(userService.getAllUsers).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(mockUsers);
+      expect(res.status).not.toHaveBeenCalled();
     });
 
-    it("returns 500 with error message on failure", async () => {
-      const error = new Error("Failed to fetch users");
-      userService.getAllUsers.mockRejectedValue(error);
+    test('should return 500 status on service error', async () => {
+      userService.getAllUsers.mockRejectedValueOnce(new Error('Database error'));
 
-      await getUsers(mockReq, mockRes);
+      await getUsers(req, res);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: "Failed to fetch users" });
       expect(userService.getAllUsers).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Database error' });
     });
   });
 
-  describe("getUserSubmissions", () => {
-    it("returns user submissions as JSON on successful fetch", async () => {
-      const userId = "user-123";
-      const mockSubmissions = [
-        { id: 1, temperature: 22, user_id: userId },
-        { id: 2, temperature: 25, user_id: userId },
-      ];
-      mockReq.params.id = userId;
-      userService.getUserSubmissions.mockResolvedValue(mockSubmissions);
+  describe('deleteUser', () => {
+    test('should delete user and return 204 status', async () => {
+      userService.deleteUser.mockResolvedValueOnce();
 
-      await getUserSubmissions(mockReq, mockRes);
+      await deleteUser(req, res);
 
-      expect(mockRes.json).toHaveBeenCalledWith(mockSubmissions);
-      expect(mockRes.status).not.toHaveBeenCalled();
-      expect(userService.getUserSubmissions).toHaveBeenCalledWith(userId);
+      expect(userService.deleteUser).toHaveBeenCalledWith('user-123');
+      expect(res.status).toHaveBeenCalledWith(204);
+      expect(res.send).toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
     });
 
-    it("returns 500 with error message on failure", async () => {
-      const userId = "user-123";
-      const error = new Error("Database error");
-      mockReq.params.id = userId;
-      userService.getUserSubmissions.mockRejectedValue(error);
+    test('should return 500 status on service error', async () => {
+      userService.deleteUser.mockRejectedValueOnce(new Error('Delete error'));
 
-      await getUserSubmissions(mockReq, mockRes);
+      await deleteUser(req, res);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: "Database error" });
-      expect(userService.getUserSubmissions).toHaveBeenCalledWith(userId);
+      expect(userService.deleteUser).toHaveBeenCalledWith('user-123');
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Delete error' });
     });
   });
 
-  describe("getUserBadges", () => {
-    it("returns user badges as JSON on successful fetch", async () => {
-      const userId = "user-123";
-      const mockBadges = [
-        { earned_on: "2023-07-01", badge: { id: 1, name: "First Submission" } },
-        { earned_on: "2023-07-02", badge: { id: 2, name: "Streak" } },
-      ];
-      mockReq.params.id = userId;
-      userService.getUserBadges.mockResolvedValue(mockBadges);
+  describe('getUserSubmissions', () => {
+    test('should return user submissions with 200 status', async () => {
+      const mockSubmissions = [{ temperature: 20 }, { temperature: 22 }];
+      userService.getUserSubmissions.mockResolvedValueOnce(mockSubmissions);
 
-      await getUserBadges(mockReq, mockRes);
+      await getUserSubmissions(req, res);
 
-      expect(mockRes.json).toHaveBeenCalledWith(mockBadges);
-      expect(mockRes.status).not.toHaveBeenCalled();
-      expect(userService.getUserBadges).toHaveBeenCalledWith(userId);
+      expect(userService.getUserSubmissions).toHaveBeenCalledWith('user-123');
+      expect(res.json).toHaveBeenCalledWith(mockSubmissions);
+      expect(res.status).not.toHaveBeenCalled();
     });
 
-    it("returns 500 with error message on failure", async () => {
-      const userId = "user-123";
-      const error = new Error("Database error");
-      mockReq.params.id = userId;
-      userService.getUserBadges.mockRejectedValue(error);
+    test('should return 500 status on service error', async () => {
+      userService.getUserSubmissions.mockRejectedValueOnce(new Error('Database error'));
 
-      await getUserBadges(mockReq, mockRes);
+      await getUserSubmissions(req, res);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: "Database error" });
-      expect(userService.getUserBadges).toHaveBeenCalledWith(userId);
+      expect(userService.getUserSubmissions).toHaveBeenCalledWith('user-123');
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Database error' });
     });
   });
 
-  describe("awardUserBadges", () => {
-    it("returns awarded badges as JSON with 200 status on successful award", async () => {
-      const userId = "user-123";
-      const mockBadges = [
-        { id: 2, name: "Location Master" },
-        { id: 3, name: "Special Badge" },
-      ];
-      mockReq.params.id = userId;
-      userService.awardUserBadges.mockResolvedValue(mockBadges);
+  describe('getUserStats', () => {
+    test('should return user stats with 200 status', async () => {
+      const mockStats = { curr_streak: 5, max_streak: 10 };
+      userService.getUserStats.mockResolvedValueOnce(mockStats);
 
-      await awardUserBadges(mockReq, mockRes);
+      await getUserStats(req, res);
 
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith(mockBadges);
-      expect(userService.awardUserBadges).toHaveBeenCalledWith(userId);
+      expect(userService.getUserStats).toHaveBeenCalledWith('user-123');
+      expect(res.json).toHaveBeenCalledWith(mockStats);
+      expect(res.status).not.toHaveBeenCalled();
     });
 
-    it("returns 500 with error message on failure", async () => {
-      const userId = "user-123";
-      const error = new Error("Badge award error");
-      mockReq.params.id = userId;
-      userService.awardUserBadges.mockRejectedValue(error);
+    test('should return 500 status on service error', async () => {
+      userService.getUserStats.mockRejectedValueOnce(new Error('Database error'));
 
-      await awardUserBadges(mockReq, mockRes);
+      await getUserStats(req, res);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: "Badge award error" });
-      expect(userService.awardUserBadges).toHaveBeenCalledWith(userId);
+      expect(userService.getUserStats).toHaveBeenCalledWith('user-123');
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Database error' });
+    });
+  });
+
+  describe('updateUserStreak', () => {
+    test('should update user streak and return 200 status', async () => {
+      userService.updateUserStreak.mockResolvedValueOnce(undefined);
+
+      await updateUserStreak(req, res);
+
+      expect(userService.updateUserStreak).toHaveBeenCalledWith('user-123');
+      expect(res.json).toHaveBeenCalledWith(undefined);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    test('should return 500 status on service error', async () => {
+      userService.updateUserStreak.mockRejectedValueOnce(new Error('Database error'));
+
+      await updateUserStreak(req, res);
+
+      expect(userService.updateUserStreak).toHaveBeenCalledWith('user-123');
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Database error' });
+    });
+  });
+
+  describe('updateUserSubmission', () => {
+    test('should update user submission and return 200 status', async () => {
+      userService.updateUserSubmission.mockResolvedValueOnce(undefined);
+
+      await updateUserSubmission(req, res);
+
+      expect(userService.updateUserSubmission).toHaveBeenCalledWith('user-123');
+      expect(res.json).toHaveBeenCalledWith(undefined);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    test('should return 500 status on service error', async () => {
+      userService.updateUserSubmission.mockRejectedValueOnce(new Error('Database error'));
+
+      await updateUserSubmission(req, res);
+
+      expect(userService.updateUserSubmission).toHaveBeenCalledWith('user-123');
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Database error' });
+    });
+  });
+
+  describe('updateUserSettings', () => {
+    test('should update user settings and return 200 status', async () => {
+      const settings = { username: 'newuser' };
+      req.body = settings;
+      const mockSettings = { username: 'newuser' };
+      userService.updateUserSettings.mockResolvedValueOnce(mockSettings);
+
+      await updateUserSettings(req, res);
+
+      expect(userService.updateUserSettings).toHaveBeenCalledWith('user-123', settings);
+      expect(res.json).toHaveBeenCalledWith(mockSettings);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    test('should return 500 status on service error', async () => {
+      req.body = { username: 'newuser' };
+      userService.updateUserSettings.mockRejectedValueOnce(new Error('Database error'));
+
+      await updateUserSettings(req, res);
+
+      expect(userService.updateUserSettings).toHaveBeenCalledWith('user-123', req.body);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Database error' });
+    });
+  });
+
+  describe('getUserBadges', () => {
+    test('should return user badges with 200 status', async () => {
+      const mockBadges = [{ id: 1, name: 'Badge 1' }, { id: 2, name: 'Badge 2' }];
+      userService.getUserBadges.mockResolvedValueOnce(mockBadges);
+
+      await getUserBadges(req, res);
+
+      expect(userService.getUserBadges).toHaveBeenCalledWith('user-123');
+      expect(res.json).toHaveBeenCalledWith(mockBadges);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    test('should return 500 status on service error', async () => {
+      userService.getUserBadges.mockRejectedValueOnce(new Error('Database error'));
+
+      await getUserBadges(req, res);
+
+      expect(userService.getUserBadges).toHaveBeenCalledWith('user-123');
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Database error' });
+    });
+  });
+
+  describe('awardUserBadges', () => {
+    test('should award user badges and return 200 status', async () => {
+      const mockBadges = [{ id: 1, name: 'Veteran' }];
+      userService.awardUserBadges.mockResolvedValueOnce(mockBadges);
+
+      await awardUserBadges(req, res);
+
+      expect(userService.awardUserBadges).toHaveBeenCalledWith('user-123');
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(mockBadges);
+    });
+
+    test('should return 500 status on service error', async () => {
+      userService.awardUserBadges.mockRejectedValueOnce(new Error('Badge award error'));
+
+      await awardUserBadges(req, res);
+
+      expect(userService.awardUserBadges).toHaveBeenCalledWith('user-123');
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Badge award error' });
+    });
+  });
+
+  describe('getPublicUsers', () => {
+    test('should return public users with 200 status', async () => {
+      const mockUsers = [{ id: 'user-1', username: 'user1' }, { id: 'user-2', username: 'user2' }];
+      userService.getPublicUsers.mockResolvedValueOnce(mockUsers);
+
+      await getPublicUsers(req, res);
+
+      expect(userService.getPublicUsers).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(mockUsers);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    test('should return 500 status on service error', async () => {
+      userService.getPublicUsers.mockRejectedValueOnce(new Error('Database error'));
+
+      await getPublicUsers(req, res);
+
+      expect(userService.getPublicUsers).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Database error' });
+    });
+  });
+
+  describe('getUserPublicProfile', () => {
+    test('should return public user profile with 200 status', async () => {
+      const mockProfile = { id: 'user-123', username: 'testuser', is_public: true };
+      userService.getUserPublicProfile.mockResolvedValueOnce(mockProfile);
+
+      await getUserPublicProfile(req, res);
+
+      expect(userService.getUserPublicProfile).toHaveBeenCalledWith('testuser');
+      expect(res.json).toHaveBeenCalledWith(mockProfile);
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    test('should return 404 status if user not found', async () => {
+      userService.getUserPublicProfile.mockRejectedValueOnce(new Error('User not found'));
+
+      await getUserPublicProfile(req, res);
+
+      expect(userService.getUserPublicProfile).toHaveBeenCalledWith('testuser');
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ error: 'User not found' });
+    });
+
+    test('should return 403 status if profile is private', async () => {
+      userService.getUserPublicProfile.mockRejectedValueOnce(new Error('Profile is private'));
+
+      await getUserPublicProfile(req, res);
+
+      expect(userService.getUserPublicProfile).toHaveBeenCalledWith('testuser');
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Profile is private' });
+    });
+
+    test('should return 500 status on other service errors', async () => {
+      userService.getUserPublicProfile.mockRejectedValueOnce(new Error('Database error'));
+
+      await getUserPublicProfile(req, res);
+
+      expect(userService.getUserPublicProfile).toHaveBeenCalledWith('testuser');
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Database error' });
+    });
+  });
+
+  describe('uploadProfilePicture', () => {
+    test('should upload profile picture and return 200 status', async () => {
+      const file = { originalname: 'pic.jpg', buffer: Buffer.from(''), mimetype: 'image/jpeg' };
+      req.file = file;
+      const mockUrl = 'https://example.com/pic.jpg';
+      userService.uploadProfilePicture.mockResolvedValueOnce(mockUrl);
+
+      await uploadProfilePicture(req, res);
+
+      expect(userService.uploadProfilePicture).toHaveBeenCalledWith('user-123', file);
+      expect(res.json).toHaveBeenCalledWith({ profilePictureUrl: mockUrl });
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    test('should remove profile picture if file is null and return 200 status', async () => {
+      req.file = null;
+      userService.uploadProfilePicture.mockResolvedValueOnce(null);
+
+      await uploadProfilePicture(req, res);
+
+      expect(userService.uploadProfilePicture).toHaveBeenCalledWith('user-123', null);
+      expect(res.json).toHaveBeenCalledWith({ profilePictureUrl: null });
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    test('should return 500 status on service error', async () => {
+      const file = { originalname: 'pic.jpg', buffer: Buffer.from(''), mimetype: 'image/jpeg' };
+      req.file = file;
+      userService.uploadProfilePicture.mockRejectedValueOnce(new Error('Failed to upload profile picture'));
+
+      await uploadProfilePicture(req, res);
+
+      expect(userService.uploadProfilePicture).toHaveBeenCalledWith('user-123', file);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Failed to upload profile picture' });
     });
   });
 });
