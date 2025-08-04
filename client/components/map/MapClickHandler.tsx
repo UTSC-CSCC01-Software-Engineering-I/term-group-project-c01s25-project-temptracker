@@ -62,10 +62,10 @@ export const MapClickHandler: React.FC<MapClickHandlerProps> = ({timeRange, toda
           isNaN(lat) ||
           isNaN(lng)
         ) {
-          console.warn("Invalid coordinates:", { lat, lng });
+          // console.warn("Invalid coordinates:", { lat, lng });
           return;
         }
-        console.log("Map clicked at:", lat, lng);
+        // console.log("Map clicked at:", lat, lng);
         let nearestPoint;
         let clickedOnLake;
         const [nearestPointResult, lakeClickResult] = await Promise.all([
@@ -103,8 +103,8 @@ export const MapClickHandler: React.FC<MapClickHandlerProps> = ({timeRange, toda
         clickedOnLake = lakeClickResult
     
         if (nearestPoint) {
-          console.log("set clicked point");
-          console.log(nearestPoint);
+          // console.log("set clicked point");
+          // console.log(nearestPoint);
           setClickedPoint({
             latitude: lat,
             longitude: lng,
@@ -119,10 +119,10 @@ export const MapClickHandler: React.FC<MapClickHandlerProps> = ({timeRange, toda
         }
 
         if (clickedOnLake.lake && clickedOnLake.lake) {
-          console.log('user clicked on:', clickedOnLake.lake)
+          // console.log('user clicked on:', clickedOnLake.lake)
           setClickedLake(clickedOnLake.lake)
         } else {
-          console.log('no lake clicked')
+          // console.log('no lake clicked')
           setClickedLake(null)
         }
       },
