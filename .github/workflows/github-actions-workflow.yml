@@ -132,8 +132,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [test]
+
     steps:
-      - name: Deploy via SSH
+      - name: Pull and restart containers
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VM_HOST }}
@@ -144,9 +145,22 @@ jobs:
             docker compose pull
             docker compose down
             docker compose up -d
-            
-            echo "Waiting 5 seconds for containers to stabilize..."
+
+      - name: Wait for containers to stabilize
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
             sleep 5
 
-            echo "Running deployed tests in server container..."
+      - name: Run deployed tests
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/temptracker
             docker compose exec -T server npm run test-deployed
