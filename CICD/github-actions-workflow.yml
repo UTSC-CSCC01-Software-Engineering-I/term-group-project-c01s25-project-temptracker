@@ -1,0 +1,141 @@
+name: CI/CD
+run-name: ${{ github.actor }} is running ${{ github.workflow }} on ${{ github.repository }}
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'release/v*'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # === BACKEND STUFF ===
+      - name: Create server/.env
+        working-directory: server
+        run: |
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
+          echo "SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}" >> .env
+          echo "SENDGRID_SENDER=${{ secrets.SENDGRID_SENDER }}" >> .env
+
+      - name: Install and test backend
+        working-directory: server
+        run: |
+          npm ci
+#          npm test
+
+      # === FRONTEND ===
+      - name: Create client/.env.local and .env.test
+        working-directory: client
+        run: |
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env.local
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> .env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.local
+          cp .env.local .env.test
+
+      - name: Install and test frontend
+        working-directory: client
+        run: |
+          npm ci
+          npm test
+
+      # === DOCKER LOGIN ===
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      # === SERVER DOCKER IMAGES ===
+      - name: Build and push server (latest)
+        working-directory: server
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:master .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-server:master
+
+      - name: Tag and push server (versioned)
+        working-directory: server
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/release/}
+          else
+            VERSION="release-v4.0"
+          fi
+          echo "Tagging server image with version: $VERSION"
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-server:$VERSION
+
+      # === CLIENT DOCKER IMAGES ===
+      - name: Build and push client (latest)
+        working-directory: client
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:master .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-client:master
+
+      - name: Tag and push client (versioned)
+        working-directory: client
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/release/}
+          else
+            VERSION="release-v4.0"
+          fi
+          echo "Tagging client image with version: $VERSION"
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-client:$VERSION
+
+      # === MAP ===
+      - name: Create map/.env
+        working-directory: map
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
+
+      - name: Build and push map (latest)
+        working-directory: map
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-map:master .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-map:master
+
+      - name: Tag and push map (versioned)
+        working-directory: map
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/release/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/release/}
+          else
+            VERSION="release-v4.0"
+          fi
+          echo "Tagging map image with version: $VERSION"
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/myapp-map:$VERSION .
+          docker push ${{ secrets.DOCKER_USERNAME }}/myapp-map:$VERSION
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/temptracker
+            docker compose pull
+            docker compose down
+            docker compose up -d
