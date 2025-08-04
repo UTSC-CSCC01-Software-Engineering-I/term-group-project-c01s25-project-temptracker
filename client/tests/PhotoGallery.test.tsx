@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { act } from 'react';
 import { toast } from 'sonner';
 import PhotoGallery from '@/app/community/PhotoGallery';
-import { getPhotos } from '@/lib/services/photo_gallery/photoRetrievalService';
-import { onUpload } from '@/lib/services/photo_gallery/photoUploadService';
+import { getPhotos } from '../lib/supabase/api/photo_gallery/photoRetrievalService';
+import { onUpload } from '../lib/supabase/api/photo_gallery/photoUploadService';
 import { useUser } from '@/app/context';
 import Image from 'next/image';
 
@@ -15,10 +15,10 @@ jest.mock('sonner', () => ({
     success: jest.fn(),
   },
 }));
-jest.mock('@/lib/services/photo_gallery/photoRetrievalService', () => ({
+jest.mock('../lib/supabase/api/photo_gallery/photoRetrievalService', () => ({
   getPhotos: jest.fn(),
 }));
-jest.mock('@/lib/services/photo_gallery/photoUploadService', () => ({
+jest.mock('../lib/supabase/api/photo_gallery/photoUploadService', () => ({
   onUpload: jest.fn(),
 }));
 jest.mock('@/app/context', () => ({
