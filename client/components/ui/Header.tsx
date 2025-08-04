@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import ProfileDropdown from "./ProfileDropdown";
+import Image from "next/image";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -16,7 +17,7 @@ export default function Header() {
 
   return (
     <header className="w-full bg-nav-blue border-b border-dark-blue sticky top-0 z-50">
-      <div className="pt-1.25 pb-0.75 sm:py-2 md:py-3 lg:px-12 px-4 flex items-center justify-between w-full">
+      <div className="pt-1.25 pb-1 lg:py-1 sm:py-2 md:py-3 lg:px-12 px-4 flex items-center justify-between w-full">
         {/* Mobile menu toggle */}
         <button
           className="md:hidden p-2 rounded-md transition hover:opacity-75 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
@@ -48,13 +49,21 @@ export default function Header() {
           </svg>
         </button>
 
-        <h1 className="text-2xl pr-2 italic font-bold text-gray-900 tracking-wide select-none">
-          GLOW - Temp Tracker
-        </h1>
+        <div className="pr-2">
+          <Link href="/">
+            <Image
+              src="/glow.png"
+              alt="GLOW Logo"
+              className="h-10 md:h-12 w-auto"
+              width={1000}
+              height={1000}
+            />
+          </Link>
+        </div>
 
         {/* Desktop nav */}
         <nav
-          className="hidden md:flex flex-grow justify-end md:mr-8 lg:mr-18"
+          className="hidden md:flex flex-grow justify-end"
           aria-label="Primary Navigation"
         >
           {navLinks.map(({ href, label }) => (
@@ -66,6 +75,9 @@ export default function Header() {
               {label}
             </Link>
           ))}
+          {/* Divider */}
+          <div className="border border-dark-blue/20 mx-4 h-8" />
+          {/* Profile Dropdown */}
         </nav>
 
         <ProfileDropdown />

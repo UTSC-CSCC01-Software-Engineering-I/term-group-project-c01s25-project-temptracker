@@ -1,7 +1,12 @@
 export type MapProps = {
   centerLatitude: number | null;
   centerLongitude: number | null;
-  timeRange: "all" | "week" | "month";
+  timeRange: "week" | "today";
+};
+
+export type ChartProps = {
+  data: [number, number];
+  title: string;
 };
 
 export type TemperaturePoint = [number, number, number]; // [lat, lng, temperature]

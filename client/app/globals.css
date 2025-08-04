@@ -54,6 +54,8 @@
   .diamond-badge .badge-accent {
     @apply bg-[#27b2ef];
   }
+
+
 }
 
 @theme {
@@ -113,7 +115,7 @@
   --card-foreground: 0 0% 3.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 3.9%;
-  --primary: 0 0% 9%; /* colour for buttons and other interactive elements */
+  --primary: 199 54% 56%; /* colour for buttons and other interactive elements */
   --primary-foreground: 0 0% 98%;
   --secondary: 207 100% 32%; /* accent colour */
   --secondary-foreground: 0 0% 9%;
@@ -146,8 +148,8 @@
   --card-foreground: 0 0% 98%;
   --popover: 0 0% 3.9%;
   --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 9%;
+  --primary: 199 54% 44%;
+  --primary-foreground: 0 0% 98%;
   --secondary: 199 54% 56%;
   --secondary-foreground: 0 0% 98%;
   --muted: 0 0% 60%;
@@ -191,15 +193,30 @@
 
 .cluster-icon {
   border-radius: 50%;
-  height: 3rem;
-  width: 3rem;
+  height: 2.5rem;
+  width: 2.5rem;
   background-color: white;
   transform: translate(-25%, -25%);
   display: flex;
   justify-content: center;
   align-items: center;
   font-weight: 900;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
+  border: 2px solid rgb(0, 119, 255);
+}
+
+.cluster-icon2 {
+  border-radius: 50%;
+  height: 2.5rem;
+  width: 2.5rem;
+  background-color: white;
+  transform: translate(-25%, -25%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 900;
+  font-size: 1.2rem;
+  border: 2px solid rgb(255, 136, 0);
 }
 
 /* need to add animations later */

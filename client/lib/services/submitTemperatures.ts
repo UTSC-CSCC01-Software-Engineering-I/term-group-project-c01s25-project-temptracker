@@ -1,9 +1,6 @@
-import { createClient } from "../supabase/client";
 import axios from "axios";
-import { updateStreak, updateUploads } from "./streakService";
+import { getCurrentUser, getAccessToken } from "../authSession";
 import { awardBadges } from "./badgeAwardService";
-
-const supabase = createClient();
 
 export interface TemperatureSubmission {
   temperature: number;
@@ -16,16 +13,15 @@ export interface TemperatureSubmission {
 }
 
 export async function submitTemperature(data: TemperatureSubmission) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const user = await getCurrentUser();
+  const accessToken = await getAccessToken();
 
   if (!user) {
     throw new Error("Login to submit a temperature reading.");
+  }
+
+  if (!accessToken) {
+    throw new Error("No access token found.");
   }
 
   const res = await axios.post(
@@ -33,31 +29,47 @@ export async function submitTemperature(data: TemperatureSubmission) {
     { ...data, user_id: user.id },
     {
       headers: {
-        Authorization: `Bearer ${session?.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );
 
   console.log("Temperature submission response:", res.data);
 
-  // currently, we record streaks by consecutive uploads
-  await updateStreak(user.id);
-  await updateUploads(user.id);
+  // update streak and uploads after submission
+  await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/streak`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/submissions`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
 
   await awardBadges(user.id);
 }
 
 export async function submitTemperatures(data: TemperatureSubmission[]) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const user = await getCurrentUser();
+  const accessToken = await getAccessToken();
 
   if (!user) {
     throw new Error("Login to submit temperature readings.");
+  }
+
+  if (!accessToken) {
+    throw new Error("No access token found.");
   }
 
   const res = await axios.post(
@@ -65,16 +77,33 @@ export async function submitTemperatures(data: TemperatureSubmission[]) {
     { formData: data, userId: user.id },
     {
       headers: {
-        Authorization: `Bearer ${session?.access_token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );
 
   console.log("Temperature submission response:", res.data);
 
-  // currently, we record streaks by consecutive uploads
-  await updateStreak(user.id);
-  await updateUploads(user.id);
+  // update streak and uploads after submission
+  await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/streak`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  await axios.post(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/submissions`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
 
   await awardBadges(user.id);
 }

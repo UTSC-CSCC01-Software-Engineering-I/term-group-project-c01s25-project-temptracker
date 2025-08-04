@@ -1,37 +1,38 @@
 import axios from "axios";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/types/badges";
+import { getAccessToken, getCurrentUserWithProfile } from "../authSession";
 
 export async function awardBadges(userId: string) {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const accessToken = await getAccessToken();
 
-  if (!session?.access_token) {
+  if (!accessToken) {
     throw new Error("No access token found");
   }
 
   try {
     const API_BASE_URL =
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+
     const response = await axios.post(
       `${API_BASE_URL}/users/${userId}/badges/award`,
       {},
       {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
 
     console.log("Awarded badges:", response.data);
 
-    // Show toast notifications for newly earned badges
-    const newBadges = response.data || [];
-    if (newBadges && newBadges.length > 0) {
-      showBadgeToasts(newBadges);
+    const newBadges: Badge[] = response.data || [];
+    if (newBadges.length > 0) {
+      // Check if user has enabled badge notifications
+      const { profile } = await getCurrentUserWithProfile();
+      if (profile?.badge_notifications) {
+        showBadgeToasts(newBadges);
+      }
     }
 
     return newBadges;
@@ -41,7 +42,6 @@ export async function awardBadges(userId: string) {
   }
 }
 
-// Difficulty colors for toast styling
 const DIFFICULTY_COLORS = {
   bronze: "#ca7e4b",
   silver: "#b6b8bc",

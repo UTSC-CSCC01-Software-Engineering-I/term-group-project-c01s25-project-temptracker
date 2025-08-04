@@ -78,8 +78,8 @@ export default function UploadTemperatureForm() {
     defaultValues: {
       temperature: -1,
       temperatureUnit: "C",
-      longitude: -181,
-      latitude: -91,
+      longitude: undefined,
+      latitude: undefined,
       date: new Date(),
       time: defaultTime,
       notes: "",
@@ -159,17 +159,18 @@ export default function UploadTemperatureForm() {
         {/* Location */}
         <div className="space-y-0.5">
           <FormLabel className="text-base font-semibold">Location</FormLabel>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
             <FormField
               control={form.control}
               name="longitude"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex-1">
                   <FormControl>
                     <Input
                       type="number"
                       step="0.000001"
                       placeholder="Longitude"
+                      value={field.value ?? ""}
                       onChange={(e) => {
                         const value = e.target.value;
                         field.onChange(value === "" ? "" : parseFloat(value));
@@ -184,12 +185,13 @@ export default function UploadTemperatureForm() {
               control={form.control}
               name="latitude"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex-1">
                   <FormControl>
                     <Input
                       type="number"
                       step="0.000001"
                       placeholder="Latitude"
+                      value={field.value ?? ""}
                       onChange={(e) => {
                         const value = e.target.value;
                         field.onChange(value === "" ? "" : parseFloat(value));
@@ -200,6 +202,32 @@ export default function UploadTemperatureForm() {
                 </FormItem>
               )}
             />
+            <Button
+              type="button"
+              onClick={() => {
+                if (!navigator.geolocation) {
+                  alert("Geolocation is not supported by your browser.");
+                  return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    form.setValue("latitude", lat);
+                    form.setValue("longitude", lng);
+                    toast.success("Location set from device.");
+                  },
+                  (error) => {
+                    console.error("Geolocation error:", error);
+                    toast.error("Unable to retrieve your location.");
+                  }
+                );
+              }}
+              className="text-white px-4 py-2 rounded-md"
+            >
+              Use My Location
+            </Button>
           </div>
         </div>
 
@@ -209,13 +237,13 @@ export default function UploadTemperatureForm() {
             Date and Time of Reading
           </FormLabel>
 
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-3">
             {/* Date */}
             <FormField
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="flex-1">
+                <FormItem className="min-w-[160px] flex-1">
                   <FormControl>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -308,7 +336,7 @@ export default function UploadTemperatureForm() {
           </div>
 
           <FormDescription>
-            Uses current date and time if not specified
+            Uses current date/time if not specified
           </FormDescription>
         </div>
 
@@ -328,7 +356,7 @@ export default function UploadTemperatureForm() {
                   />
                 </FormControl>
                 <FormDescription>
-                  Optional: Add any relevant observations about the measurement
+                  Optional: Add any relevant notes about the measurement
                   conditions
                 </FormDescription>
                 <FormMessage />

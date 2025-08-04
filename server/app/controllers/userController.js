@@ -1,3 +1,4 @@
+const { request } = require("node:https");
 const userService = require("../services/userService");
 
 async function getUsers(req, res) {
@@ -9,11 +10,65 @@ async function getUsers(req, res) {
   }
 }
 
+async function deleteUser(req, res) {
+  const userId = req.params.id;
+  try {
+    await userService.deleteUser(userId);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async function getUserSubmissions(req, res) {
   const userId = req.params.id;
   try {
     const submissions = await userService.getUserSubmissions(userId);
     res.json(submissions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function getUserStats(req, res) {
+  const userId = req.params.id;
+  try {
+    const stats = await userService.getUserStats(userId);
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function updateUserStreak(req, res) {
+  const userId = req.params.id;
+  try {
+    const updatedUser = await userService.updateUserStreak(userId);
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function updateUserSubmission(req, res) {
+  const userId = req.params.id;
+  try {
+    const updatedSubmission = await userService.updateUserSubmission(userId);
+    res.json(updatedSubmission);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function updateUserSettings(req, res) {
+  const userId = req.params.id;
+  const settings = req.body;
+  try {
+    const updatedSettings = await userService.updateUserSettings(
+      userId,
+      settings
+    );
+    res.json(updatedSettings);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -39,9 +94,58 @@ async function awardUserBadges(req, res) {
   }
 }
 
+async function getPublicUsers(req, res) {
+  try {
+    const users = await userService.getPublicUsers();
+
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function getUserPublicProfile(req, res) {
+  const { username } = req.params;
+  try {
+    const profile = await userService.getUserPublicProfile(username);
+    res.json(profile);
+  } catch (err) {
+    if (err.message === "User not found") {
+      res.status(404).json({ error: err.message });
+    } else if (err.message === "Profile is private") {
+      res.status(403).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: err.message });
+    }
+  }
+}
+
+async function uploadProfilePicture(req, res) {
+  const userId = req.params.id;
+  const file = req.file;
+  
+  try {
+    const profilePictureUrl = await userService.uploadProfilePicture(
+      userId,
+      file
+    );
+    res.json({ profilePictureUrl });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   getUsers,
+  deleteUser,
   getUserSubmissions,
+  getUserStats,
+  updateUserStreak,
+  updateUserSubmission,
+  updateUserSettings,
   getUserBadges,
   awardUserBadges,
+  getPublicUsers,
+  getUserPublicProfile,
+  uploadProfilePicture,
 };

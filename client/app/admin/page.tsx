@@ -1,33 +1,54 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
+import { UserRound } from "lucide-react";
 import { useUser } from "@/app/context";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import AdminEmailForm from "@/components/ui/emailForm";
+import Image from "next/image";
 
 const supabase = createClient();
+const ITEMS_PER_PAGE = 20;
 
 export default function Profile() {
   const { user, profile } = useUser();
   const [useFahrenheit, setUseFahrenheit] = useState(false);
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [filteredDate, setFilteredDate] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
   const provider = user?.app_metadata?.provider || "email";
+
   const userSince = user?.email_confirmed_at
     ? format(new Date(user.email_confirmed_at), "MMMM d, yyyy")
     : "Unknown";
 
-  // Fetch data depending on role
+  const uniqueDates = [
+    "All",
+    ...Array.from(
+      new Set(
+        submissions.map((s) => format(new Date(s.measured_on), "yyyy-MM-dd"))
+      )
+    ),
+  ];
+
   useEffect(() => {
     const fetchSubmissions = async () => {
       if (!user?.id || !profile?.role) return;
 
-      const { data, error } =
+      const query =
         profile.role === "admin"
-          ? await supabase.from("temperatures").select("*")
-          : await supabase
+          ? supabase
               .from("temperatures")
               .select("*")
-              .eq("user_id", user.id);
+              .order("measured_on", { ascending: false })
+          : supabase
+              .from("temperatures")
+              .select("*")
+              .eq("user_id", user.id)
+              .order("measured_on", { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching submissions:", error);
@@ -73,51 +94,100 @@ export default function Profile() {
       console.error("Error toggling verified:", error);
     } else {
       setSubmissions((prev) =>
-        prev.map((s) =>
-          s.id === id ? { ...s, is_verified: !current } : s
-        )
+        prev.map((s) => (s.id === id ? { ...s, is_verified: !current } : s))
       );
     }
   };
 
+  const filteredSubmissions =
+    filteredDate === "All"
+      ? submissions
+      : submissions.filter(
+          (s) => format(new Date(s.measured_on), "yyyy-MM-dd") === filteredDate
+        );
+
+  const totalPages = Math.ceil(filteredSubmissions.length / ITEMS_PER_PAGE);
+  const paginatedSubmissions = filteredSubmissions.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold mb-4">
-        Welcome, {user?.user_metadata?.username || "Admin"}
+        Welcome, {profile?.username || "Admin"}
       </h1>
 
+      {/* User Info */}
       <div className="rounded-lg shadow-md overflow-hidden mb-14 lg:mb-20">
         <div className="bg-nav-blue h-8 flex items-center justify-end px-4">
           <span className="text-xs font-medium text-white px-2 py-1 rounded capitalize">
             {profile?.role} Account
           </span>
         </div>
-
         <div className="flex items-center bg-white p-6 space-x-6">
-          <img
-            src={"profile.png"}
-            alt="Profile"
-            className="w-20 h-20 rounded-full object-cover"
-          />
+          <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+            {profile?.profile_picture_url ? (
+              <Image
+                src={profile.profile_picture_url}
+                alt="pfp"
+                width={100}
+                height={100}
+                className="w-20 h-20 rounded-full object-cover"
+              />
+            ) : (
+              <UserRound className="w-10 h-10 text-muted-foreground" />
+            )}
+          </div>
           <div>
-            <h2 className="text-xl font-semibold text-dark-blue">
-              {user?.user_metadata?.username || "Username"}
+            <h2 className="text-xl font-semibold text-dark-blue text-left">
+              {profile?.username || "Username"}
             </h2>
             <p className="text-gray-600">
               {user?.email || "email@example.com"}
             </p>
-            <div className="mt-2">
-              <p className="text-sm text-gray-500">Signed in with {provider}</p>
-              <p className="text-sm text-gray-500">User since {userSince}</p>
-            </div>
+            <p className="text-sm text-gray-500 mt-1">
+              Signed in with {provider}
+            </p>
+            <p className="text-sm text-gray-500">User since {userSince}</p>
           </div>
         </div>
       </div>
 
-      {/* Buttons (top on desktop) */}
-      <div className="hidden sm:flex items-center justify-between mb-3">
+      {/* Top Controls */}
+      {profile?.role === "admin" && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4 text-left">
+            Send Community Update to Users
+          </h2>
+          <AdminEmailForm />
+        </div>
+      )}
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
         <h2 className="text-2xl font-semibold">My Submissions</h2>
-        <div className="flex gap-4">
+        <div className="flex gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={filteredDate === "All" ? "" : filteredDate}
+              onChange={(e) => {
+                setFilteredDate(e.target.value || "All");
+                setCurrentPage(1);
+              }}
+              className="border border-gray-300 px-2 py-1 rounded"
+            />
+            {filteredDate !== "All" && (
+              <button
+                onClick={() => {
+                  setFilteredDate("All");
+                  setCurrentPage(1);
+                }}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Clear
+              </button>
+            )}
+          </div>
           <button
             onClick={handleExportCSV}
             className="px-4 py-2 bg-nav-blue text-white text-sm rounded hover:opacity-90"
@@ -133,63 +203,63 @@ export default function Profile() {
         </div>
       </div>
 
-      <h2 className="text-2xl font-semibold mb-3 sm:hidden">My Submissions</h2>
-
+      {/* Table */}
       <div className="bg-white shadow-md rounded-lg overflow-x-auto lg:mb-20">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-nav-blue text-white">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase">
                 Date
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase">
                 Temp ({useFahrenheit ? "°F" : "°C"})
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase">
                 Location (lat, long)
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase">
                 Notes
               </th>
               {profile?.role === "admin" && (
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase">
                   Verified
                 </th>
               )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 text-gray-700">
-            {submissions.map(
-              ({ id, measured_on, temperature, latitude, longitude, notes, is_verified }) => (
-                <tr
-                  key={id}
-                  className="hover:bg-blue-100 transition-colors duration-200"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {measured_on
-                      ? format(new Date(measured_on), "yyyy-MM-dd")
-                      : "N/A"}
+            {paginatedSubmissions.map(
+              ({
+                id,
+                measured_on,
+                temperature,
+                latitude,
+                longitude,
+                notes,
+                is_verified,
+              }) => (
+                <tr key={id} className="hover:bg-blue-100 transition-colors">
+                  <td className="px-6 py-4">
+                    {format(parseISO(measured_on), "yyyy-MM-dd")}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4">
                     {useFahrenheit
                       ? ((temperature * 9) / 5 + 32).toFixed(1)
                       : temperature.toFixed(1)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4">
                     {latitude.toFixed(2)}, {longitude.toFixed(2)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{notes}</td>
+                  <td className="px-6 py-4">{notes}</td>
                   {profile?.role === "admin" && (
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <button
                         onClick={() => handleToggleVerified(id, is_verified)}
                         className={`px-3 py-1 text-sm rounded ${
-                          is_verified
-                            ? "bg-red-500 text-white hover:bg-red-600"
-                            : "bg-green-500 text-white hover:bg-green-600"
-                        }`}
+                          is_verified ? "bg-red-500" : "bg-green-500"
+                        } text-white hover:opacity-90`}
                       >
-                        {is_verified ? "Remove" : "Verify"}
+                        {is_verified ? "Unverify" : "Verify"}
                       </button>
                     </td>
                   )}
@@ -200,19 +270,24 @@ export default function Profile() {
         </table>
       </div>
 
-      {/* Buttons (bottom on mobile) */}
-      <div className="flex sm:hidden justify-center gap-4 mt-2">
+      {/* Pagination */}
+      <div className="flex justify-center items-center gap-4">
         <button
-          onClick={handleExportCSV}
-          className="px-4 py-2 bg-nav-blue text-white text-sm rounded hover:opacity-90"
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          className="px-3 py-1 border rounded disabled:opacity-50"
         >
-          Export CSV
+          Prev
         </button>
+        <span className="text-sm">
+          Page {currentPage} of {totalPages}
+        </span>
         <button
-          onClick={toggleUnits}
-          className="px-4 py-2 border border-nav-blue text-nav-blue text-sm rounded hover:bg-nav-blue hover:text-white transition"
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+          className="px-3 py-1 border rounded disabled:opacity-50"
         >
-          {useFahrenheit ? "Show °C" : "Show °F"}
+          Next
         </button>
       </div>
     </div>

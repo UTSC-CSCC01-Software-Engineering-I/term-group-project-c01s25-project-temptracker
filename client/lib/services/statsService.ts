@@ -1,7 +1,5 @@
-// RECONSIDER: currently a full frontend service
-import { createClient } from "../supabase/client";
-
-const supabase = createClient();
+import axios from "axios";
+import { getAccessToken } from "../authSession";
 
 // fixes tied ranking issue, O(50) complexity is negligible
 function assignRanksWithTies(
@@ -12,7 +10,7 @@ function assignRanksWithTies(
   let lastValue: number | null = null;
   let countSame = 0;
 
-  return data.map((item, index) => {
+  return data.map((item) => {
     const currentValue = item[orderBy];
 
     if (currentValue !== lastValue) {
@@ -27,26 +25,14 @@ function assignRanksWithTies(
   });
 }
 
-export async function fetchTopByUploadCount(limit = 50) {
-  const { data, error } = await supabase
-    .from("stats")
-    .select(
-      `
-      user_id,
-      curr_streak,
-      max_streak,
-      upload_count,
-      likes_count,
-      user_profile:user_profiles(username)
-    `
-    )
-    .order("upload_count", { ascending: false })
-    .limit(limit);
+export async function fetchTopByUploadCount() {
+  const res = await axios.get(
+    `${process.env.NEXT_PUBLIC_API_URL}/general-data/top-user-stats/upload_count`
+  );
 
-  if (error) throw error;
-  if (!data) return [];
+  if (!res.data) return [];
 
-  const rankedData = assignRanksWithTies(data, "upload_count");
+  const rankedData = assignRanksWithTies(res.data, "upload_count");
 
   return rankedData.map((row: any) => ({
     user_id: row.user_id,
@@ -59,26 +45,14 @@ export async function fetchTopByUploadCount(limit = 50) {
   }));
 }
 
-export async function fetchTopByLikesCount(limit = 50) {
-  const { data, error } = await supabase
-    .from("stats")
-    .select(
-      `
-      user_id,
-      curr_streak,
-      max_streak,
-      upload_count,
-      likes_count,
-      user_profile:user_profiles(username)
-    `
-    )
-    .order("likes_count", { ascending: false })
-    .limit(limit);
+export async function fetchTopByLikesCount() {
+  const res = await axios.get(
+    `${process.env.NEXT_PUBLIC_API_URL}/general-data/top-user-stats/likes_count`
+  );
 
-  if (error) throw error;
-  if (!data) return [];
+  if (!res.data) return [];
 
-  const rankedData = assignRanksWithTies(data, "likes_count");
+  const rankedData = assignRanksWithTies(res.data, "likes_count");
 
   return rankedData.map((row: any) => ({
     user_id: row.user_id,
@@ -91,26 +65,14 @@ export async function fetchTopByLikesCount(limit = 50) {
   }));
 }
 
-export async function fetchTopByMaxStreak(limit = 50) {
-  const { data, error } = await supabase
-    .from("stats")
-    .select(
-      `
-      user_id,
-      curr_streak,
-      max_streak,
-      upload_count,
-      likes_count,
-      user_profile:user_profiles(username)
-    `
-    )
-    .order("max_streak", { ascending: false })
-    .limit(limit);
+export async function fetchTopByMaxStreak() {
+  const res = await axios.get(
+    `${process.env.NEXT_PUBLIC_API_URL}/general-data/top-user-stats/max_streak`
+  );
 
-  if (error) throw error;
-  if (!data) return [];
+  if (!res.data) return [];
 
-  const rankedData = assignRanksWithTies(data, "max_streak");
+  const rankedData = assignRanksWithTies(res.data, "max_streak");
 
   return rankedData.map((row: any) => ({
     user_id: row.user_id,
@@ -127,36 +89,37 @@ export async function fetchCurrentUserStatsWithRank(
   userId: string,
   orderBy: "upload_count" | "likes_count" | "max_streak"
 ) {
-  const { data: userRow, error } = await supabase
-    .from("stats")
-    .select(
-      `
-      curr_streak,
-      max_streak,
-      upload_count,
-      likes_count,
-      user_profile:user_profiles(username)
-    `
-    )
-    .eq("user_id", userId)
-    .single();
+  const accessToken = await getAccessToken();
 
-  if (error || !userRow) throw error ?? new Error("User not found");
+  if (!accessToken) {
+    throw new Error("No access token found");
+  }
 
-  const { data: allData, error: allError } = await supabase
-    .from("stats")
-    .select(`user_id, ${orderBy}`)
-    .order(orderBy, { ascending: false });
+  const userStatsRes = await axios.get(
+    `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}/stats`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
 
-  if (allError || !allData)
-    throw allError ?? new Error("Failed to fetch rankings");
+  if (userStatsRes.status !== 200 || !userStatsRes.data)
+    throw new Error("Failed to fetch user stats");
 
-  const ranked = assignRanksWithTies(allData, orderBy);
+  const res = await axios.get(
+    `${process.env.NEXT_PUBLIC_API_URL}/general-data/top-user-stats/${orderBy}`
+  );
+
+  if (res.status !== 200 || !res.data)
+    throw new Error("Failed to fetch rankings");
+
+  const ranked = assignRanksWithTies(res.data, orderBy);
 
   const userRank = ranked.find((r) => r.user_id === userId)?.rank ?? -1;
+  const userRow = userStatsRes.data;
 
   return {
-    // @ts-ignore
     username: userRow.user_profile?.username ?? "Unknown",
     curr_streak: userRow.curr_streak,
     max_streak: userRow.max_streak,

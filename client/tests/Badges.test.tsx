@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import Badges from "@/components/ui/Badges";
+import Badges from "@/app/profile/Badges";
 import { BadgeData } from "@/types/badges";
 
 describe("Badges component", () => {

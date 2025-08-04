@@ -6,32 +6,16 @@ const LazyMap = dynamic(() => import("@/components/map/Map"), {
   ssr: false,
   loading: () => <p>Loading...</p>,
 });
-import { Input } from "@/components/shadcn/input";
-import { Label } from "@/components/shadcn/label";
-
-const sampleLocations = [
-  { id: 1, name: "Location A", temperature: "22°C" },
-  { id: 2, name: "Location B", temperature: "19°C" },
-  { id: 3, name: "Location C", temperature: "25°C" },
-];
+import POIs from "./POIs";
+import Controls from "./TopControls";
+import { UnitsProvider } from "./unitsContext";
 
 export default function Home() {
   const [searchLatitude, setSearchLatitude] = useState<number | null>(null);
   const [searchLongitude, setSearchLongitude] = useState<number | null>(null);
   const [centerLatitude, setCenterLatitude] = useState<number | null>(null);
   const [centerLongitude, setCenterLongitude] = useState<number | null>(null);
-
-  const [timeRange, setTimeRange] = useState<"week" | "month">("week");
-
-  const handleLatitude = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
-    setSearchLatitude(val);
-  };
-
-  const handleLongitude = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
-    setSearchLongitude(val);
-  };
+  const [timeRange, setTimeRange] = useState<"week" | "today">("today");
 
   const searchCoords = () => {
     setCenterLatitude(searchLatitude);
@@ -41,71 +25,57 @@ export default function Home() {
     );
   };
 
-  return (
-    <div className="main-container w-full max-w-[1800px] md:mt-4">
-      <div className="flex flex-col md:flex-row items-center justify-space-between md:px-12 gap-3">
-        <div className="flex md:items-center gap-1 flex-col md:flex-row">
-          <Label htmlFor="latitude" className="text-lg">
-            Latitude
-          </Label>
-          <Input
-            id="latitude"
-            type="number"
-            step="0.000001"
-            name="latitude"
-            onChange={handleLatitude}
-          />
-        </div>
-        <div className="flex md:items-center gap-1 flex-col md:flex-row">
-          <Label htmlFor="longitude" className="text-lg">
-            Longitude
-          </Label>
-          <Input
-            id="longitude"
-            type="number"
-            step="0.000001"
-            name="longitude"
-            onChange={handleLongitude}
-          />
-        </div>
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
 
-        <button
-          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors cursor-pointer w-full md:w-fit"
-          onClick={searchCoords}
-        >
-          Search
-        </button>
-        <div className="flex items-center gap-2">
-          <Label htmlFor="timeRange">Time Range</Label>
-          <select
-            id="timeRange"
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as any)}
-            className="border rounded px-3 py-1"
-          >
-            <option value="week">Last Week</option>
-            <option value="month">Last Month</option>
-          </select>
-        </div>
-      </div>
-      <div className="map-placeholder">
-        <LazyMap
-          centerLatitude={centerLatitude}
-          centerLongitude={centerLongitude}
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        setSearchLatitude(lat);
+        setSearchLongitude(lng);
+        setCenterLatitude(lat);
+        setCenterLongitude(lng);
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+        alert("Unable to retrieve your location.");
+      }
+    );
+  };
+
+  return (
+    <UnitsProvider>
+      <div className="main-container w-full max-w-[1800px] mx-auto md:mt-4">
+        <Controls
+          searchLatitude={searchLatitude}
+          searchLongitude={searchLongitude}
+          setSearchLatitude={setSearchLatitude}
+          setSearchLongitude={setSearchLongitude}
+          setCenterLatitude={setCenterLatitude}
+          setCenterLongitude={setCenterLongitude}
           timeRange={timeRange}
+          setTimeRange={setTimeRange}
         />
-      </div>
-      <section className="locations-section">
-        <h2>Points of Interest</h2>
-        <div className="locations-list">
-          {sampleLocations.map(({ id, name, temperature }) => (
-            <div key={id} className="location-card">
-              <span>{name}</span>
-              <span>{temperature}</span>
-            </div>
-          ))}
+
+        <div className="map-placeholder">
+          <LazyMap
+            key={
+              centerLatitude != null && centerLongitude != null
+                ? `${centerLatitude}-${centerLongitude}`
+                : "null"
+            }
+            centerLatitude={centerLatitude}
+            centerLongitude={centerLongitude}
+            timeRange={timeRange}
+          />
         </div>
-      </section>
-    </div>
+        <POIs />
+      </div>
+    </UnitsProvider>
   );
 }

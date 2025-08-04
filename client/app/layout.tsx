@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import Header from "@/components/ui/Header";
+import Footer from "@/components/ui/Footer";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { UserProvider } from "./context";
@@ -34,15 +35,17 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
-          enableSystem
+          enableSystem={false}
           disableTransitionOnChange
         >
           <UserProvider>
             <div className="min-h-screen flex flex-col">
               <Header />
               <main className="flex-1 p-4 flex flex-col items-center">
-                <div className="mt-6 w-full">{children}</div>
+                <div className="mt-6 md:mt-8 w-full">{children}</div>
               </main>
+              {/* <Footer /> */}
+              <Footer />
             </div>
           </UserProvider>
           <Toaster position="top-center" richColors />
