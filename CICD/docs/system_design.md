@@ -6,12 +6,6 @@ This document outlines the architecture and components of the TempTracker applic
 
 ---
 
-## Architecture Diagram
-
-![System Architecture](../images/system_architecture.png)
-
----
-
 ## Components
 
 ### 1. Frontend (`client`)
