@@ -13,7 +13,14 @@ import "leaflet/dist/leaflet.css";
 import "react-leaflet-markercluster/styles";
 import "../../styles/MapSlider.css";
 
-import { toFarenheit, simpleDate, createCustomClusterIcon, customUserIcon, poiIcon, mapClickIcon } from "./mapUtils";
+import {
+  toFarenheit,
+  simpleDate,
+  createCustomClusterIcon,
+  customUserIcon,
+  poiIcon,
+  mapClickIcon,
+} from "./mapUtils";
 import { getClosestPOIs, POI } from "@/lib/services/POIsService";
 import { getMapContours } from "@/lib/services/mapContourService";
 import { getAverageClosestTemperature } from "@/lib/services/tempByCoordinatesService";
@@ -21,13 +28,14 @@ import { SliderLayer } from "./SliderLayer";
 import { HeatmapLayer } from "./HeatMapLayer";
 import { MapClickHandler } from "./MapClickHandler";
 import type { MapProps } from "./mapTypes";
-import MapControls from "../ui/MapControls";
+import MapControls from "./MapControls";
 import TrendsModal from "../ui/TrendsModal";
-import IconLegend from "../ui/MapIconLegend";
+import IconLegend from "./MapIconLegend";
+import { useUnits } from "@/app/unitsContext";
 
 const getCurrentHourBucket = () => {
   const hour = new Date().getHours();
-  console.log('hour func:',hour)
+  console.log("hour func:", hour);
   if (hour < 4) return 0;
   if (hour < 8) return 4;
   if (hour < 12) return 8;
@@ -50,12 +58,13 @@ const Map = (props: MapProps) => {
   });
 
   const [tempVisible, setTempVisible] = useState(true);
-  const [heatVisible, setHeatVisible] = useState(false)
+  const [heatVisible, setHeatVisible] = useState(false);
+  const [graphVisible, setGraphVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [fetchLoading, setFetchLoading] = useState(false)
+  const [fetchLoading, setFetchLoading] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [showTrendsModal, setShowTrendsModal] = useState(false);
-  const [clickedLake, setClickedLake] = useState<null | string>(null)
+  const [clickedLake, setClickedLake] = useState<null | string>(null);
 
   const [currentWeekday, setCurrentWeekday] = useState(7);
   const [currentHour, setCurrentHour] = useState(getCurrentHourBucket);
@@ -68,25 +77,31 @@ const Map = (props: MapProps) => {
   const [lmhofsContours, setLmhofsContours] = useState(null);
 
   //Points buckets
-  const [userPoints, setUserPoints] = useState([])
-  const [heatMapPoints, setHeatMapPoints] = useState([])
-  const [poiData, setPoiData] = useState<POI[]>([])
-  const [poiTemps, setPoiTemps] = useState<Record<number, string | null>>({})
+  const [userPoints, setUserPoints] = useState([]);
+  const [heatMapPoints, setHeatMapPoints] = useState([]);
+  const [poiData, setPoiData] = useState<POI[]>([]);
+  const [poiTemps, setPoiTemps] = useState<Record<number, string | null>>({});
   const [poiKey, setPoiKey] = useState<string>(() => {
     if (poiData.length > 0) {
       let key = poiData.map((item) => {
-        return item["id"]
-      })
-      return key.join("-")
+        return item["id"];
+      });
+      return key.join("-");
     }
-    return ""
-  })
+    return "";
+  });
+
+  const [modalPoint, setModalPoint] = useState<{
+    latitude: number;
+    longitude: number;
+    lake: string | null;
+  } | null>(null);
 
   const [date, setDate] = useState(getTodayDate);
   const [today, setToday] = useState(getTodayDate);
   const [tempDate, setTempDate] = useState(getTodayDate);
 
-  const [unit, setUnit] = useState("Celsius");
+  const { unit, setUnit } = useUnits();
 
   const [clickedPoint, setClickedPoint] = useState({
     latitude: null as number | null,
@@ -135,9 +150,12 @@ const Map = (props: MapProps) => {
   useEffect(() => {
     const setPOI = async () => {
       if (mapCoords.latitude != null && mapCoords.longitude != null) {
-       const data = await getClosestPOIs(mapCoords.latitude, mapCoords.longitude)
+        const data = await getClosestPOIs(
+          mapCoords.latitude,
+          mapCoords.longitude
+        );
         if (data && data.length > 0) {
-          setPoiData(data)
+          setPoiData(data);
           const tempsMap: Record<number, string | null> = {};
           for (const poi of data) {
             const avgTemp = await getAverageClosestTemperature(
@@ -149,60 +167,58 @@ const Map = (props: MapProps) => {
             } else {
               tempsMap[poi.id] = "...";
             }
-            
           }
           setPoiTemps(tempsMap);
 
           //update key
           const idArr = data.map((item) => {
-            return item["id"]
-          })
-          setPoiKey(idArr.join("-"))
+            return item["id"];
+          });
+          setPoiKey(idArr.join("-"));
         }
       }
-    }
+    };
 
-    setPOI()
-  },[mapCoords])
+    setPOI();
+  }, [mapCoords]);
 
   const fetchAllData = async () => {
     if (fetchLoading) return;
-    setFetchLoading(true)
+    setFetchLoading(true);
     try {
       const response = await getMapContours({
         date: date,
         today: today,
         currentHour: currentHour,
-        timeRange: props.timeRange
+        timeRange: props.timeRange,
       });
       if (response && response.data) {
         // console.log('fetchAll data:', response.data)
-        setUserPoints(response.data.userPoints)
-        setHeatMapPoints(response.data.heatMapPoints)
-        setLoofsContours(response.data.loofsContours)
-        setLeofsContours(response.data.leofsContours)
-        setLsofsContours(response.data.lsofsContours)
-        setLmhofsContours(response.data.lmhofsContours)
+        setUserPoints(response.data.userPoints);
+        setHeatMapPoints(response.data.heatMapPoints);
+        setLoofsContours(response.data.loofsContours);
+        setLeofsContours(response.data.leofsContours);
+        setLsofsContours(response.data.lsofsContours);
+        setLmhofsContours(response.data.lmhofsContours);
 
-        if(response.data.tempDate) {
-          setTempDate(new Date(response.data.tempDate))
+        if (response.data.tempDate) {
+          setTempDate(new Date(response.data.tempDate));
         } else if (response.data.currentHour) {
-          setTempHour(response.data.currentHour)
+          setTempHour(response.data.currentHour);
         }
 
         toggleUpdateComplete();
       }
-
     } catch (err) {
-        console.error('Error fetching map data:', err);
+      console.error("Error fetching map data:", err);
     } finally {
-      setFetchLoading(false)
+      setFetchLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     // console.log("date state changed");
-    fetchAllData()
+    fetchAllData();
   }, [date, currentHour, props.timeRange, today]);
 
   useEffect(() => {
@@ -245,7 +261,6 @@ const Map = (props: MapProps) => {
     }, 500);
   };
 
-
   const getFeatureStyle2 = (feature: any) => {
     // colors the geo json contours on the map
     const temperature = feature.properties.fill;
@@ -258,7 +273,6 @@ const Map = (props: MapProps) => {
       fillOpacity: 1,
     };
   };
-
 
   //RENDER
   if (
@@ -282,56 +296,84 @@ const Map = (props: MapProps) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
-        <MapClickHandler date={date} today={today} currentHour={currentHour} setClickedLake={setClickedLake} setClickedPoint={setClickedPoint} timeRange={props.timeRange} />
-        {tempVisible && <MarkerClusterGroup
+        <MapClickHandler
+          date={date}
+          today={today}
+          currentHour={currentHour}
+          setClickedLake={setClickedLake}
+          setClickedPoint={setClickedPoint}
+          timeRange={props.timeRange}
+        />
+        {tempVisible && (
+          <MarkerClusterGroup
+            chunkedLoading
+            iconCreateFunction={(cluster: L.MarkerCluster) =>
+              createCustomClusterIcon(cluster, "user point")
+            }
+            key={`markers-${date.toDateString()}`}
+          >
+            {userPoints.length > 0 &&
+              userPoints.map((item, index) => {
+                // console.log('Adding user point')
+                return (
+                  <Marker
+                    key={`marker-${index}-${date.toDateString()}`}
+                    position={[item["latitude"], item["longitude"]]}
+                    icon={customUserIcon}
+                  >
+                    <Popup>
+                      <div className="bg-white w-20 md:w-30 rounded-md gap-0">
+                        <p className="font-semibold text-center text-sm md:text-lg mb-0">
+                          {unit === "Celsius"
+                            ? `${item["temperature"]} °C`
+                            : `${toFarenheit(item["temperature"])} °F`}
+                        </p>
+                        <p className="text-center text-xs text-gray-500">
+                          {simpleDate(
+                            (item["measured_on"] as string)
+                              ?.split("T")[1]
+                              .split("+")[0]
+                          )}
+                        </p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+          </MarkerClusterGroup>
+        )}
+
+        <MarkerClusterGroup
           chunkedLoading
-          iconCreateFunction={(cluster: L.MarkerCluster) => createCustomClusterIcon(cluster, "user point")}
-          key={`markers-${date.toDateString()}`}
+          key={poiKey}
+          iconCreateFunction={(cluster: L.MarkerCluster) =>
+            createCustomClusterIcon(cluster, "poi")
+          }
         >
-          {userPoints.length > 0 &&
-            userPoints.map((item, index) => {
-              // console.log('Adding user point')
+          {poiData.length > 0 &&
+            Object.keys(poiTemps).length > 0 &&
+            poiData.map((item) => {
               return (
                 <Marker
-                  key={`marker-${index}-${date.toDateString()}`}
+                  key={item["id"]}
                   position={[item["latitude"], item["longitude"]]}
-                  icon={customUserIcon}
+                  icon={poiIcon}
                 >
                   <Popup>
                     <div className="bg-white w-20 md:w-30 rounded-md gap-0">
-                    <p className="font-semibold text-center text-sm md:text-lg mb-0">
-                      {unit == "Celsius"
-                      ? `${item["temperature"]} °C`
-                      : `${toFarenheit(item["temperature"])} °F`}
+                      <p className="font-semibold text-center md:text-sm text-xs">
+                        {item["name"]}
                       </p>
-                      <p className="text-center text-xs text-gray-500">{simpleDate((item["measured_on"] as string)?.split('T')[1].split('+')[0])}</p>
+                      <p className="text-center text-xs md:text-sm mb-0">
+                        {unit == "Celsius"
+                          ? `Avg: ${poiTemps[item.id]} °C`
+                          : `Avg: ${toFarenheit(poiTemps[item.id])} °F`}
+                      </p>
                     </div>
                   </Popup>
                 </Marker>
               );
             })}
-        </MarkerClusterGroup>
-        }
-
-        <MarkerClusterGroup
-        chunkedLoading
-        key={poiKey}
-        iconCreateFunction={(cluster: L.MarkerCluster) => createCustomClusterIcon(cluster, "poi")}>
-          {poiData.length > 0 && Object.keys(poiTemps).length > 0 && poiData.map((item) => {
-            return(<Marker key={item["id"]} position={[item["latitude"], item["longitude"]]} icon={poiIcon}>
-              <Popup>
-                    <div className="bg-white w-20 md:w-30 rounded-md gap-0">
-                      <p className="font-semibold text-center md:text-sm text-xs">{item["name"]}</p>
-                    <p className="text-center text-xs md:text-sm mb-0">
-                      {unit == "Celsius"
-                      ? `Avg: ${poiTemps[item.id]} °C`
-                      : `Avg: ${toFarenheit(poiTemps[item.id])} °F`}
-                      </p>
-                    </div>
-                  </Popup>
-            </Marker>)
-          })}
-
         </MarkerClusterGroup>
 
         {tempVisible && (
@@ -370,21 +412,22 @@ const Map = (props: MapProps) => {
           >
             <Popup>
               <div className="bg-white w-20 md:w-25 rounded-md flex items-center justify-center py-0 px-0">
-                <p className="text-center text-sm md:text-base">{unit == "Celsius"
-                  ? `${clickedPoint.nearestPoint?.temperature.toFixed(2)} °C`
-                  : `${toFarenheit(clickedPoint.nearestPoint?.temperature.toFixed(2))} °F`}
-                  </p>
+                <p className="text-center text-sm md:text-base">
+                  {unit == "Celsius"
+                    ? `${clickedPoint.nearestPoint?.temperature.toFixed(2)} °C`
+                    : `${toFarenheit(
+                        clickedPoint.nearestPoint?.temperature.toFixed(2)
+                      )} °F`}
+                </p>
                 <br />
               </div>
             </Popup>
           </Marker>
         )}
 
-        {heatVisible && <HeatmapLayer data={heatMapPoints}/>}
+        {heatVisible && <HeatmapLayer data={heatMapPoints} />}
 
         <MapControls
-          unit={unit as "Celsius" | "Farenheit"}
-          setUnit={setUnit}
           tempVisible={tempVisible}
           setTempVisible={setTempVisible}
           heatVisible={heatVisible}
@@ -393,16 +436,25 @@ const Map = (props: MapProps) => {
           clickedPoint={clickedPoint}
           lakeClicked={clickedLake}
           onTrendPromptClick={() => {
-            console.log("Clicked point:", clickedPoint);
-            setShowTrendsModal(true);
+            if (clickedPoint.latitude && clickedPoint.longitude) {
+              setModalPoint({
+                latitude: clickedPoint.latitude,
+                longitude: clickedPoint.longitude,
+                lake: clickedLake,
+              });
+              setShowTrendsModal(true);
+            }
           }}
         />
-        {showTrendsModal && (
+        {modalPoint && (
           <TrendsModal
-            latitude={clickedPoint?.latitude ?? null}
-            longitude={clickedPoint?.longitude ?? null}
-            lake={clickedLake}
-            onClose={() => setShowTrendsModal(false)}
+            latitude={modalPoint.latitude}
+            longitude={modalPoint.longitude}
+            lake={modalPoint.lake}
+            onClose={() => {
+              setShowTrendsModal(false);
+              setModalPoint(null);
+            }}
           />
         )}
 
@@ -419,10 +471,26 @@ const Map = (props: MapProps) => {
             height: "auto",
           }}
         >
-          <SliderLayer currentHour={currentHour} currentWeekday={currentWeekday} timeRange={props.timeRange} today={today} hourSliderChange={hourSliderChange} weekSliderChange={weekSliderChange} />
+          <SliderLayer
+            currentHour={currentHour}
+            currentWeekday={currentWeekday}
+            timeRange={props.timeRange}
+            today={today}
+            hourSliderChange={hourSliderChange}
+            weekSliderChange={weekSliderChange}
+          />
         </div>
 
-        <div style={{ position: "absolute", zIndex: 500, top: '50%', left: '5px', width: 'auto', height: 'auto'}}>
+        <div
+          style={{
+            position: "absolute",
+            zIndex: 500,
+            top: "50%",
+            left: "5px",
+            width: "auto",
+            height: "auto",
+          }}
+        >
           <IconLegend />
         </div>
       </MapContainer>
