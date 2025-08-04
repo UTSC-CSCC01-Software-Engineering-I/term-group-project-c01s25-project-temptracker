@@ -19,6 +19,7 @@
     "dev": "nodemon index"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@sendgrid/mail": "^8.1.5",
     "@supabase/supabase-js": "^2.49.8",
     "@turf/turf": "^7.2.0",
