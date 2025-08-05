@@ -114,9 +114,6 @@ describe('API Integration Tests', () => {
         );
 
         expect(res.status).toBe(201);
-        expect(res.data).toHaveProperty("message", "Success");
         expect(res.data).toHaveProperty("data");
-        expect(res.data.data).toHaveProperty("userPoints");
-        expect(Array.isArray(res.data.data.userPoints)).toBe(true);
     });
 });

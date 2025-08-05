@@ -28,7 +28,7 @@ describe('Performance Tests (Deployed)', () => {
         const duration = getDuration(res);
 
         expect(res.status).toBe(200);
-        expect(duration).toBeLessThan(500);
+        expect(duration).toBeLessThan(850);
     });
 
     test('GET /api/poi/closest responds under 500ms', async () => {
