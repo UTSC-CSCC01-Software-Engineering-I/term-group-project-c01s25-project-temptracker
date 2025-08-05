@@ -46,7 +46,7 @@ jobs:
         working-directory: server
         run: |
           npm ci
-#          npm test
+          npm test
 
       # === FRONTEND ===
       - name: Create client/.env.local and .env.test
