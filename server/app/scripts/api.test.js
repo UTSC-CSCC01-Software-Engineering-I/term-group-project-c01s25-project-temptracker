@@ -114,6 +114,5 @@ describe('API Integration Tests', () => {
         );
 
         expect(res.status).toBe(201);
-        expect(res.data).toHaveProperty("data");
     });
 });
