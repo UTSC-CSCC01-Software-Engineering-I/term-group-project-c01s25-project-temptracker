@@ -51,7 +51,7 @@ Triggered by `.github/workflows/github-actions-workflow.yml`:
 
 ---
 
-#### Job 3: Test Containers (Only if Job 1 Succeeds)
+#### Job 3: Test Containers (Only if Job 2 Succeeds)
 
 - do a npm run test-deployed script which uses the scripts located in server
 - runs integrated tests on performance metrics (ensure < 500ms on most api calls)
