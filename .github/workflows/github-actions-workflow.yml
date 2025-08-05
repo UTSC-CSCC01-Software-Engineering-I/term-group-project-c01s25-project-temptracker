@@ -142,21 +142,20 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
             cd ~/temptracker
-
-            echo "Waiting for Docker Hub to finish image push..."
-            sleep 10
-
+            
             docker compose down
 
             docker rmi haseeb702/myapp-server:master || true
             docker rmi haseeb702/myapp-client:master || true
             docker rmi haseeb702/myapp-map:master || true
             
-            docker compose pull
-            
-
             echo "Cleaning up old Docker resources..."
             docker system prune -a --volumes -f
+
+            echo "Waiting for Docker Hub to finish image push..."
+            sleep 10
+
+            docker compose pull
             
             docker compose up -d
 
