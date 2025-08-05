@@ -39,7 +39,7 @@ Triggered by `.github/workflows/github-actions-workflow.yml`:
     - `map:latest` and `map:<tag>`
 
 ![Docker Hub](https://drive.google.com/uc?export=view&id=1AKdi72rV-OBXmyPmCYRgk3u5XZ2sfnu3)
-
+![Descriptive Alt Text](https://drive.google.com/uc?export=view&id=1pC1KeGSEhZBGt0YxCMY4K8oEin_Bjpqn)
 
 #### Job 2: Deploy (Only if Job 1 Succeeds)
 
