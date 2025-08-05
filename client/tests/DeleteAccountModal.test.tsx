@@ -98,7 +98,7 @@ describe('DeleteAccountModal', () => {
 
   beforeAll(() => {
     // Suppress console.error in tests
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => { });
   });
 
   afterAll(() => {
@@ -196,10 +196,12 @@ describe('DeleteAccountModal', () => {
       await user.click(screen.getByRole('button', { name: 'Delete Account' }));
     });
     await waitFor(() => {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
       expect(axios.delete).toHaveBeenCalledWith(
-        'http://localhost:8080/api/users/user1',
-        { headers: { Authorization: 'Bearer mock-token' } },
+        `${apiUrl}/users/user1`,
+        { headers: { Authorization: 'Bearer mock-token' } }
       );
+
       expect(toast.success).toHaveBeenCalledWith('Account deleted successfully');
       expect(signOut).toHaveBeenCalled();
       expect(mockPush).toHaveBeenCalledWith('/login');

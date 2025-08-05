@@ -14,17 +14,20 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "jest --coverage",
+    "test": "jest app/tests",
+    "test-deployed": "jest app/scripts/performance.test.js app/scripts/api.test.js",
     "start": "node index.js",
     "dev": "nodemon index"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@sendgrid/mail": "^8.1.5",
     "@supabase/supabase-js": "^2.49.8",
     "@turf/turf": "^7.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "leaflet-canvas-marker": "^0.2.0",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.5"
   },
