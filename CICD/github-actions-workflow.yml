@@ -67,7 +67,7 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # === SERVER DOCKER IMAGES ===
+      # === SERVER DOCKER IMAGE ===
       - name: Build and push server (latest)
         working-directory: server
         run: |
@@ -142,8 +142,22 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
             cd ~/temptracker
-            docker compose pull
+
+            echo "Waiting for Docker Hub to finish image push..."
+            sleep 10
+
             docker compose down
+
+            docker rmi haseeb702/myapp-server:master || true
+            docker rmi haseeb702/myapp-client:master || true
+            docker rmi haseeb702/myapp-map:master || true
+            
+            docker compose pull
+            
+
+            echo "Cleaning up old Docker resources..."
+            docker system prune -a --volumes -f
+            
             docker compose up -d
 
       - name: Wait for containers to stabilize

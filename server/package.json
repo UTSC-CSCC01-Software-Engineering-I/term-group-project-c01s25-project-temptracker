@@ -14,7 +14,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "jest --coverage",
+    "test": "jest app/tests",
     "test-deployed": "jest app/scripts/performance.test.js app/scripts/api.test.js",
     "start": "node index.js",
     "dev": "nodemon index"
