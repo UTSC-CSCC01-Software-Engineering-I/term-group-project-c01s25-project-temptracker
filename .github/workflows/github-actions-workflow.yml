@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - develop
+      - feat/deploy-testing
     tags:
       - 'release/v*'
   pull_request:
@@ -36,6 +37,10 @@ jobs:
           echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
           echo "SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}" >> .env
           echo "SENDGRID_SENDER=${{ secrets.SENDGRID_SENDER }}" >> .env
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> .env.test
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.test
+          echo "TEST_EMAIL=${{ secrets.TEST_EMAIL }}" >> .env.test
+          echo "TEST_PASSWORD=${{ secrets.TEST_PASSWORD }}" >> .env.test
 
       - name: Install and test backend
         working-directory: server
@@ -127,8 +132,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [test]
+
     steps:
-      - name: Deploy via SSH
+      - name: Pull and restart containers
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VM_HOST }}
@@ -139,3 +145,22 @@ jobs:
             docker compose pull
             docker compose down
             docker compose up -d
+
+      - name: Wait for containers to stabilize
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            sleep 5
+
+      - name: Run deployed tests
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd ~/temptracker
+            docker compose exec -T server npm run test-deployed
