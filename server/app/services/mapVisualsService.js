@@ -28,10 +28,8 @@ const fetchContourData = async (date,today,currentHour,timeRange) => {
             .select("latitude,longitude,temperature,measured_on")
             .gte("measured_on",startDate.toISOString())
             .lt("measured_on",endDate.toISOString())
-            // .eq("is_verified",true);
-            console.log('between ', startDate.toISOString())
-            console.log('and ',endDate.toISOString())
-            console.log('user data: ', data)
+            .eq("is_verified",true);
+            
 
           if (error)
             throw new Error(`Error reading user uploads: ${error.message}`);
@@ -98,18 +96,18 @@ const fetchContourData = async (date,today,currentHour,timeRange) => {
         // Database uploads
         async () => {
           const startTime = new Date(todayDate);
-          startTime.setUTCHours(currentHour, 0, 0, 0);
+          startTime.setHours(currentHour, 0, 0, 0);
           
           const endTime = new Date(todayDate);
-          endTime.setUTCHours(currentHour + 4, 0, 0, 0);
+          endTime.setHours(currentHour + 4, 0, 0, 0);
           
           const { data, error } = await supabase.from('temperatures').select('latitude,longitude,temperature,measured_on')
           .gte('measured_on', startTime.toISOString())
           .lt('measured_on', endTime.toISOString())
-          // .eq('is_verified', true);
-          console.log('between ', startTime.toISOString())
-          console.log('and ',endTime.toISOString())
-          console.log('user data: ', data)
+          .eq('is_verified', true);
+          // console.log('between ', startTime.toISOString())
+          // console.log('and ',endTime.toISOString())
+          // console.log('user data: ', data)
           if (error) throw new Error(`Error reading user uploads: ${error.message}`);
           return { type: 'userPoints', data: data };
         },
