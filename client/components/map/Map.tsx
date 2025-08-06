@@ -329,11 +329,7 @@ const Map = (props: MapProps) => {
                             : `${toFarenheit(item["temperature"])} °F`}
                         </p>
                         <p className="text-center text-xs text-gray-500">
-                          {simpleDate(
-                            (item["measured_on"] as string)
-                              ?.split("T")[1]
-                              .split("+")[0]
-                          )}
+                          {simpleDate(item["measured_on"])}
                         </p>
                       </div>
                     </Popup>
