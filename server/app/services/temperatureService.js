@@ -50,6 +50,10 @@ async function submitTemperature(formData) {
     const waterBody = await isPointInContour(formData?.longitude, formData?.latitude, arr)
     const [hours, minutes] = formData?.time.split(":");
     const timestamp = new Date(formData?.date);
+    console.log('submit timestamp: ', timestamp)
+    console.log('submit timestamp str: ', timestamp.toISOString())
+    console.log('submit hour: ', hours)
+    console.log('submit minutes: ', minutes)
     timestamp.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
     const formattedData = {

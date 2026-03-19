@@ -23,18 +23,16 @@ export const lakeCodeConvert = (code: string) => {
 };
 
 export const simpleDate = (date: string) => {
-  let hourInt;
-  let m;
-  let hourStr = date.slice(0, 2);
-  if (parseInt(hourStr) > 13) {
-    hourInt = parseInt(hourStr) - 12;
-    m = "PM";
-  } else {
-    hourInt = parseInt(hourStr);
-    m = "AM";
-  }
+  const d = new Date(date)
 
-  return `${hourInt.toString().padStart(2, "0")}${date.slice(2)} ${m}`;
+  const time = d.toLocaleTimeString('en-US', {
+    hour12: true,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+});
+
+  return time;
 };
 
 export const mapClickIcon = new Icon({

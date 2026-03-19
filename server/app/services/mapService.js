@@ -44,36 +44,74 @@ async function getTemperatureReading(coordinates,date,hour) {
   // const date = new Date()
   // const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`
   const max_distance = 0.5
-  let min_distance = Infinity
-  const arr = [`loofs_${date}_points_${hour}.geo.json`,`leofs_${date}_points_${hour}.geo.json`,`lsofs_${date}_points_${hour}.geo.json`,`lmhofs_${date}_points_${hour}.geo.json`,'user_points.geo.json']
-  for (let i=0; i< arr.length; i++){
+  const lakes = ['loofs','leofs','lsofs','lmhofs']
+  const arr = lakes.map((item) => {
+    return `${date}/${item}_${date}_${hour}.geo.json`
+  })
+  const waterBody = await isPointInContour(lng, lat, arr)
+  if (waterBody != null) {
+    console.log('point in ', waterBody)
+    let min_distance = Infinity
+    let tempLat
+    let tempLng
+    let tempTemp
     try {
-      const { data } = await supabase.storage.from('geojson').download(`${date}/${arr[i]}`)
-      if (data) {
-        const text = await data.text();
-        const geojson = JSON.parse(text)
+        const { data } = await supabase.storage.from('geojson').download(`${date}/${waterBody}_${date}_points_${hour}.geo.json`)
+        if (data) {
+          const text = await data.text();
+          const geojson = JSON.parse(text)
 
-        //loop through points
-        for (let j=0; j<geojson.features.length;j++) {
-          var temp_coords = [geojson.features[j].geometry.coordinates[1], geojson.features[j].geometry.coordinates[0]]
-          const temp_distance = Math.sqrt(Math.pow(lat - temp_coords[0], 2) + Math.pow(lng - temp_coords[1], 2))
-          if (temp_distance <= max_distance && temp_distance < min_distance) {
-            if (geojson.features[j].properties.temperature != null) {
-              return {message: "Temperature reading acquired successfully", data: {temp: geojson.features[j].properties.temperature, lat: temp_coords[0], lng: temp_coords[1]}}
+          //loop through points
+          for (let j=0; j<geojson.features.length;j++) {
+            var temp_coords = [geojson.features[j].geometry.coordinates[1], geojson.features[j].geometry.coordinates[0]]
+            const temp_distance = Math.sqrt(Math.pow(lat - temp_coords[0], 2) + Math.pow(lng - temp_coords[1], 2))
+            if (temp_distance <= max_distance && temp_distance < min_distance) {
+              if (geojson.features[j].properties.temperature != null) {
+                tempLat = geojson.features[j].geometry.coordinates[1]
+                tempLng = geojson.features[j].geometry.coordinates[0]
+                tempTemp = geojson.features[j].properties.temperature
+                min_distance = temp_distance
+              }
             }
           }
+          return {message: "Temperature reading acquired successfully", data: {temp: tempTemp, lat: tempLat, lng: tempLng}}
         }
-      }
-      
-      
-    } catch(e) {
+    } catch (e) {
         console.error("getTemperatureReading error:", e);
         // throw e;
         return { message: "Temperature reading unsuccessful", data: null}
     }
+  } else {
+    console.log('point not in water body')
+    for (let i=0; i< arr.length; i++){
+      try {
+        const { data } = await supabase.storage.from('geojson').download(`${date}/${arr[i]}`)
+        if (data) {
+          const text = await data.text();
+          const geojson = JSON.parse(text)
+
+          //loop through points
+          for (let j=0; j<geojson.features.length;j++) {
+            var temp_coords = [geojson.features[j].geometry.coordinates[1], geojson.features[j].geometry.coordinates[0]]
+            const temp_distance = Math.sqrt(Math.pow(lat - temp_coords[0], 2) + Math.pow(lng - temp_coords[1], 2))
+            if (temp_distance <= max_distance) {
+              if (geojson.features[j].properties.temperature != null) {
+                return {message: "Temperature reading acquired successfully", data: {temp: geojson.features[j].properties.temperature, lat: temp_coords[0], lng: temp_coords[1]}}
+              }
+            }
+          }
+        }
+        
+        
+      } catch(e) {
+          console.error("getTemperatureReading error:", e);
+          // throw e;
+          return { message: "Temperature reading unsuccessful", data: null}
+      }
+    }
+    console.log('No nearest point found')
+    return { message: "Temperature reading unsuccessful", data: null}
   }
-  console.log('No nearest point found')
-  return { message: "Temperature reading unsuccessful", data: null}
 
 }
 
@@ -89,7 +127,6 @@ async function lakeClicked(coordinates,date,hour) {
   try {
     const inLake = await isPointInContour(lng, lat, arr)
     if (inLake) {
-      // console.log("Point in known water body")
       return { message: "Point in known water body", lake: inLake}
     }
     // console.log("Point not in known water body")
