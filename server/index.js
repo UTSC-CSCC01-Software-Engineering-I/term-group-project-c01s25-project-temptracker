@@ -11,9 +11,13 @@ const tempByCoordinatesRoutes = require("./app/routes/tempByCoordinatesRoutes");
 const mapVisualsRoutes = require("./app/routes/mapVisualsRoutes")
 
 const PORT = process.env.PORT || 8080;
+let corsOptions = {
+   origin : ['https://term-group-project-c01s25-project-t.vercel.app','http://localhost:3000'],
+   credentials: true
+}
 
 const app = express();
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/temperatures", temperatureRoutes);
